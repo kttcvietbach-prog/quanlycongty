@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VIETBACHCORP - Hệ thống quản lý ERP">
+    <title>VIETBACHCORP - Quản lý ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-bg">
+            <div class="login-bg-shape shape-1"></div>
+            <div class="login-bg-shape shape-2"></div>
+            <div class="login-bg-shape shape-3"></div>
+        </div>
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="login-logo-icon login-logo-img">
+                    <img src="assets/logo.svg" alt="VIETBACHCORP Logo">
+                </div>
+                <h1 class="login-logo-title">VIETBACHCORP</h1>
+                <p class="login-logo-subtitle">Hệ thống quản lý công ty</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="login-field">
+                    <label for="loginUsername">
+                        <span class="material-icons-outlined">person</span>
+                        Tài khoản
+                    </label>
+                    <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập" autocomplete="username"
+                        required>
+                </div>
+                <div class="login-field">
+                    <label for="loginPassword">
+                        <span class="material-icons-outlined">lock</span>
+                        Mật khẩu
+                    </label>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" placeholder="Nhập mật khẩu"
+                            autocomplete="current-password" required>
+                        <button type="button" class="toggle-password" id="togglePassword">
+                            <span class="material-icons-outlined">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="login-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                </div>
+                <div class="login-error" id="loginError"></div>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span class="material-icons-outlined">login</span>
+                    Đăng nhập
+                </button>
+            </form>
+            <div class="login-footer">
+                <p>© 2026 Nguyễn Quang Quốc. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Container (hidden until login) -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <div class="logo-icon logo-img">
+                        <img src="assets/logo.svg" alt="VIETBACHCORP Logo">
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-title">VIETBACHCORP</span>
+                        <span class="logo-subtitle">Hệ thống quản lý công ty</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebarNav">
+                <ul class="nav-list">
+                    <li class="nav-item" data-page="trang-chu">
+                        <span class="material-icons-outlined">home</span>
+                        <span class="nav-label">Trang chủ</span>
+                    </li>
+                    <li class="nav-item" data-page="hanh-chinh">
+                        <span class="material-icons-outlined">apartment</span>
+                        <span class="nav-label">Hành chính</span>
+                    </li>
+                    <li class="nav-item" data-page="nhan-su">
+                        <span class="material-icons-outlined">people</span>
+                        <span class="nav-label">Nhân sự</span>
+                    </li>
+                    <li class="nav-item" data-page="van-hanh">
+                        <span class="material-icons-outlined">miscellaneous_services</span>
+                        <span class="nav-label">Vận hành</span>
+                    </li>
+                    <li class="nav-item" data-page="kinh-doanh">
+                        <span class="material-icons-outlined">storefront</span>
+                        <span class="nav-label">Kinh doanh</span>
+                    </li>
+                    <li class="nav-item" data-page="marketing">
+                        <span class="material-icons-outlined">campaign</span>
+                        <span class="nav-label">Marketing</span>
+                    </li>
+                    <li class="nav-item" data-page="tai-chinh">
+                        <span class="material-icons-outlined">account_balance</span>
+                        <span class="nav-label">Tài chính</span>
+                    </li>
+                    <li class="nav-item" data-page="mua-hang">
+                        <span class="material-icons-outlined">shopping_cart</span>
+                        <span class="nav-label">Mua hàng</span>
+                    </li>
+                    <li class="nav-item active" data-page="san-xuat">
+                        <span class="material-icons-outlined">precision_manufacturing</span>
+                        <span class="nav-label">Sản xuất</span>
+                    </li>
+                    <li class="nav-item" data-page="kho-van">
+                        <span class="material-icons-outlined">inventory_2</span>
+                        <span class="nav-label">Kho vận</span>
+                    </li>
+                    <li class="nav-item" data-page="dieu-hanh">
+                        <span class="material-icons-outlined">dashboard</span>
+                        <span class="nav-label">Điều hành</span>
+                    </li>
+                    <li class="nav-item" data-page="he-thong">
+                        <span class="material-icons-outlined">settings</span>
+                        <span class="nav-label">Hệ thống</span>
+                    </li>
+                    <li class="nav-item" data-page="tro-ly-ai">
+                        <span class="material-icons-outlined">smart_toy</span>
+                        <span class="nav-label">Trợ lý AI</span>
+                    </li>
+                    <li class="nav-item" data-page="ban-quyen">
+                        <span class="material-icons-outlined">info</span>
+                        <span class="nav-label">Thông tin bản quyền</span>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <span class="material-icons-outlined">menu</span>
+                    </button>
+                    <nav class="breadcrumb">
+                        <span class="material-icons-outlined breadcrumb-home">home</span>
+                        <span class="breadcrumb-item">Trang chủ</span>
+                        <span class="material-icons-outlined breadcrumb-sep">chevron_right</span>
+                        <span class="breadcrumb-item current" id="breadcrumbCurrent">Sản xuất</span>
+                    </nav>
+                    <div class="page-badge" id="pageBadge">Sản xuất</div>
+                </div>
+                <div class="header-right">
+                    <div class="header-clock">
+                        <span class="material-icons-outlined">schedule</span>
+                        <span id="clockTime">07:41:03</span>
+                    </div>
+                    <div class="header-date">
+                        <span class="material-icons-outlined">calendar_today</span>
+                        <span id="clockDate">Thứ 5, 02/04/2026</span>
+                    </div>
+                    <button class="header-icon-btn notification-btn" id="notificationBtn">
+                        <span class="material-icons-outlined">notifications</span>
+                        <span class="notification-badge">4</span>
+                    </button>
+                    <!-- User Profile Area -->
+                    <div class="user-profile-area" id="userProfileArea">
+                        <div class="user-avatar-wrapper" id="userAvatarBtn">
+                            <div class="user-avatar" id="userAvatar">
+                                <span class="avatar-initials" id="avatarInitials">NQ</span>
+                            </div>
+                            <div class="online-indicator"></div>
+                        </div>
+                        <div class="user-info-header" id="userInfoHeader">
+                            <span class="user-name" id="headerUserName">Nguyễn Quang Quốc</span>
+                            <span class="user-role" id="headerUserRole">Admin</span>
+                        </div>
+                        <!-- User Dropdown -->
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="dropdown-user-info">
+                                <div class="dropdown-avatar">
+                                    <span class="avatar-initials" id="dropdownInitials">NQ</span>
+                                    <div class="online-indicator"></div>
+                                </div>
+                                <div class="dropdown-user-text">
+                                    <span class="dropdown-user-name" id="dropdownUserName">Nguyễn Quang Quốc</span>
+                                    <span class="dropdown-user-role" id="dropdownUserRole">Admin</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-menu-list">
+                                <button class="dropdown-menu-item" id="btnProfile">
+                                    <span class="material-icons-outlined">person</span>
+                                    Hồ sơ cá nhân
+                                </button>
+                                <button class="dropdown-menu-item" id="btnSettings">
+                                    <span class="material-icons-outlined">settings</span>
+                                    Cài đặt hệ thống
+                                </button>
+                                <button class="dropdown-menu-item" id="btnChangePassword">
+                                    <span class="material-icons-outlined">vpn_key</span>
+                                    Đổi mật khẩu
+                                </button>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-menu-item logout-item" id="btnLogout">
+                                <span class="material-icons-outlined">logout</span>
+                                Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content" id="pageContent">
+                <!-- The active page content will be rendered here -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

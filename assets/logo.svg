@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#B8D4F0"/>
+      <stop offset="100%" stop-color="#A8C8E8"/>
+    </linearGradient>
+    <linearGradient id="pinkGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F0A0B0"/>
+      <stop offset="100%" stop-color="#E890A0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded rect -->
+  <rect x="5" y="5" width="190" height="140" rx="16" ry="16" fill="url(#bgGrad)" stroke="#6080B0" stroke-width="2"/>
+  <!-- Pink bottom bar -->
+  <rect x="5" y="105" width="190" height="40" rx="0" ry="0" fill="url(#pinkGrad)"/>
+  <rect x="5" y="130" width="190" height="15" rx="16" ry="16" fill="url(#pinkGrad)"/>
+  <!-- Red arches -->
+  <path d="M30 108 Q70 15 100 108" fill="none" stroke="#E02020" stroke-width="8" stroke-linecap="round"/>
+  <path d="M100 108 Q130 15 170 108" fill="none" stroke="#E02020" stroke-width="8" stroke-linecap="round"/>
+  <!-- Blue V check mark -->
+  <path d="M55 40 Q80 15 95 55" fill="none" stroke="#1a3a6e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M95 55 Q110 20 140 30" fill="none" stroke="#1a3a6e" stroke-width="6" stroke-linecap="round"/>
+  <!-- Vertical lines under arches -->
+  <g stroke="#4060A0" stroke-width="1.5" opacity="0.5">
+    <line x1="55" y1="60" x2="55" y2="108"/>
+    <line x1="65" y1="45" x2="65" y2="108"/>
+    <line x1="75" y1="38" x2="75" y2="108"/>
+    <line x1="85" y1="40" x2="85" y2="108"/>
+    <line x1="95" y1="50" x2="95" y2="108"/>
+    <line x1="105" y1="50" x2="105" y2="108"/>
+    <line x1="115" y1="38" x2="115" y2="108"/>
+    <line x1="125" y1="38" x2="125" y2="108"/>
+    <line x1="135" y1="45" x2="135" y2="108"/>
+    <line x1="145" y1="60" x2="145" y2="108"/>
+  </g>
+  <!-- Text -->
+  <text x="100" y="130" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="22" fill="#1a3a6e" letter-spacing="1">VIET BACH CORP</text>
+</svg>
