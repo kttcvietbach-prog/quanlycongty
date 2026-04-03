@@ -7,6 +7,101 @@
 (function () {
     'use strict';
 
+    // ==========================================
+    // FileStore - Lưu nội dung file vào IndexedDB
+    // Firestore chỉ lưu metadata, dataUrl lưu ở đây
+    // ==========================================
+    const FileStore = {
+        dbName: 'VietBachCorp_Files',
+        storeName: 'fileData',
+        _db: null,
+
+        async open() {
+            if (this._db) return this._db;
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(this.dbName, 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(this.storeName)) {
+                        db.createObjectStore(this.storeName);
+                    }
+                };
+                req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
+                req.onerror = (e) => { console.error('IndexedDB error:', e); resolve(null); };
+            });
+        },
+
+        // Lưu dataUrl của file: key = "collectionName:docId:fileName"
+        async saveFile(collection, docId, fileName, dataUrl) {
+            const db = await this.open();
+            if (!db || !dataUrl) return;
+            const key = `${collection}:${docId}:${fileName}`;
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(this.storeName, 'readwrite');
+                    tx.objectStore(this.storeName).put(dataUrl, key);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                } catch (e) { resolve(false); }
+            });
+        },
+
+        // Lấy dataUrl từ IndexedDB
+        async getFile(collection, docId, fileName) {
+            const db = await this.open();
+            if (!db) return null;
+            const key = `${collection}:${docId}:${fileName}`;
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(this.storeName, 'readonly');
+                    const req = tx.objectStore(this.storeName).get(key);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                } catch (e) { resolve(null); }
+            });
+        },
+
+        // Xóa file khỏi IndexedDB
+        async deleteFile(collection, docId, fileName) {
+            const db = await this.open();
+            if (!db) return;
+            const key = `${collection}:${docId}:${fileName}`;
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(this.storeName, 'readwrite');
+                    tx.objectStore(this.storeName).delete(key);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                } catch (e) { resolve(false); }
+            });
+        },
+
+        // Lưu tất cả file của 1 document
+        async saveAllFiles(collection, docId, files) {
+            if (!files || files.length === 0) return;
+            for (const f of files) {
+                if (f.dataUrl) {
+                    await this.saveFile(collection, docId, f.name, f.dataUrl);
+                }
+            }
+        },
+
+        // Khôi phục dataUrl cho tất cả file của 1 document
+        async restoreFiles(collection, docId, files) {
+            if (!files || files.length === 0) return files;
+            for (const f of files) {
+                if (!f.dataUrl) {
+                    const data = await this.getFile(collection, docId, f.name);
+                    if (data) f.dataUrl = data;
+                }
+            }
+            return files;
+        }
+    };
+
+    window.FileStore = FileStore;
+    FileStore.open(); // Pre-open
+
     // Sanitize document ID (Firestore không cho phép / trong doc ID)
     function sanitizeDocId(id) {
         return String(id).replace(/\//g, '__');

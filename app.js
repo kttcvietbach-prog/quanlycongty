@@ -3594,12 +3594,16 @@
             const cv=congVanList.find(c=>c.id===id);
             if(cv){
                 Object.assign(cv,{title,type,status,sender,receiver,issueDate,priority,note,files:[...tempCvFiles]});
+                // Lưu dataUrl vào IndexedDB
+                if(window.FileStore) window.FileStore.saveAllFiles('congVanList', id, cv.files);
                 if(window.CrudSync) window.CrudSync.saveItem('congVanList',cv,'id');
                 showToast('Đã cập nhật '+id);
             }
         } else {
             const newCv={id:nextCvId(),title,type,status,sender,receiver,issueDate,priority,note,files:[...tempCvFiles]};
             congVanList.unshift(newCv);
+            // Lưu dataUrl vào IndexedDB
+            if(window.FileStore) window.FileStore.saveAllFiles('congVanList', newCv.id, newCv.files);
             if(window.CrudSync) window.CrudSync.saveItem('congVanList',newCv,'id');
             showToast('Đã thêm công văn mới');
         }
@@ -4173,8 +4177,12 @@
                 const fileType = ext === 'pdf' ? 'pdf' : 'doc';
                 const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    cv.files.push({ name: file.name, size: sizeStr, type: fileType, dataUrl: e.target.result });
+                reader.onload = async (e) => {
+                    const fileData = { name: file.name, size: sizeStr, type: fileType, dataUrl: e.target.result };
+                    cv.files.push(fileData);
+                    // Lưu vào IndexedDB
+                    if (window.FileStore) await window.FileStore.saveFile('congVanList', cvId, file.name, e.target.result);
+                    if (window.CrudSync) window.CrudSync.saveItem('congVanList', cv, 'id');
                     showToast(`Đã upload "${file.name}" vào ${cvId}`);
                     const m = document.getElementById('cvViewModal');
                     if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
@@ -4184,10 +4192,16 @@
             });
             event.target.value = '';
         },
-        previewCvFile: (index, cvId) => {
+        previewCvFile: async (index, cvId) => {
             let file;
             if (cvId) { const cv = congVanList.find(c => c.id === cvId); if (cv && cv.files && cv.files[index]) file = cv.files[index]; }
             else { file = tempCvFiles[index]; }
+            if (!file) { showToast('Không tìm thấy file!'); return; }
+            // Khôi phục dataUrl từ IndexedDB nếu thiếu
+            if (!file.dataUrl && window.FileStore && cvId) {
+                const restored = await window.FileStore.getFile('congVanList', cvId, file.name);
+                if (restored) file.dataUrl = restored;
+            }
             if (file && file.dataUrl) {
                 // Xem inline bằng modal
                 const previewId = 'cvFilePreviewModal';
@@ -4225,11 +4239,13 @@
             const listEl = document.getElementById('cvFileList');
             if (listEl) listEl.innerHTML = renderHsFileList(tempCvFiles, true, 'cv-edit');
         },
-        removeCvFileDirect: (index, cvId) => {
+        removeCvFileDirect: async (index, cvId) => {
             const cv = congVanList.find(c => c.id === cvId);
             if (!cv || !cv.files) return;
             const fileName = cv.files[index]?.name || 'file';
             if (!confirm(`Xóa file "${fileName}" khỏi công văn ${cvId}?`)) return;
+            // Xóa khỏi IndexedDB
+            if (window.FileStore) await window.FileStore.deleteFile('congVanList', cvId, fileName);
             cv.files.splice(index, 1);
             if (window.CrudSync) window.CrudSync.saveItem('congVanList', cv, 'id');
             showToast(`Đã xóa "${fileName}"`);
