@@ -238,6 +238,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
@@ -246,22 +247,25 @@
         const firebaseConfig = {
             apiKey: "AIzaSyAv1FZeYwrWc5MAHtcu_uD382zycRyaGZ0",
             authDomain: "vietbach-corp.firebaseapp.com",
+            databaseURL: "https://vietbach-corp-default-rtdb.firebaseio.com",
             projectId: "vietbach-corp",
             storageBucket: "vietbach-corp.firebasestorage.app",
             messagingSenderId: "814327586951",
-            appId: "1:814327586951:web:004351ac014f55ae331822",
-            measurementId: "G-5P97PXT83Q"
+            appId: "1:814327586951:web:ecce6a31e7bd3175331822",
+            measurementId: "G-G7L6RENHPG"
         };
 
         const firebaseApp = firebase.initializeApp(firebaseConfig);
         const analytics = firebase.analytics();
         const db = firebase.firestore();
+        const rtdb = firebase.database();
         const storage = firebase.storage();
         const auth = firebase.auth();
 
         // Export để dùng trong app.js
         window.firebaseApp = firebaseApp;
         window.db = db;
+        window.rtdb = rtdb;
         window.storage = storage;
         window.auth = auth;
 
