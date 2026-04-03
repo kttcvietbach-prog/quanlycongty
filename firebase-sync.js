@@ -15,6 +15,11 @@
         }
     }
 
+    // Sanitize document ID (Firestore không cho phép /, ., #, $, [, ] trong doc ID)
+    function sanitizeDocId(id) {
+        return String(id).replace(/\//g, '__');
+    }
+
     // ==========================================
     // Firestore CRUD helpers
     // ==========================================
@@ -38,7 +43,7 @@
                 // Remove _docId from data before saving
                 const cleanData = { ...data };
                 delete cleanData._docId;
-                await window.db.collection(collection).doc(docId).set(cleanData);
+                await window.db.collection(collection).doc(sanitizeDocId(docId)).set(cleanData);
                 console.log(`✅ Saved ${docId} to "${collection}"`);
                 return true;
             } catch (err) {
@@ -49,7 +54,7 @@
 
         async deleteDoc(collection, docId) {
             try {
-                await window.db.collection(collection).doc(docId).delete();
+                await window.db.collection(collection).doc(sanitizeDocId(docId)).delete();
                 console.log(`🗑️ Deleted ${docId} from "${collection}"`);
                 return true;
             } catch (err) {
@@ -77,7 +82,7 @@
                     if (cleanItem.avatar && cleanItem.avatar.startsWith('data:')) {
                         delete cleanItem.avatar; // bỏ base64 avatar
                     }
-                    const ref = window.db.collection(collection).doc(docId);
+                    const ref = window.db.collection(collection).doc(sanitizeDocId(docId));
                     batch.set(ref, cleanItem);
                 });
                 await batch.commit();
