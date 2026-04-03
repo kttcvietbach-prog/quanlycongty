@@ -186,24 +186,29 @@
         },
 
         async syncCollection(name, idField) {
-            const empty = await FireSync.isEmpty(name);
+            // Luôn thử tải dữ liệu từ Firestore trước
+            console.log(`🔍 Kiểm tra "${name}" trên Firestore...`);
+            const data = await FireSync.getAll(name);
 
-            if (empty) {
-                // Firestore trống → đẩy mock data lên
+            if (data === null) {
+                // Lỗi kết nối/permission → giữ mock data local, KHÔNG đè
+                console.warn(`⚠️ Không thể đọc "${name}" từ Firestore. Giữ dữ liệu local.`);
+                this.syncStatus[name] = 'local-only';
+                return;
+            }
+
+            if (data.length > 0) {
+                // Firestore có data → tải về thay thế mock data
+                console.log(`📥 Đã tải ${data.length} items từ "${name}"`);
+                this.setLocalData(name, data);
+                this.syncStatus[name] = 'loaded';
+            } else {
+                // Firestore thực sự trống → đẩy mock data lên
                 console.log(`📤 "${name}" trống → Đẩy dữ liệu mẫu lên...`);
                 const mockData = this.getMockData(name);
                 if (mockData && mockData.length > 0) {
-                    await FireSync.batchUpload(name, mockData, idField);
-                    this.syncStatus[name] = 'uploaded';
-                }
-            } else {
-                // Firestore có data → tải về thay thế mock data
-                console.log(`📥 Tải "${name}" từ Firestore...`);
-                const data = await FireSync.getAll(name);
-                if (data && data.length > 0) {
-                    this.setLocalData(name, data);
-                    this.syncStatus[name] = 'loaded';
-                    console.log(`  ✅ Đã cập nhật local "${name}" → ${data.length} items`);
+                    const success = await FireSync.batchUpload(name, mockData, idField);
+                    this.syncStatus[name] = success ? 'uploaded' : 'error';
                 }
             }
         },
