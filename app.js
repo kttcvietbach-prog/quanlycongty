@@ -36,6 +36,13 @@
             loginScreen.classList.add('hidden');
             appContainer.style.display = 'flex';
             updateUserUI();
+            // Sync Firebase trước khi render trang
+            (async () => {
+                if (window.SyncManager) {
+                    await window.SyncManager.init();
+                }
+                navigateTo('trang-chu');
+            })();
             return;
         }
 
@@ -67,14 +74,16 @@
 
                 // Animate out login, show app
                 loginScreen.style.animation = 'fadeOut 0.3s ease forwards';
-                setTimeout(() => {
+                setTimeout(async () => {
                     loginScreen.classList.add('hidden');
                     loginScreen.style.animation = '';
                     appContainer.style.display = 'flex';
                     updateUserUI();
+                    // Sync Firebase TRƯỚC, rồi mới render trang
+                    if (window.SyncManager) {
+                        await window.SyncManager.init();
+                    }
                     navigateTo('trang-chu');
-                    // Firebase sync sau đăng nhập
-                    if (window.SyncManager) window.SyncManager.init();
                 }, 300);
             } else {
                 loginError.innerHTML = '<span class="material-icons-outlined" style="font-size:15px">error</span> Tài khoản hoặc mật khẩu không đúng';
