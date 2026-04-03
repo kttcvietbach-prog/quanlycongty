@@ -3216,18 +3216,40 @@
         document.body.appendChild(modal);
     }
 
-    function renderHsFileList(files, editable) {
+    function renderHsFileList(files, editable, context) {
         if (!files || files.length === 0) return '';
-        return files.map((f, i) => `
+        // context: 'cv-edit' | 'cv-view:CV_ID' | undefined (ho so)
+        return files.map((f, i) => {
+            const icon = f.type === 'pdf' ? 'picture_as_pdf' : 'description';
+            const iconColor = f.type === 'pdf' ? '#DC2626' : '#2563EB';
+            let actions = '';
+            if (context && context.startsWith('cv-view:')) {
+                const cvId = context.split(':')[1];
+                actions = `
+                    <button class="hs-file-action-btn" title="Xem file" onclick="window.erpApp.previewCvFile(${i},'${cvId}')" style="color:#0D9488"><span class="material-icons-outlined">visibility</span></button>
+                    <button class="hs-file-action-btn" title="Xóa file" onclick="window.erpApp.removeCvFileDirect(${i},'${cvId}')" style="color:#DC2626"><span class="material-icons-outlined">delete</span></button>
+                `;
+            } else if (context === 'cv-edit') {
+                actions = `
+                    <button class="hs-file-action-btn" title="Xem file" onclick="window.erpApp.previewCvFile(${i},'')" style="color:#0D9488"><span class="material-icons-outlined">visibility</span></button>
+                    <button class="contract-file-remove" onclick="window.erpApp.removeCvFileTemp(${i})"><span class="material-icons-outlined">close</span></button>
+                `;
+            } else if (editable) {
+                actions = `<button class="contract-file-remove" onclick="window.erpApp.removeHsFile(${i})"><span class="material-icons-outlined">close</span></button>`;
+            } else {
+                actions = `<button class="contract-file-remove" style="color:var(--primary)" onclick="window.erpApp.previewHsFile(${i}, '')"><span class="material-icons-outlined">visibility</span></button>`;
+            }
+            return `
             <div class="contract-file-item">
-                <span class="material-icons-outlined" style="color:${f.type === 'pdf' ? '#DC2626' : '#2563EB'};font-size:20px">${f.type === 'pdf' ? 'picture_as_pdf' : 'description'}</span>
+                <span class="material-icons-outlined" style="color:${iconColor};font-size:20px">${icon}</span>
                 <div class="contract-file-info">
                     <span class="contract-file-name">${f.name}</span>
                     <span class="contract-file-size">${f.size}</span>
                 </div>
-                ${editable ? `<button class="contract-file-remove" onclick="window.erpApp.removeHsFile(${i})"><span class="material-icons-outlined">close</span></button>` : `<button class="contract-file-remove" style="color:var(--primary)" onclick="window.erpApp.previewHsFile(${i}, '')"><span class="material-icons-outlined">visibility</span></button>`}
+                <div style="display:flex;gap:4px;align-items:center">${actions}</div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function closeHsEditModal() {
@@ -3447,12 +3469,8 @@
 
     function viewCongVan(id) {
         const cv = congVanList.find(c=>c.id===id); if(!cv) return;
-        let filesHtml = cv.files && cv.files.length > 0 ? cv.files.map((f,i)=>`
-            <div class="hs-file-item">
-                <span class="material-icons-outlined hs-file-icon ${f.type==='pdf'?'pdf':'doc'}">${f.type==='pdf'?'picture_as_pdf':'description'}</span>
-                <div class="hs-file-info"><span class="hs-file-name">${f.name}</span><span class="hs-file-size">${f.size}</span></div>
-                <button class="hs-file-action-btn" title="Xem/Tải" onclick="window.erpApp.previewCvFile(${i},'${cv.id}')"><span class="material-icons-outlined">download</span></button>
-            </div>`).join('') : '<div class="hs-no-files"><span class="material-icons-outlined">cloud_off</span> Chưa có file đính kèm</div>';
+        let filesHtml = cv.files && cv.files.length > 0 ? renderHsFileList(cv.files, false, 'cv-view:' + cv.id)
+            : '<div class="hs-no-files"><span class="material-icons-outlined">cloud_off</span> Chưa có file đính kèm</div>';
 
         const modal = document.createElement('div'); modal.className='modal-overlay'; modal.id='cvViewModal';
         modal.innerHTML = `<div class="modal-content" style="max-width:680px">
@@ -3553,7 +3571,7 @@
                         <span style="font-size:11px;color:var(--text-muted);font-weight:400">Hỗ trợ: .pdf, .doc, .docx — Tối đa 10MB/file</span></label>
                     <input type="file" id="cvFileInput" accept=".pdf,.doc,.docx" multiple onchange="window.erpApp.handleCvFileUpload(event)" style="display:none">
                 </div>
-                <div id="cvFileList">${renderHsFileList(tempCvFiles, true)}</div>
+                <div id="cvFileList">${renderHsFileList(tempCvFiles, true, 'cv-edit')}</div>
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="window.erpApp.closeCvEditModal()">Hủy</button>
@@ -4138,7 +4156,7 @@
                 reader.onload = (e) => {
                     tempCvFiles.push({ name: file.name, size: sizeStr, type: fileType, dataUrl: e.target.result });
                     const listEl = document.getElementById('cvFileList');
-                    if (listEl) listEl.innerHTML = renderHsFileList(tempCvFiles, true);
+                    if (listEl) listEl.innerHTML = renderHsFileList(tempCvFiles, true, 'cv-edit');
                 };
                 reader.readAsDataURL(file);
             });
@@ -4171,10 +4189,54 @@
             if (cvId) { const cv = congVanList.find(c => c.id === cvId); if (cv && cv.files && cv.files[index]) file = cv.files[index]; }
             else { file = tempCvFiles[index]; }
             if (file && file.dataUrl) {
-                const win = window.open('', '_blank');
-                if (file.type === 'pdf') { win.document.write(`<iframe src="${file.dataUrl}" style="width:100%;height:100%;border:none;position:fixed;top:0;left:0"></iframe>`); }
-                else { win.document.write(`<html><head><title>${file.name}</title></head><body style="font-family:sans-serif;padding:40px;text-align:center"><h2>📄 ${file.name}</h2><p>File Word không thể xem trước trực tiếp.<br>Bấm nút bên dưới để tải về.</p><a href="${file.dataUrl}" download="${file.name}" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#4A7C4B;color:white;border-radius:8px;text-decoration:none;font-weight:600">⬇ Tải xuống</a></body></html>`); }
+                // Xem inline bằng modal
+                const previewId = 'cvFilePreviewModal';
+                const old = document.getElementById(previewId); if (old) old.remove();
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay'; modal.id = previewId;
+                let contentHtml;
+                if (file.type === 'pdf') {
+                    contentHtml = `<iframe src="${file.dataUrl}" style="width:100%;height:75vh;border:none;border-radius:8px"></iframe>`;
+                } else {
+                    contentHtml = `
+                        <div style="text-align:center;padding:40px 20px">
+                            <span class="material-icons-outlined" style="font-size:64px;color:#2563EB">description</span>
+                            <h3 style="margin:16px 0 8px">📄 ${file.name}</h3>
+                            <p style="color:var(--text-secondary);margin-bottom:24px">File Word không thể xem trước trực tiếp trên web.<br>Bấm nút bên dưới để tải về máy.</p>
+                            <a href="${file.dataUrl}" download="${file.name}" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--primary);color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px">
+                                <span class="material-icons-outlined">download</span> Tải xuống
+                            </a>
+                        </div>`;
+                }
+                modal.innerHTML = `<div class="modal-content" style="max-width:900px;max-height:90vh">
+                    <div class="modal-header"><h3><span class="material-icons-outlined">${file.type === 'pdf' ? 'picture_as_pdf' : 'description'}</span> ${file.name}</h3>
+                        <div style="display:flex;gap:8px">
+                            <a href="${file.dataUrl}" download="${file.name}" class="btn-cancel" style="display:flex;align-items:center;gap:4px;text-decoration:none;font-size:13px"><span class="material-icons-outlined" style="font-size:16px">download</span> Tải về</a>
+                            <button class="modal-close" onclick="document.getElementById('${previewId}').classList.add('closing');setTimeout(()=>document.getElementById('${previewId}').remove(),200)"><span class="material-icons-outlined">close</span></button>
+                        </div>
+                    </div>
+                    <div class="modal-body" style="padding:12px">${contentHtml}</div>
+                </div>`;
+                document.body.appendChild(modal);
             } else { showToast('File mẫu — chưa có dữ liệu thực. Hãy upload file mới!'); }
+        },
+        removeCvFileTemp: (index) => {
+            tempCvFiles.splice(index, 1);
+            const listEl = document.getElementById('cvFileList');
+            if (listEl) listEl.innerHTML = renderHsFileList(tempCvFiles, true, 'cv-edit');
+        },
+        removeCvFileDirect: (index, cvId) => {
+            const cv = congVanList.find(c => c.id === cvId);
+            if (!cv || !cv.files) return;
+            const fileName = cv.files[index]?.name || 'file';
+            if (!confirm(`Xóa file "${fileName}" khỏi công văn ${cvId}?`)) return;
+            cv.files.splice(index, 1);
+            if (window.CrudSync) window.CrudSync.saveItem('congVanList', cv, 'id');
+            showToast(`Đã xóa "${fileName}"`);
+            // Refresh view modal
+            const m = document.getElementById('cvViewModal');
+            if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
+            setTimeout(() => viewCongVan(cvId), 250);
         },
 
         // === Attendance module handlers ===
