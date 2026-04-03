@@ -73,6 +73,8 @@
                     appContainer.style.display = 'flex';
                     updateUserUI();
                     navigateTo('trang-chu');
+                    // Firebase sync sau đăng nhập
+                    if (window.SyncManager) window.SyncManager.init();
                 }, 300);
             } else {
                 loginError.innerHTML = '<span class="material-icons-outlined" style="font-size:15px">error</span> Tài khoản hoặc mật khẩu không đúng';
@@ -1514,12 +1516,14 @@
             const idx = employees.findIndex(e => e.id === editId);
             if (idx !== -1) {
                 employees[idx] = { ...employees[idx], ...data };
+                if (window.CrudSync) window.CrudSync.saveItem('employees', employees[idx], 'id');
             }
             showToast(`Đã cập nhật thông tin: ${data.name}`);
         } else {
             // Thêm mới
             const newEmp = { id: nextEmployeeId(), ...data };
             employees.push(newEmp);
+            if (window.CrudSync) window.CrudSync.saveItem('employees', newEmp, 'id');
             showToast(`Đã thêm nhân viên: ${data.name}`);
         }
 
@@ -1675,6 +1679,7 @@
     function deleteEmployee(id) {
         const emp = employees.find(e => e.id === id);
         employees = employees.filter(e => e.id !== id);
+        if (window.CrudSync) window.CrudSync.deleteItem('employees', id);
         closeConfirmModal();
         renderHoSoNhanVien();
         showToast(`Đã xóa nhân viên: ${emp ? emp.name : id}`);
@@ -2106,10 +2111,15 @@
 
         if (editId) {
             const idx = contracts.findIndex(c => c.id === editId);
-            if (idx !== -1) contracts[idx] = { ...contracts[idx], ...data };
+            if (idx !== -1) {
+                contracts[idx] = { ...contracts[idx], ...data };
+                if (window.CrudSync) window.CrudSync.saveItem('contracts', contracts[idx], 'id');
+            }
             showToast(`Đã cập nhật hợp đồng: ${editId}`);
         } else {
-            contracts.push({ id: nextContractId(), ...data });
+            const newCt = { id: nextContractId(), ...data };
+            contracts.push(newCt);
+            if (window.CrudSync) window.CrudSync.saveItem('contracts', newCt, 'id');
             showToast(`Đã thêm hợp đồng mới cho: ${data.empName}`);
         }
 
@@ -2261,6 +2271,7 @@
     function deleteContract(id) {
         const ct = contracts.find(c => c.id === id);
         contracts = contracts.filter(c => c.id !== id);
+        if (window.CrudSync) window.CrudSync.deleteItem('contracts', id);
         closeCtConfirmModal();
         renderHopDongLaoDong();
         showToast(`Đã xóa hợp đồng: ${ct ? ct.id : id}`);
@@ -3236,10 +3247,13 @@
             const doc = hoSoDocuments.find(d => d.id === id);
             if (doc) {
                 Object.assign(doc, { title, category, status, supplier, customer, value, issueDate, note, files: [...tempHsFiles] });
+                if (window.CrudSync) window.CrudSync.saveItem('hoSoDocuments', doc, 'id');
                 showToast('Đã cập nhật hồ sơ ' + id);
             }
         } else {
-            hoSoDocuments.unshift({ id: nextHsId(), title, category, status, supplier, customer, value, issueDate, note, files: [...tempHsFiles] });
+            const newDoc = { id: nextHsId(), title, category, status, supplier, customer, value, issueDate, note, files: [...tempHsFiles] };
+            hoSoDocuments.unshift(newDoc);
+            if (window.CrudSync) window.CrudSync.saveItem('hoSoDocuments', newDoc, 'id');
             showToast('Đã thêm hồ sơ mới');
         }
 
@@ -3271,6 +3285,7 @@
 
     function deleteHoSo(id) {
         hoSoDocuments = hoSoDocuments.filter(d => d.id !== id);
+        if (window.CrudSync) window.CrudSync.deleteItem('hoSoDocuments', id);
         const modal = document.getElementById('hsDeleteModal');
         if (modal) { modal.classList.add('closing'); setTimeout(() => modal.remove(), 200); }
         showToast('Đã xóa hồ sơ ' + id);
@@ -3534,8 +3549,19 @@
         const issueDate=document.getElementById('cvIssueDate').value, priority=document.getElementById('cvPriority').value;
         const note=document.getElementById('cvNote').value.trim();
         if(!title||!sender||!receiver||!issueDate){showToast('Vui lòng điền đầy đủ thông tin bắt buộc!');return;}
-        if(id){const cv=congVanList.find(c=>c.id===id);if(cv){Object.assign(cv,{title,type,status,sender,receiver,issueDate,priority,note,files:[...tempCvFiles]});showToast('Đã cập nhật '+id);}}
-        else{congVanList.unshift({id:nextCvId(),title,type,status,sender,receiver,issueDate,priority,note,files:[...tempCvFiles]});showToast('Đã thêm công văn mới');}
+        if(id){
+            const cv=congVanList.find(c=>c.id===id);
+            if(cv){
+                Object.assign(cv,{title,type,status,sender,receiver,issueDate,priority,note,files:[...tempCvFiles]});
+                if(window.CrudSync) window.CrudSync.saveItem('congVanList',cv,'id');
+                showToast('Đã cập nhật '+id);
+            }
+        } else {
+            const newCv={id:nextCvId(),title,type,status,sender,receiver,issueDate,priority,note,files:[...tempCvFiles]};
+            congVanList.unshift(newCv);
+            if(window.CrudSync) window.CrudSync.saveItem('congVanList',newCv,'id');
+            showToast('Đã thêm công văn mới');
+        }
         closeCvEditModal(); renderQuanLyCongVan();
     }
 
@@ -3547,7 +3573,14 @@
             <div class="modal-footer"><button class="btn-cancel" onclick="window.erpApp.closeCvDeleteModal()">Hủy</button><button class="btn-save" style="background:#DC2626" onclick="window.erpApp.deleteCongVan('${cv.id}')"><span class="material-icons-outlined">delete</span> Xóa</button></div></div>`;
         document.body.appendChild(modal);
     }
-    function deleteCongVan(id){congVanList=congVanList.filter(c=>c.id!==id);const m=document.getElementById('cvDeleteModal');if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}showToast('Đã xóa '+id);renderQuanLyCongVan();}
+    function deleteCongVan(id){
+        congVanList=congVanList.filter(c=>c.id!==id);
+        if(window.CrudSync) window.CrudSync.deleteItem('congVanList',id);
+        const m=document.getElementById('cvDeleteModal');
+        if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}
+        showToast('Đã xóa '+id);
+        renderQuanLyCongVan();
+    }
     function closeCvDeleteModal(){const m=document.getElementById('cvDeleteModal');if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}}
 
     // ==========================================
@@ -3730,6 +3763,32 @@
 
     // --- Export thêm các hàm vào API công khai ---
     Object.assign(window.erpApp, {
+        // Firebase data access
+        _getData: (name) => {
+            switch (name) {
+                case 'employees': return [...employees];
+                case 'contracts': return [...contracts];
+                case 'hoSoDocuments': return [...hoSoDocuments];
+                case 'congVanList': return [...congVanList];
+                default: return [];
+            }
+        },
+        _setData: (name, data) => {
+            switch (name) {
+                case 'employees': employees = data; break;
+                case 'contracts': contracts = data; break;
+                case 'hoSoDocuments': hoSoDocuments = data; break;
+                case 'congVanList': congVanList = data; break;
+            }
+            console.log(`📥 Updated local "${name}" with ${data.length} items`);
+        },
+        _triggerSync: async () => {
+            if (window.SyncManager) {
+                await window.SyncManager.init();
+                // Re-render trang hiện tại sau khi sync
+                renderPage();
+            }
+        },
         empSearch: (val) => {
             empSearchQuery = val;
             empCurrentPage = 1;
