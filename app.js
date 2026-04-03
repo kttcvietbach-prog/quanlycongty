@@ -3326,6 +3326,7 @@
     let cvSearchQuery = '';
     let cvCurrentPage = 1;
     let cvActiveTab = 'all';
+    let cvSortOrder = 'desc'; // 'desc' = mới nhất trước, 'asc' = cũ nhất trước
     const cvPageSize = 8;
     let tempCvFiles = [];
 
@@ -3343,6 +3344,12 @@
         if (cvActiveTab !== 'all') data = data.filter(c => c.type === cvActiveTab);
         const q = cvSearchQuery.toLowerCase().trim();
         if (q) data = data.filter(c => c.id.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.sender.toLowerCase().includes(q) || c.receiver.toLowerCase().includes(q));
+        // Sắp xếp theo ngày ban hành
+        data.sort((a, b) => {
+            const dateA = new Date(a.issueDate || '1970-01-01');
+            const dateB = new Date(b.issueDate || '1970-01-01');
+            return cvSortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        });
         return data;
     }
 
@@ -3396,8 +3403,15 @@
         if (filtered.length === 0) {
             html += `<div class="table-empty"><span class="material-icons-outlined">search_off</span><p>Không tìm thấy công văn nào.</p></div>`;
         } else {
+            const sortIcon = cvSortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward';
+            const sortLabel = cvSortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất';
             html += `<table class="data-table"><thead><tr>
-                <th>Số CV</th><th>Tiêu đề</th><th>Loại</th><th>Người gửi</th><th>Người nhận</th><th>Ngày</th><th>Ưu tiên</th><th>Trạng thái</th><th>Tác vụ</th>
+                <th>Số CV</th><th>Tiêu đề</th><th>Loại</th><th>Người gửi</th><th>Người nhận</th>
+                <th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="window.erpApp.cvToggleSort()" title="Click để đổi thứ tự">
+                    Ngày <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;margin-left:2px">${sortIcon}</span>
+                    <span style="font-size:10px;color:var(--text-secondary);font-weight:400;margin-left:4px">${sortLabel}</span>
+                </th>
+                <th>Ưu tiên</th><th>Trạng thái</th><th>Tác vụ</th>
             </tr></thead><tbody>`;
             pageData.forEach(cv => {
                 const hasFiles = cv.files && cv.files.length > 0;
@@ -4098,6 +4112,7 @@
         // === Công văn module handlers ===
         cvSearch: (q) => { cvSearchQuery = q; cvCurrentPage = 1; renderQuanLyCongVan(); },
         cvSetTab: (tab) => { cvActiveTab = tab; cvCurrentPage = 1; renderQuanLyCongVan(); },
+        cvToggleSort: () => { cvSortOrder = cvSortOrder === 'desc' ? 'asc' : 'desc'; cvCurrentPage = 1; renderQuanLyCongVan(); },
         cvGoPage: (page) => {
             const filtered = getFilteredCongVan();
             const totalPages = Math.ceil(filtered.length / cvPageSize);
