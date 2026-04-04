@@ -2404,6 +2404,9 @@
         // Calendar cells
         const calendarHtml = buildCalendarGrid(emp.id, attCurrentYear, attCurrentMonth);
 
+        // Ngày công thực (full + half*0.5)
+        const ngayCong = (stats.full + stats.half * 0.5).toFixed(1);
+
         let html = `
             <div class="attendance-module">
                 <div class="employee-toolbar">
@@ -2412,6 +2415,13 @@
                         Quay lại
                     </button>
                     <div style="flex:1"></div>
+                </div>
+
+                <div class="att-title-bar">
+                    <div class="att-title-icon">
+                        <span class="material-icons-outlined">event_note</span>
+                    </div>
+                    <span class="att-title-text">Chấm Công</span>
                 </div>
 
                 <div class="attendance-layout">
@@ -2440,17 +2450,22 @@
                             <div class="att-emp-stats">
                                 <div class="att-stat-row green">
                                     <span class="material-icons-outlined">event_available</span>
-                                    Ngày công: <strong>${stats.attended}/${stats.workingDays} ngày</strong>
+                                    Ngày công: <strong>${ngayCong}/${stats.daysInMonth} ngày</strong>
                                 </div>
                                 <div class="att-stat-row orange">
                                     <span class="material-icons-outlined">more_time</span>
                                     Giờ tăng ca: <strong>${stats.totalOt}h</strong>
                                 </div>
                             </div>
-                            <div class="att-stat-pct">
-                                <span class="material-icons-outlined">percent</span>
-                                ${stats.pct}%
-                                <span class="att-stat-pct-label">điểm danh</span>
+                            <div class="att-pct-bar-wrapper">
+                                <div class="att-pct-info">
+                                    <span class="material-icons-outlined">percent</span>
+                                    <span class="att-pct-value">${stats.pct}%</span>
+                                    <span class="att-pct-label">điểm danh</span>
+                                </div>
+                                <div class="att-pct-track">
+                                    <div class="att-pct-fill" style="width:${stats.pct}%"></div>
+                                </div>
                             </div>
                         </div>
 
