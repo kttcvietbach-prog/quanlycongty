@@ -938,6 +938,7 @@
             if (title === 'Lưu trữ hồ sơ') { renderLuuTruHoSo(); return; }
             if (title === 'Quản lý công văn') { renderQuanLyCongVan(); return; }
             if (title === 'Phê duyệt văn bản') { renderPheDuyetVanBan(); return; }
+            if (title === 'Phiếu kho') { renderPhieuKho(); return; }
             // Generic modules - use function to avoid TDZ
             const cfg = getModuleConfig(title);
             if (cfg) { renderGenericModule(cfg); return; }
@@ -3971,6 +3972,271 @@
     function closePdDeleteModal(){const m=document.getElementById('pdDeleteModal');if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}}
 
     // ==========================================
+    // MODULE: Phiếu kho (Warehouse Receipts)
+    // ==========================================
+
+    let pkList = [
+        { id: 'PN-001', type: 'nhap', date: '2026-03-01', warehouse: 'Kho trung tâm', desc: 'Nhập hàng đầu kỳ', status: 'da-duyet', updatedAt: '04/04', items: [{name:'Thép cuộn CB300',qty:500,unit:'kg',price:15000},{name:'Xi măng PCB40',qty:200,unit:'bao',price:85000}] },
+        { id: 'PN-002', type: 'nhap', date: '2026-03-05', warehouse: 'Kho trung tâm', desc: 'Chờ duyệt', status: 'cho-duyet', updatedAt: '04/04', items: [{name:'Sơn Dulux ngoại thất',qty:50,unit:'thùng',price:320000}] },
+        { id: 'PN-003', type: 'nhap', date: '2026-03-10', warehouse: 'Kho chi nhánh phía Bắc', desc: 'Phiếu không duyệt', status: 'khong-duyet', updatedAt: '04/04', items: [{name:'Ống nhựa PVC D90',qty:300,unit:'ống',price:45000}] },
+        { id: 'PN-004', type: 'nhap', date: '2026-03-15', warehouse: 'Kho trung tâm', desc: 'Nhập NVL đợt 2', status: 'da-duyet', updatedAt: '03/28', items: [{name:'Gạch ốp lát 60x60',qty:1000,unit:'viên',price:72000},{name:'Keo dán gạch',qty:100,unit:'bao',price:55000}] },
+        { id: 'PX-001', type: 'xuat', date: '2026-03-02', warehouse: 'Kho trung tâm', desc: 'Xuất cho công trình A', status: 'da-duyet', updatedAt: '04/01', items: [{name:'Thép cuộn CB300',qty:200,unit:'kg',price:15000}] },
+        { id: 'PX-002', type: 'xuat', date: '2026-03-08', warehouse: 'Kho chi nhánh phía Bắc', desc: 'Xuất nội bộ phòng KT', status: 'cho-duyet', updatedAt: '04/02', items: [{name:'Sơn Dulux ngoại thất',qty:10,unit:'thùng',price:320000}] },
+        { id: 'PX-003', type: 'xuat', date: '2026-03-12', warehouse: 'Kho trung tâm', desc: 'Xuất hàng hủy lô 5', status: 'khong-duyet', updatedAt: '04/03', items: [{name:'Xi măng PCB40 (lỗi)',qty:30,unit:'bao',price:85000}] },
+        { id: 'PC-001', type: 'chuyen', date: '2026-03-04', warehouse: 'Kho trung tâm → Kho Bắc', desc: 'Chuyển hàng chi nhánh', status: 'da-duyet', updatedAt: '03/30', items: [{name:'Thép cuộn CB300',qty:100,unit:'kg',price:15000}] },
+        { id: 'PC-002', type: 'chuyen', date: '2026-03-14', warehouse: 'Kho Bắc → Kho Nam', desc: 'Điều chuyển theo yêu cầu', status: 'cho-duyet', updatedAt: '04/04', items: [{name:'Gạch ốp lát 60x60',qty:200,unit:'viên',price:72000}] },
+    ];
+
+    let pkActiveTab = 'nhap';
+    let pkSearchQuery = '';
+    let pkFilterStatus = 'all';
+    let pkFilterWarehouse = 'all';
+    let pkCurrentPage = 1;
+    const pkPageSize = 8;
+
+    function getPkStatusLabel(s) { return {'da-duyet':'Đã duyệt','cho-duyet':'Chờ duyệt','khong-duyet':'Không duyệt'}[s]||s; }
+    function getPkStatusColor(s) { return {'da-duyet':'green','cho-duyet':'blue','khong-duyet':'red'}[s]||'gray'; }
+    function getPkTabLabel(t) { return {'nhap':'Nhập kho','xuat':'Xuất kho','chuyen':'Chuyển kho','chitiet':'Chi tiết phiếu'}[t]||t; }
+    function getPkTabIcon(t) { return {'nhap':'download','xuat':'upload','chuyen':'swap_horiz','chitiet':'list_alt'}[t]||'description'; }
+    function getPkPrefix(t) { return {'nhap':'PN','xuat':'PX','chuyen':'PC'}[t]||'PK'; }
+    function nextPkId(type) {
+        const prefix = getPkPrefix(type);
+        const nums = pkList.filter(p=>p.id.startsWith(prefix)).map(p=>parseInt(p.id.split('-')[1],10));
+        return prefix + '-' + String(Math.max(...nums,0)+1).padStart(3,'0');
+    }
+
+    function getFilteredPhieuKho() {
+        let data = pkActiveTab === 'chitiet' ? [...pkList] : pkList.filter(p=>p.type===pkActiveTab);
+        if (pkFilterStatus !== 'all') data = data.filter(p=>p.status===pkFilterStatus);
+        if (pkFilterWarehouse !== 'all') data = data.filter(p=>p.warehouse.includes(pkFilterWarehouse));
+        const q = pkSearchQuery.toLowerCase().trim();
+        if (q) data = data.filter(p=>p.id.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q)||p.warehouse.toLowerCase().includes(q));
+        data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+        return data;
+    }
+
+    function getUniqueWarehouses() {
+        const set = new Set();
+        pkList.forEach(p => { if(p.warehouse) set.add(p.warehouse.split('→')[0].trim()); });
+        return [...set];
+    }
+
+    function renderPhieuKho() {
+        breadcrumbCurrent.textContent = 'Phiếu kho';
+        pageBadge.textContent = 'Kho vận';
+        const filtered = getFilteredPhieuKho();
+        const totalPages = Math.ceil(filtered.length / pkPageSize);
+        if (pkCurrentPage > totalPages && totalPages > 0) pkCurrentPage = totalPages;
+        const pageData = filtered.slice((pkCurrentPage-1)*pkPageSize, pkCurrentPage*pkPageSize);
+        const warehouses = getUniqueWarehouses();
+
+        const tabs = ['nhap','xuat','chuyen','chitiet'];
+
+        let html = `<div class="employee-module">
+            <div class="pk-tabs">
+                ${tabs.map(t => `<button class="pk-tab ${pkActiveTab===t?'active':''}" onclick="window.erpApp.pkSetTab('${t}')">
+                    <span class="material-icons-outlined">${getPkTabIcon(t)}</span> ${getPkTabLabel(t)}
+                </button>`).join('')}
+            </div>
+            <div class="employee-toolbar">
+                <button class="back-btn" onclick="window.erpApp.navigateTo('kho-van')"><span class="material-icons-outlined">arrow_back</span> Quay lại</button>
+                <div class="search-box"><span class="material-icons-outlined">search</span>
+                    <input type="text" id="pkSearchInput" placeholder="Tìm kiếm ..." value="${pkSearchQuery}" oninput="window.erpApp.pkSearch(this.value)">
+                </div>
+                ${pkActiveTab!=='chitiet'?`<button class="btn-add-employee" onclick="window.erpApp.openPkModal()"><span class="material-icons-outlined">add</span> Thêm mới</button>`:''}
+            </div>
+            <div class="pk-filters">
+                <div class="pk-filter-group">
+                    <span class="material-icons-outlined" style="font-size:16px;color:var(--text-muted)">filter_list</span>
+                    <select onchange="window.erpApp.pkFilterStatus(this.value)">
+                        <option value="all" ${pkFilterStatus==='all'?'selected':''}>Trạng thái</option>
+                        <option value="da-duyet" ${pkFilterStatus==='da-duyet'?'selected':''}>Đã duyệt</option>
+                        <option value="cho-duyet" ${pkFilterStatus==='cho-duyet'?'selected':''}>Chờ duyệt</option>
+                        <option value="khong-duyet" ${pkFilterStatus==='khong-duyet'?'selected':''}>Không duyệt</option>
+                    </select>
+                </div>
+                <div class="pk-filter-group">
+                    <span class="material-icons-outlined" style="font-size:16px;color:var(--text-muted)">warehouse</span>
+                    <select onchange="window.erpApp.pkFilterWh(this.value)">
+                        <option value="all" ${pkFilterWarehouse==='all'?'selected':''}>Kho đến</option>
+                        ${warehouses.map(w=>`<option value="${w}" ${pkFilterWarehouse===w?'selected':''}>${w}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="table-container"><div class="table-scroll">`;
+
+        if (filtered.length === 0) {
+            html += `<div class="table-empty"><span class="material-icons-outlined">search_off</span><p>Không tìm thấy phiếu nào.</p></div>`;
+        } else {
+            html += `<table class="data-table"><thead><tr>
+                <th style="width:40px"><input type="checkbox" disabled></th>
+                <th>Số phiếu</th><th>Ngày</th><th>Kho đến</th><th>Mô tả</th><th>Trạng thái</th><th>Cập nhật</th><th>Thao tác</th>
+            </tr></thead><tbody>`;
+            pageData.forEach(p => {
+                html += `<tr>
+                    <td><input type="checkbox"></td>
+                    <td><span class="td-id" style="cursor:pointer" onclick="window.erpApp.viewPk('${p.id}')">${p.id}</span></td>
+                    <td>${p.date}</td>
+                    <td>${p.warehouse}</td>
+                    <td>${p.desc}</td>
+                    <td><span class="gm-badge ${getPkStatusColor(p.status)}">${getPkStatusLabel(p.status)}</span></td>
+                    <td>${p.updatedAt}</td>
+                    <td><div class="table-actions">
+                        <button class="table-action-btn edit" title="Sửa" onclick="window.erpApp.openPkModal('${p.id}')"><span class="material-icons-outlined">edit</span></button>
+                        <button class="table-action-btn delete" title="Xóa" onclick="window.erpApp.confirmDeletePk('${p.id}')"><span class="material-icons-outlined">delete</span></button>
+                    </div></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+        html += `</div>`;
+        if (totalPages > 1) {
+            html += `<div class="pagination">`;
+            html += `<button class="page-btn" ${pkCurrentPage<=1?'disabled':''} onclick="window.erpApp.pkGoPage(${pkCurrentPage-1})"><span class="material-icons-outlined">chevron_left</span></button>`;
+            for (let i=1;i<=totalPages;i++) html += `<button class="page-btn ${i===pkCurrentPage?'active':''}" onclick="window.erpApp.pkGoPage(${i})">${i}</button>`;
+            html += `<button class="page-btn" ${pkCurrentPage>=totalPages?'disabled':''} onclick="window.erpApp.pkGoPage(${pkCurrentPage+1})"><span class="material-icons-outlined">chevron_right</span></button></div>`;
+        }
+        html += `</div></div>`;
+        pageContent.innerHTML = html;
+    }
+
+    function viewPk(id) {
+        const pk = pkList.find(p=>p.id===id); if(!pk) return;
+        const itemsHtml = pk.items && pk.items.length > 0 ? `<table class="data-table" style="font-size:12px"><thead><tr><th>#</th><th>Tên hàng hóa</th><th>Số lượng</th><th>ĐVT</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>
+            ${pk.items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.name}</td><td>${it.qty}</td><td>${it.unit}</td><td>${(it.price||0).toLocaleString('vi-VN')}đ</td><td>${((it.qty||0)*(it.price||0)).toLocaleString('vi-VN')}đ</td></tr>`).join('')}
+            <tr style="font-weight:700;background:#F0FDF4"><td colspan="5" style="text-align:right">Tổng cộng:</td><td>${pk.items.reduce((s,it)=>s+(it.qty||0)*(it.price||0),0).toLocaleString('vi-VN')}đ</td></tr>
+        </tbody></table>` : '<p style="color:var(--text-muted);text-align:center;padding:20px">Chưa có chi tiết hàng hóa</p>';
+
+        const modal = document.createElement('div'); modal.className='modal-overlay'; modal.id='pkViewModal';
+        modal.innerHTML = `<div class="modal-content" style="max-width:720px">
+            <div class="modal-header"><h3><span class="material-icons-outlined">${getPkTabIcon(pk.type)}</span> ${pk.id} — ${getPkTabLabel(pk.type)}</h3>
+                <button class="modal-close" onclick="document.getElementById('pkViewModal').classList.add('closing');setTimeout(()=>document.getElementById('pkViewModal').remove(),200)"><span class="material-icons-outlined">close</span></button>
+            </div>
+            <div class="modal-body" style="padding:0">
+                <div class="hs-view-header">
+                    <span class="gm-badge ${getPkStatusColor(pk.status)}" style="font-size:13px;padding:6px 14px">${getPkStatusLabel(pk.status)}</span>
+                    <span class="hs-view-id">${pk.id}</span>
+                </div>
+                <div class="hs-view-grid">
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">event</span> Ngày</label><p>${formatDate(pk.date)}</p></div>
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">warehouse</span> Kho</label><p>${pk.warehouse}</p></div>
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">description</span> Mô tả</label><p>${pk.desc}</p></div>
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">update</span> Cập nhật</label><p>${pk.updatedAt}</p></div>
+                </div>
+                <div style="padding:16px 20px"><label style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:var(--text-secondary);margin-bottom:12px"><span class="material-icons-outlined" style="font-size:16px">inventory_2</span> Chi tiết hàng hóa (${pk.items?pk.items.length:0})</label>
+                    ${itemsHtml}
+                </div>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+    }
+
+    let tempPkItems = [];
+
+    function openPkModal(id) {
+        const pk = id ? pkList.find(p=>p.id===id) : null;
+        const isEdit = !!pk;
+        tempPkItems = pk ? JSON.parse(JSON.stringify(pk.items||[])) : [];
+        const modal = document.createElement('div'); modal.className='modal-overlay'; modal.id='pkEditModal';
+        modal.innerHTML = `<div class="modal-content" style="max-width:680px">
+            <div class="modal-header"><h3><span class="material-icons-outlined">${isEdit?'edit':'add_circle'}</span> ${isEdit?'Sửa phiếu '+pk.id:'Thêm phiếu mới'}</h3>
+                <button class="modal-close" onclick="window.erpApp.closePkEditModal()"><span class="material-icons-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pkEditId" value="${isEdit?pk.id:''}">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Loại phiếu <span class="required">*</span></label>
+                        <select id="pkType" ${isEdit?'disabled':''}>
+                            <option value="nhap" ${isEdit&&pk.type==='nhap'?'selected':''}>📥 Nhập kho</option>
+                            <option value="xuat" ${isEdit&&pk.type==='xuat'?'selected':''}>📤 Xuất kho</option>
+                            <option value="chuyen" ${isEdit&&pk.type==='chuyen'?'selected':''}>🔄 Chuyển kho</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày <span class="required">*</span></label>
+                        <input type="date" id="pkDate" value="${isEdit?pk.date:new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Kho <span class="required">*</span></label>
+                        <input type="text" id="pkWarehouse" value="${isEdit?pk.warehouse:''}" placeholder="VD: Kho trung tâm">
+                    </div>
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <select id="pkStatus">
+                            <option value="cho-duyet" ${isEdit&&pk.status==='cho-duyet'?'selected':''}>🔵 Chờ duyệt</option>
+                            <option value="da-duyet" ${isEdit&&pk.status==='da-duyet'?'selected':''}>🟢 Đã duyệt</option>
+                            <option value="khong-duyet" ${isEdit&&pk.status==='khong-duyet'?'selected':''}>🔴 Không duyệt</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Mô tả</label>
+                        <input type="text" id="pkDesc" value="${isEdit?pk.desc:''}" placeholder="Ghi chú phiếu kho...">
+                    </div>
+                </div>
+                <div class="form-section-title" style="margin-top:16px"><span class="material-icons-outlined" style="font-size:14px">inventory_2</span> Chi tiết hàng hóa</div>
+                <div id="pkItemsList">${renderPkItemsList()}</div>
+                <button type="button" class="btn-cancel" style="margin-top:8px;font-size:12px" onclick="window.erpApp.addPkItem()"><span class="material-icons-outlined" style="font-size:14px">add</span> Thêm dòng</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="window.erpApp.closePkEditModal()">Hủy</button>
+                <button class="btn-save" onclick="window.erpApp.savePhieuKho()"><span class="material-icons-outlined">save</span> ${isEdit?'Cập nhật':'Lưu phiếu'}</button>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+    }
+
+    function renderPkItemsList() {
+        if (tempPkItems.length === 0) return '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px">Chưa có dòng nào. Nhấn "Thêm dòng" bên dưới.</p>';
+        return tempPkItems.map((it,i) => `<div class="pk-item-row" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+            <input type="text" placeholder="Tên hàng hóa" value="${it.name||''}" style="flex:2;padding:7px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:12px" onchange="window.erpApp.updatePkItem(${i},'name',this.value)">
+            <input type="number" placeholder="SL" value="${it.qty||''}" style="width:60px;padding:7px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:12px" onchange="window.erpApp.updatePkItem(${i},'qty',parseFloat(this.value))">
+            <input type="text" placeholder="ĐVT" value="${it.unit||''}" style="width:60px;padding:7px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:12px" onchange="window.erpApp.updatePkItem(${i},'unit',this.value)">
+            <input type="number" placeholder="Đơn giá" value="${it.price||''}" style="width:90px;padding:7px 10px;border:1px solid var(--border-color);border-radius:8px;font-size:12px" onchange="window.erpApp.updatePkItem(${i},'price',parseFloat(this.value))">
+            <button onclick="window.erpApp.removePkItem(${i})" style="background:none;border:none;color:#DC2626;cursor:pointer;padding:4px"><span class="material-icons-outlined" style="font-size:18px">close</span></button>
+        </div>`).join('');
+    }
+
+    function closePkEditModal() { const m=document.getElementById('pkEditModal'); if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);} tempPkItems=[]; }
+
+    function savePhieuKho() {
+        const id=document.getElementById('pkEditId').value;
+        const type=document.getElementById('pkType').value;
+        const date=document.getElementById('pkDate').value;
+        const warehouse=document.getElementById('pkWarehouse').value.trim();
+        const status=document.getElementById('pkStatus').value;
+        const desc=document.getElementById('pkDesc').value.trim();
+        if(!date||!warehouse){showToast('Vui lòng điền đầy đủ thông tin!');return;}
+        const now=new Date(); const updatedAt=String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+        if(id){
+            const pk=pkList.find(p=>p.id===id);
+            if(pk) Object.assign(pk,{date,warehouse,status,desc,updatedAt,items:[...tempPkItems]});
+            showToast('Đã cập nhật '+id);
+        } else {
+            const newPk={id:nextPkId(type),type,date,warehouse,status,desc,updatedAt,items:[...tempPkItems]};
+            pkList.unshift(newPk);
+            showToast('Đã thêm phiếu mới');
+        }
+        closePkEditModal(); renderPhieuKho();
+    }
+
+    function confirmDeletePk(id) {
+        const pk=pkList.find(p=>p.id===id);if(!pk)return;
+        const modal=document.createElement('div');modal.className='modal-overlay';modal.id='pkDeleteModal';
+        modal.innerHTML=`<div class="modal-content" style="max-width:420px"><div class="modal-header"><h3><span class="material-icons-outlined" style="color:#DC2626">warning</span> Xác nhận xóa</h3><button class="modal-close" onclick="window.erpApp.closePkDeleteModal()"><span class="material-icons-outlined">close</span></button></div>
+            <div class="modal-body" style="text-align:center;padding:24px"><p style="font-size:15px">Xóa phiếu <strong>${pk.id}</strong>?</p><p style="color:var(--text-secondary);margin-top:8px;font-size:13px">${pk.desc}</p></div>
+            <div class="modal-footer"><button class="btn-cancel" onclick="window.erpApp.closePkDeleteModal()">Hủy</button><button class="btn-save" style="background:#DC2626" onclick="window.erpApp.deletePhieuKho('${pk.id}')"><span class="material-icons-outlined">delete</span> Xóa</button></div></div>`;
+        document.body.appendChild(modal);
+    }
+    function deletePhieuKho(id){
+        pkList=pkList.filter(p=>p.id!==id);
+        const m=document.getElementById('pkDeleteModal');
+        if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}
+        showToast('Đã xóa '+id); renderPhieuKho();
+    }
+    function closePkDeleteModal(){const m=document.getElementById('pkDeleteModal');if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}}
+
+    // ==========================================
     // CONFIGS: 4 Module Hành chính (generic)
     // ==========================================
 
@@ -4549,6 +4815,23 @@
             if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
             setTimeout(() => viewPheDuyet(vbId), 250);
         },
+
+        // === Phiếu kho module handlers ===
+        pkSetTab: (tab) => { pkActiveTab = tab; pkCurrentPage = 1; pkSearchQuery = ''; pkFilterStatus = 'all'; pkFilterWarehouse = 'all'; renderPhieuKho(); },
+        pkSearch: (q) => { pkSearchQuery = q; pkCurrentPage = 1; renderPhieuKho(); },
+        pkFilterStatus: (val) => { pkFilterStatus = val; pkCurrentPage = 1; renderPhieuKho(); },
+        pkFilterWh: (val) => { pkFilterWarehouse = val; pkCurrentPage = 1; renderPhieuKho(); },
+        pkGoPage: (page) => { const f = getFilteredPhieuKho(); const tp = Math.ceil(f.length / pkPageSize); if (page < 1 || page > tp) return; pkCurrentPage = page; renderPhieuKho(); },
+        openPkModal: (id) => openPkModal(id),
+        closePkEditModal,
+        savePhieuKho,
+        viewPk,
+        confirmDeletePk,
+        deletePhieuKho,
+        closePkDeleteModal,
+        addPkItem: () => { tempPkItems.push({name:'',qty:0,unit:'',price:0}); const el=document.getElementById('pkItemsList'); if(el) el.innerHTML=renderPkItemsList(); },
+        removePkItem: (i) => { tempPkItems.splice(i,1); const el=document.getElementById('pkItemsList'); if(el) el.innerHTML=renderPkItemsList(); },
+        updatePkItem: (i,field,val) => { if(tempPkItems[i]) tempPkItems[i][field]=val; },
 
         // === Công văn module handlers ===
         cvSearch: (q) => { cvSearchQuery = q; cvCurrentPage = 1; renderQuanLyCongVan(); },

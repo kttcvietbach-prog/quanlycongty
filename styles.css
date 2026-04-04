@@ -3846,6 +3846,190 @@ body {
 }
 
 /* ========================================
+   Module: Phiếu kho (Warehouse Receipts)
+   ======================================== */
+
+.pk-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.pk-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.pk-tab:hover {
+    color: #3B82F6;
+    background: #EFF6FF;
+}
+
+.pk-tab.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+}
+
+.pk-tab .material-icons-outlined {
+    font-size: 16px;
+}
+
+.pk-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.pk-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pk-filter-group select {
+    padding: 6px 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pk-filter-group select:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Table actions (edit/delete buttons) */
+.table-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-action-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+}
+
+.table-action-btn:hover {
+    background: #EFF6FF;
+    color: #3B82F6;
+}
+
+.table-action-btn.edit:hover {
+    background: #EFF6FF;
+    color: #3B82F6;
+}
+
+.table-action-btn.delete:hover {
+    background: #FEF2F2;
+    color: #DC2626;
+}
+
+.table-action-btn .material-icons-outlined {
+    font-size: 17px;
+}
+
+/* Table empty state */
+.table-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.table-empty .material-icons-outlined {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+}
+
+.table-empty p {
+    font-size: 14px;
+}
+
+/* Table ID badge */
+.td-id {
+    font-size: 12px;
+    font-weight: 700;
+    color: #3B82F6;
+    background: #EFF6FF;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.td-id:hover {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+/* Form section title */
+.form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .pk-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pk-tab {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* ========================================
    Generic Module Dashboard Engine
    ======================================== */
 
