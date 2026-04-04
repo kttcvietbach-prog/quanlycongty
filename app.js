@@ -398,19 +398,27 @@
             badge: 'Kho vận',
             sections: [
                 {
-                    title: 'Quản lý kho',
+                    title: 'Nhập xuất kho',
                     modules: [
-                        { icon: 'warehouse', color: 'blue', title: 'Nhập kho', desc: 'Ghi nhận phiếu nhập kho từ mua hàng, sản xuất, trả hàng.' },
-                        { icon: 'local_shipping', color: 'purple', title: 'Xuất kho', desc: 'Quản lý phiếu xuất kho theo đơn hàng, nội bộ, huỷ.' },
-                        { icon: 'swap_horiz', color: 'orange', title: 'Chuyển kho', desc: 'Điều chuyển hàng hoá giữa các kho, chi nhánh.' }
+                        { icon: 'warehouse', color: 'blue', title: 'Phiếu kho', desc: 'Nhập kho, xuất kho, chuyển kho.' },
+                        { icon: 'request_quote', color: 'teal', title: 'Phiếu đề xuất vật tư', desc: 'Đề xuất vật tư theo nơi, người đề xuất, người duyệt.' },
+                        { icon: 'fact_check', color: 'green', title: 'Kiểm kê kho', desc: 'Đợt kiểm kê, đối chiếu, điều chỉnh tồn.' }
                     ]
                 },
                 {
-                    title: 'Kiểm soát tồn kho',
+                    title: 'Báo cáo',
                     modules: [
-                        { icon: 'inventory', color: 'green', title: 'Tồn kho', desc: 'Theo dõi số lượng tồn kho theo vị trí, lô, hạn sử dụng.' },
-                        { icon: 'fact_check', color: 'teal', title: 'Kiểm kê', desc: 'Kiểm kê kho định kỳ, đối chiếu chênh lệch thực tế.' },
-                        { icon: 'assessment', color: 'amber', title: 'Báo cáo kho', desc: 'Thống kê nhập - xuất - tồn, vòng quay hàng tồn kho.' }
+                        { icon: 'inventory', color: 'blue', title: 'Tồn kho', desc: 'Theo sản phẩm, theo nơi lưu và thống kê tồn kho.' },
+                        { icon: 'assessment', color: 'purple', title: 'Báo cáo nhập xuất tồn', desc: 'Tổng hợp nhập, xuất, tồn theo kỳ.' }
+                    ]
+                },
+                {
+                    title: 'Thiết lập và danh mục',
+                    modules: [
+                        { icon: 'menu_book', color: 'orange', title: 'Danh mục hàng hóa', desc: 'Nhóm hàng, đơn vị tính, quy cách.' },
+                        { icon: 'list_alt', color: 'blue', title: 'Danh sách hàng hóa', desc: 'Mã hàng, tên, tồn, giá.' },
+                        { icon: 'store', color: 'green', title: 'Danh sách kho', desc: 'Chi nhánh kho, vị trí, người phụ trách.' },
+                        { icon: 'people_alt', color: 'purple', title: 'Danh sách đối tác', desc: 'Nhà cung cấp, khách hàng, nhóm, tag, phiếu kho liên quan.' }
                     ]
                 }
             ]
