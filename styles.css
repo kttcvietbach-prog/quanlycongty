@@ -4452,6 +4452,84 @@ body {
     font-size: 18px;
 }
 
+/* ========================================
+   Pagination: .page-btn (Lưu trữ hồ sơ & Công văn)
+   ======================================== */
+
+/* Pagination container – standalone inside .table-container */
+.table-container > .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-body);
+}
+
+/* Page button base */
+.page-btn {
+    min-width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-family: inherit;
+    padding: 0 6px;
+    line-height: 1;
+    gap: 0;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 124, 255, 0.12);
+}
+
+.page-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary);
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(74, 124, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.page-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: var(--bg-body);
+    border-color: var(--border-light);
+}
+
+.page-btn .material-icons-outlined {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Pagination responsive */
+@media (max-width: 480px) {
+    .table-container > .pagination {
+        gap: 4px;
+        padding: 10px 12px;
+    }
+    .page-btn {
+        min-width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+}
+
 @media (max-width: 768px) {
     .hs-view-grid {
         grid-template-columns: 1fr;

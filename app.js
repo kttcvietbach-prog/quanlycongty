@@ -929,6 +929,7 @@
             if (title === 'Chấm công') { renderChamCong(); return; }
             if (title === 'Lưu trữ hồ sơ') { renderLuuTruHoSo(); return; }
             if (title === 'Quản lý công văn') { renderQuanLyCongVan(); return; }
+            if (title === 'Phê duyệt văn bản') { renderPheDuyetVanBan(); return; }
             // Generic modules - use function to avoid TDZ
             const cfg = getModuleConfig(title);
             if (cfg) { renderGenericModule(cfg); return; }
@@ -3218,7 +3219,7 @@
 
     function renderHsFileList(files, editable, context) {
         if (!files || files.length === 0) return '';
-        // context: 'cv-edit' | 'cv-view:CV_ID' | undefined (ho so)
+        // context: 'cv-edit' | 'cv-view:CV_ID' | 'pd-edit' | 'pd-view:VB_ID' | undefined (ho so)
         return files.map((f, i) => {
             const icon = f.type === 'pdf' ? 'picture_as_pdf' : 'description';
             const iconColor = f.type === 'pdf' ? '#DC2626' : '#2563EB';
@@ -3233,6 +3234,17 @@
                 actions = `
                     <button class="hs-file-action-btn" title="Xem file" onclick="window.erpApp.previewCvFile(${i},'')" style="color:#0D9488"><span class="material-icons-outlined">visibility</span></button>
                     <button class="contract-file-remove" onclick="window.erpApp.removeCvFileTemp(${i})"><span class="material-icons-outlined">close</span></button>
+                `;
+            } else if (context && context.startsWith('pd-view:')) {
+                const vbId = context.split(':')[1];
+                actions = `
+                    <button class="hs-file-action-btn" title="Xem file" onclick="window.erpApp.previewPdFile(${i},'${vbId}')" style="color:#0D9488"><span class="material-icons-outlined">visibility</span></button>
+                    <button class="hs-file-action-btn" title="Xóa file" onclick="window.erpApp.removePdFileDirect(${i},'${vbId}')" style="color:#DC2626"><span class="material-icons-outlined">delete</span></button>
+                `;
+            } else if (context === 'pd-edit') {
+                actions = `
+                    <button class="hs-file-action-btn" title="Xem file" onclick="window.erpApp.previewPdFile(${i},'')" style="color:#0D9488"><span class="material-icons-outlined">visibility</span></button>
+                    <button class="contract-file-remove" onclick="window.erpApp.removePdFileTemp(${i})"><span class="material-icons-outlined">close</span></button>
                 `;
             } else if (editable) {
                 actions = `<button class="contract-file-remove" onclick="window.erpApp.removeHsFile(${i})"><span class="material-icons-outlined">close</span></button>`;
@@ -3629,51 +3641,317 @@
     function closeCvDeleteModal(){const m=document.getElementById('cvDeleteModal');if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}}
 
     // ==========================================
+    // MODULE: Phê duyệt văn bản (CRUD đầy đủ)
+    // ==========================================
+
+    let pheDuyetList = [
+        { id: 'VB-087', title: 'Đề xuất mua thiết bị CNTT', type: 'de-xuat', sender: 'Phạm Thúy Dung', department: 'Phòng IT', approver: 'Nguyễn Quang Quốc', submitDate: '2026-04-01', status: 'cho-duyet', priority: 'cao', note: 'Mua 10 laptop cho nhân viên mới', files: [{ name: 'DeXuat_ThietBi_CNTT.pdf', size: '2.1 MB', type: 'pdf' }] },
+        { id: 'VB-086', title: 'Đề xuất tuyển dụng Q2/2026', type: 'de-xuat', sender: 'Lê Hoàng Cường', department: 'Phòng Nhân sự', approver: 'Nguyễn Quang Quốc', submitDate: '2026-03-31', status: 'cho-duyet', priority: 'cao', note: 'Tuyển 15 vị trí mới cho dự án Sunrise', files: [{ name: 'DeXuat_TuyenDung_Q2.pdf', size: '1.8 MB', type: 'pdf' }] },
+        { id: 'VB-085', title: 'Xin phê duyệt ngân sách Marketing Q2', type: 'ngan-sach', sender: 'Võ Kim Em', department: 'Phòng Marketing', approver: 'Ban Giám đốc', submitDate: '2026-03-30', status: 'cho-duyet', priority: 'trung-binh', note: 'Ngân sách dự kiến 800 triệu VND', files: [{ name: 'NganSach_MKT_Q2.pdf', size: '3.5 MB', type: 'pdf' }] },
+        { id: 'VB-084', title: 'Đề xuất thay đổi quy trình KCS', type: 'quy-trinh', sender: 'Đặng Văn Phúc', department: 'Phòng Sản xuất', approver: 'Nguyễn Quang Quốc', submitDate: '2026-03-28', status: 'cho-duyet', priority: 'thap', note: 'Thêm bước kiểm tra tự động', files: [] },
+        { id: 'VB-083', title: 'Hợp đồng thuê kho Bình Dương', type: 'hop-dong', sender: 'Nguyễn Văn An', department: 'Phòng Kỹ thuật', approver: 'CEO', submitDate: '2026-03-27', status: 'da-duyet', priority: 'cao', note: 'Thuê kho 2000m² trong 2 năm', files: [{ name: 'HD_ThueKho_BinhDuong.pdf', size: '4.2 MB', type: 'pdf' }] },
+        { id: 'VB-082', title: 'Đề xuất nghỉ phép tập thể 30/4', type: 'de-xuat', sender: 'Trần Thị Bích', department: 'Phòng Nhân sự', approver: 'Ban Giám đốc', submitDate: '2026-03-25', status: 'da-duyet', priority: 'trung-binh', note: 'Nghỉ bù cho nhân viên làm thêm giờ', files: [{ name: 'DeXuat_NghiPhep_304.pdf', size: '890 KB', type: 'pdf' }] },
+        { id: 'VB-081', title: 'Điều chỉnh bảng lương tháng 4', type: 'ngan-sach', sender: 'Phan Thị Hương', department: 'Phòng Kế toán', approver: 'CEO', submitDate: '2026-03-24', status: 'tu-choi', priority: 'cao', note: 'Tăng phụ cấp vùng cho nhân viên', files: [{ name: 'DieuChinh_Luong_T4.pdf', size: '1.5 MB', type: 'pdf' }] },
+        { id: 'VB-080', title: 'Phê duyệt thiết kế giao diện app mobile', type: 'de-xuat', sender: 'Hoàng Minh Đức', department: 'Phòng IT', approver: 'Nguyễn Quang Quốc', submitDate: '2026-03-22', status: 'da-duyet', priority: 'trung-binh', note: 'UI/UX redesign version 2.0', files: [{ name: 'UI_Mobile_v2.pdf', size: '8.5 MB', type: 'pdf' }] },
+        { id: 'VB-079', title: 'Hợp đồng thuê văn phòng mới', type: 'hop-dong', sender: 'Lý Văn Khoa', department: 'Phòng Hành chính', approver: 'Ban Giám đốc', submitDate: '2026-03-20', status: 'yeu-cau-sua', priority: 'cao', note: 'Cần sửa điều khoản giá thuê', files: [{ name: 'HD_ThueVP_Moi.docx', size: '2.3 MB', type: 'doc' }] },
+        { id: 'VB-078', title: 'Đề xuất đào tạo nâng cao cho phòng KT', type: 'de-xuat', sender: 'Ngô Thanh Giang', department: 'Phòng Nhân sự', approver: 'Nguyễn Quang Quốc', submitDate: '2026-03-18', status: 'da-duyet', priority: 'thap', note: 'Khoá học NextJS & React nâng cao', files: [{ name: 'KeHoach_DaoTao_KT.pdf', size: '1.9 MB', type: 'pdf' }] },
+        { id: 'VB-077', title: 'Xin phê duyệt mua nguyên vật liệu đợt 3', type: 'ngan-sach', sender: 'Bùi Quang Hải', department: 'Phòng Mua hàng', approver: 'CEO', submitDate: '2026-03-15', status: 'da-duyet', priority: 'cao', note: 'Tổng giá trị 1.2 tỷ VND', files: [{ name: 'DeXuat_NVL_Dot3.pdf', size: '3.1 MB', type: 'pdf' }] },
+        { id: 'VB-076', title: 'Đề xuất thay đổi quy trình nhập kho', type: 'quy-trinh', sender: 'Đinh Thị Ngọc', department: 'Phòng Kho vận', approver: 'Nguyễn Quang Quốc', submitDate: '2026-03-12', status: 'tu-choi', priority: 'trung-binh', note: 'Cần bổ sung căn cứ pháp lý', files: [] },
+    ];
+
+    let pdSearchQuery = '';
+    let pdCurrentPage = 1;
+    let pdActiveTab = 'all';
+    let pdSortOrder = 'desc';
+    const pdPageSize = 8;
+    let tempPdFiles = [];
+
+    function getPdTypeLabel(t) { return { 'de-xuat': 'Đề xuất', 'ngan-sach': 'Ngân sách', 'hop-dong': 'Hợp đồng', 'quy-trinh': 'Quy trình' }[t] || t; }
+    function getPdTypeColor(t) { return { 'de-xuat': 'blue', 'ngan-sach': 'purple', 'hop-dong': 'teal', 'quy-trinh': 'orange' }[t] || 'gray'; }
+    function getPdTypeIcon(t) { return { 'de-xuat': 'description', 'ngan-sach': 'account_balance_wallet', 'hop-dong': 'handshake', 'quy-trinh': 'route' }[t] || 'article'; }
+    function getPdStatusLabel(s) { return { 'cho-duyet': 'Chờ duyệt', 'da-duyet': 'Đã duyệt', 'tu-choi': 'Từ chối', 'yeu-cau-sua': 'Yêu cầu sửa' }[s] || s; }
+    function getPdStatusColor(s) { return { 'cho-duyet': 'orange', 'da-duyet': 'green', 'tu-choi': 'red', 'yeu-cau-sua': 'blue' }[s] || 'gray'; }
+    function getPdPriorityLabel(p) { return { 'cao': 'Cao', 'trung-binh': 'Trung bình', 'thap': 'Thấp' }[p] || p; }
+    function getPdPriorityColor(p) { return { 'cao': 'red', 'trung-binh': 'orange', 'thap': 'blue' }[p] || 'gray'; }
+    function nextPdId() { const nums = pheDuyetList.map(v => parseInt(v.id.replace('VB-',''),10)); return 'VB-' + String(Math.max(...nums,0)+1).padStart(3,'0'); }
+
+    function getFilteredPheDuyet() {
+        let data = [...pheDuyetList];
+        if (pdActiveTab !== 'all') data = data.filter(v => v.status === pdActiveTab);
+        const q = pdSearchQuery.toLowerCase().trim();
+        if (q) data = data.filter(v => v.id.toLowerCase().includes(q) || v.title.toLowerCase().includes(q) || v.sender.toLowerCase().includes(q) || v.department.toLowerCase().includes(q) || v.approver.toLowerCase().includes(q));
+        data.sort((a, b) => {
+            const dateA = new Date(a.submitDate || '1970-01-01');
+            const dateB = new Date(b.submitDate || '1970-01-01');
+            return pdSortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        });
+        return data;
+    }
+
+    function renderPheDuyetVanBan() {
+        breadcrumbCurrent.textContent = 'Phê duyệt văn bản';
+        pageBadge.textContent = 'Hành chính';
+        const filtered = getFilteredPheDuyet();
+        const totalPages = Math.ceil(filtered.length / pdPageSize);
+        if (pdCurrentPage > totalPages && totalPages > 0) pdCurrentPage = totalPages;
+        const pageData = filtered.slice((pdCurrentPage-1)*pdPageSize, pdCurrentPage*pdPageSize);
+        const cChoDuyet = pheDuyetList.filter(v=>v.status==='cho-duyet').length;
+        const cDaDuyet = pheDuyetList.filter(v=>v.status==='da-duyet').length;
+        const cTuChoi = pheDuyetList.filter(v=>v.status==='tu-choi').length;
+        const cYeuCauSua = pheDuyetList.filter(v=>v.status==='yeu-cau-sua').length;
+
+        let html = `<div class="employee-module">
+            <div class="employee-toolbar">
+                <button class="back-btn" onclick="window.erpApp.navigateTo('hanh-chinh')"><span class="material-icons-outlined">arrow_back</span> Quay lại</button>
+                <div class="search-box"><span class="material-icons-outlined">search</span>
+                    <input type="text" id="pdSearchInput" placeholder="Tìm mã VB, tiêu đề, người gửi, phòng ban..." value="${pdSearchQuery}" oninput="window.erpApp.pdSearch(this.value)">
+                </div>
+                <button class="btn-add-employee" onclick="window.erpApp.openPdModal()"><span class="material-icons-outlined">note_add</span> Thêm văn bản</button>
+            </div>
+            <div class="employee-stats">
+                <div class="stat-card" style="cursor:pointer;${pdActiveTab==='cho-duyet'?'outline:2px solid var(--primary)':''}" onclick="window.erpApp.pdSetTab('cho-duyet')">
+                    <div class="stat-card-icon orange"><span class="material-icons-outlined">pending_actions</span></div>
+                    <div class="stat-card-body"><div class="stat-card-value">${cChoDuyet}</div><div class="stat-card-label">Chờ duyệt</div></div>
+                </div>
+                <div class="stat-card" style="cursor:pointer;${pdActiveTab==='da-duyet'?'outline:2px solid var(--primary)':''}" onclick="window.erpApp.pdSetTab('da-duyet')">
+                    <div class="stat-card-icon green"><span class="material-icons-outlined">check_circle</span></div>
+                    <div class="stat-card-body"><div class="stat-card-value">${cDaDuyet}</div><div class="stat-card-label">Đã duyệt</div></div>
+                </div>
+                <div class="stat-card" style="cursor:pointer;${pdActiveTab==='tu-choi'?'outline:2px solid var(--primary)':''}" onclick="window.erpApp.pdSetTab('tu-choi')">
+                    <div class="stat-card-icon red"><span class="material-icons-outlined">cancel</span></div>
+                    <div class="stat-card-body"><div class="stat-card-value">${cTuChoi}</div><div class="stat-card-label">Từ chối</div></div>
+                </div>
+                <div class="stat-card" style="cursor:pointer;${pdActiveTab==='yeu-cau-sua'?'outline:2px solid var(--primary)':''}" onclick="window.erpApp.pdSetTab('yeu-cau-sua')">
+                    <div class="stat-card-icon blue"><span class="material-icons-outlined">assignment_return</span></div>
+                    <div class="stat-card-body"><div class="stat-card-value">${cYeuCauSua}</div><div class="stat-card-label">Yêu cầu sửa</div></div>
+                </div>
+            </div>
+            <div class="hs-tab-bar">
+                <button class="hs-tab ${pdActiveTab==='all'?'active':''}" onclick="window.erpApp.pdSetTab('all')">Tất cả (${pheDuyetList.length})</button>
+                <button class="hs-tab ${pdActiveTab==='cho-duyet'?'active':''}" onclick="window.erpApp.pdSetTab('cho-duyet')">Chờ duyệt (${cChoDuyet})</button>
+                <button class="hs-tab ${pdActiveTab==='da-duyet'?'active':''}" onclick="window.erpApp.pdSetTab('da-duyet')">Đã duyệt (${cDaDuyet})</button>
+                <button class="hs-tab ${pdActiveTab==='tu-choi'?'active':''}" onclick="window.erpApp.pdSetTab('tu-choi')">Từ chối (${cTuChoi})</button>
+                <button class="hs-tab ${pdActiveTab==='yeu-cau-sua'?'active':''}" onclick="window.erpApp.pdSetTab('yeu-cau-sua')">Yêu cầu sửa (${cYeuCauSua})</button>
+            </div>
+            <div class="table-container"><div class="table-header-bar">
+                <div class="table-title"><span class="material-icons-outlined">approval</span> Danh sách văn bản phê duyệt</div>
+                <div class="table-count">${filtered.length} kết quả</div>
+            </div><div class="table-scroll">`;
+
+        if (filtered.length === 0) {
+            html += `<div class="table-empty"><span class="material-icons-outlined">search_off</span><p>Không tìm thấy văn bản nào.</p></div>`;
+        } else {
+            const sortIcon = pdSortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward';
+            const sortLabel = pdSortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất';
+            html += `<table class="data-table"><thead><tr>
+                <th>Mã VB</th><th>Tiêu đề</th><th>Loại</th><th>Người gửi</th><th>Phòng ban</th>
+                <th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="window.erpApp.pdToggleSort()" title="Click để đổi thứ tự">
+                    Ngày gửi <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;margin-left:2px">${sortIcon}</span>
+                    <span style="font-size:10px;color:var(--text-secondary);font-weight:400;margin-left:4px">${sortLabel}</span>
+                </th>
+                <th>Ưu tiên</th><th>Trạng thái</th><th>Tác vụ</th>
+            </tr></thead><tbody>`;
+            pageData.forEach(vb => {
+                const hasFiles = vb.files && vb.files.length > 0;
+                html += `<tr>
+                    <td class="td-id">${vb.id}</td>
+                    <td><div class="hs-title-cell"><span class="material-icons-outlined hs-cat-icon ${getPdTypeColor(vb.type)}">${getPdTypeIcon(vb.type)}</span><span class="hs-title-text" title="${vb.title}">${vb.title}</span></div></td>
+                    <td><span class="gm-badge ${getPdTypeColor(vb.type)}">${getPdTypeLabel(vb.type)}</span></td>
+                    <td><span class="hs-partner-cell"><span class="material-icons-outlined">person</span>${vb.sender}</span></td>
+                    <td><span class="hs-partner-cell"><span class="material-icons-outlined">business</span>${vb.department}</span></td>
+                    <td>${formatDate(vb.submitDate)}</td>
+                    <td><span class="gm-badge ${getPdPriorityColor(vb.priority)}">${getPdPriorityLabel(vb.priority)}</span></td>
+                    <td><span class="gm-badge ${getPdStatusColor(vb.status)}">${getPdStatusLabel(vb.status)}</span></td>
+                    <td><div class="table-actions">
+                        <button class="table-action-btn view" title="Xem" onclick="window.erpApp.viewPheDuyet('${vb.id}')"><span class="material-icons-outlined">visibility</span></button>
+                        <button class="table-action-btn edit" title="Sửa" onclick="window.erpApp.openPdModal('${vb.id}')"><span class="material-icons-outlined">edit</span></button>
+                        ${hasFiles ? `<button class="table-action-btn" title="Tải file" onclick="window.erpApp.previewPdFile(0,'${vb.id}')" style="color:#0D9488"><span class="material-icons-outlined">download</span></button>` : ''}
+                        <button class="table-action-btn delete" title="Xóa" onclick="window.erpApp.confirmDeletePd('${vb.id}')"><span class="material-icons-outlined">delete</span></button>
+                    </div></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+        html += `</div>`;
+        if (totalPages > 1) {
+            html += `<div class="pagination">`;
+            html += `<button class="page-btn" ${pdCurrentPage<=1?'disabled':''} onclick="window.erpApp.pdGoPage(${pdCurrentPage-1})"><span class="material-icons-outlined">chevron_left</span></button>`;
+            for (let i=1;i<=totalPages;i++) html += `<button class="page-btn ${i===pdCurrentPage?'active':''}" onclick="window.erpApp.pdGoPage(${i})">${i}</button>`;
+            html += `<button class="page-btn" ${pdCurrentPage>=totalPages?'disabled':''} onclick="window.erpApp.pdGoPage(${pdCurrentPage+1})"><span class="material-icons-outlined">chevron_right</span></button></div>`;
+        }
+        html += `</div></div>`;
+        pageContent.innerHTML = html;
+    }
+
+    function viewPheDuyet(id) {
+        const vb = pheDuyetList.find(v=>v.id===id); if(!vb) return;
+        let filesHtml = vb.files && vb.files.length > 0 ? renderHsFileList(vb.files, false, 'pd-view:' + vb.id)
+            : '<div class="hs-no-files"><span class="material-icons-outlined">cloud_off</span> Chưa có file đính kèm</div>';
+
+        const modal = document.createElement('div'); modal.className='modal-overlay'; modal.id='pdViewModal';
+        modal.innerHTML = `<div class="modal-content" style="max-width:680px">
+            <div class="modal-header"><h3><span class="material-icons-outlined">${getPdTypeIcon(vb.type)}</span> ${vb.title}</h3>
+                <button class="modal-close" onclick="document.getElementById('pdViewModal').classList.add('closing');setTimeout(()=>document.getElementById('pdViewModal').remove(),200)"><span class="material-icons-outlined">close</span></button>
+            </div>
+            <div class="modal-body" style="padding:0">
+                <div class="hs-view-header">
+                    <span class="gm-badge ${getPdTypeColor(vb.type)}" style="font-size:13px;padding:6px 14px">${getPdTypeLabel(vb.type)}</span>
+                    <span class="gm-badge ${getPdStatusColor(vb.status)}" style="font-size:13px;padding:6px 14px">${getPdStatusLabel(vb.status)}</span>
+                    <span class="gm-badge ${getPdPriorityColor(vb.priority)}" style="font-size:13px;padding:6px 14px">Ưu tiên: ${getPdPriorityLabel(vb.priority)}</span>
+                    <span class="hs-view-id">${vb.id}</span>
+                </div>
+                <div class="hs-view-grid">
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">person</span> Người gửi</label><p>${vb.sender}</p></div>
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">business</span> Phòng ban</label><p>${vb.department}</p></div>
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">supervisor_account</span> Người duyệt</label><p>${vb.approver}</p></div>
+                    <div class="hs-view-field"><label><span class="material-icons-outlined">event</span> Ngày gửi</label><p>${formatDate(vb.submitDate)}</p></div>
+                </div>
+                ${vb.note ? `<div class="hs-view-note"><label><span class="material-icons-outlined">notes</span> Ghi chú</label><p>${vb.note}</p></div>` : ''}
+                <div class="hs-view-files"><label><span class="material-icons-outlined">attach_file</span> File đính kèm (${vb.files?vb.files.length:0})</label>
+                    <div class="hs-file-list">${filesHtml}</div>
+                    <div class="hs-upload-inline"><label class="hs-upload-btn" for="pdViewUpload_${vb.id}"><span class="material-icons-outlined">cloud_upload</span> Upload thêm file</label>
+                        <input type="file" id="pdViewUpload_${vb.id}" accept=".pdf,.doc,.docx" multiple style="display:none" onchange="window.erpApp.handlePdFileUploadDirect(event,'${vb.id}')">
+                    </div>
+                </div>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+    }
+
+    function openPdModal(id) {
+        const vb = id ? pheDuyetList.find(v=>v.id===id) : null;
+        const isEdit = !!vb;
+        tempPdFiles = vb ? [...(vb.files||[])] : [];
+        const modal = document.createElement('div'); modal.className='modal-overlay'; modal.id='pdEditModal';
+        modal.innerHTML = `<div class="modal-content" style="max-width:680px">
+            <div class="modal-header"><h3><span class="material-icons-outlined">${isEdit?'edit':'note_add'}</span> ${isEdit?'Chỉnh sửa văn bản':'Thêm văn bản phê duyệt'}</h3>
+                <button class="modal-close" onclick="window.erpApp.closePdEditModal()"><span class="material-icons-outlined">close</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pdEditId" value="${isEdit?vb.id:''}">
+                <div class="form-section-title"><span class="material-icons-outlined" style="font-size:14px">info</span> Thông tin văn bản</div>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:var(--primary)">article</span> Tiêu đề <span class="required">*</span></label>
+                        <input type="text" id="pdTitle" value="${isEdit?vb.title:''}" placeholder="VD: Đề xuất mua thiết bị CNTT...">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#7C3AED">category</span> Loại văn bản <span class="required">*</span></label>
+                        <select id="pdType">
+                            <option value="de-xuat" ${isEdit&&vb.type==='de-xuat'?'selected':''}>📋 Đề xuất</option>
+                            <option value="ngan-sach" ${isEdit&&vb.type==='ngan-sach'?'selected':''}>💰 Ngân sách</option>
+                            <option value="hop-dong" ${isEdit&&vb.type==='hop-dong'?'selected':''}>🤝 Hợp đồng</option>
+                            <option value="quy-trinh" ${isEdit&&vb.type==='quy-trinh'?'selected':''}>📐 Quy trình</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#16A34A">flag</span> Trạng thái</label>
+                        <select id="pdStatus">
+                            <option value="cho-duyet" ${isEdit&&vb.status==='cho-duyet'?'selected':''}>🟡 Chờ duyệt</option>
+                            <option value="da-duyet" ${isEdit&&vb.status==='da-duyet'?'selected':''}>🟢 Đã duyệt</option>
+                            <option value="tu-choi" ${isEdit&&vb.status==='tu-choi'?'selected':''}>🔴 Từ chối</option>
+                            <option value="yeu-cau-sua" ${isEdit&&vb.status==='yeu-cau-sua'?'selected':''}>🔵 Yêu cầu sửa</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-section-title"><span class="material-icons-outlined" style="font-size:14px">people</span> Người gửi & Người duyệt</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#EA580C">person</span> Người gửi <span class="required">*</span></label>
+                        <input type="text" id="pdSender" value="${isEdit?vb.sender:''}" placeholder="Tên người gửi...">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#0D9488">business</span> Phòng ban <span class="required">*</span></label>
+                        <input type="text" id="pdDepartment" value="${isEdit?vb.department:''}" placeholder="Phòng ban gửi...">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#7C3AED">supervisor_account</span> Người duyệt <span class="required">*</span></label>
+                        <input type="text" id="pdApprover" value="${isEdit?vb.approver:''}" placeholder="Tên người phê duyệt...">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#DC2626">event</span> Ngày gửi <span class="required">*</span></label>
+                        <input type="date" id="pdSubmitDate" value="${isEdit?vb.submitDate:new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#D97706">priority_high</span> Mức ưu tiên</label>
+                        <select id="pdPriority">
+                            <option value="cao" ${isEdit&&vb.priority==='cao'?'selected':''}>🔴 Cao</option>
+                            <option value="trung-binh" ${isEdit&&vb.priority==='trung-binh'?'selected':''}>🟡 Trung bình</option>
+                            <option value="thap" ${isEdit&&vb.priority==='thap'?'selected':''}>🔵 Thấp</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label><span class="material-icons-outlined" style="font-size:15px;color:#6B7A90">notes</span> Ghi chú</label>
+                        <textarea id="pdNote" rows="2" placeholder="Nội dung tóm tắt...">${isEdit?(vb.note||''):''}</textarea>
+                    </div>
+                </div>
+                <div class="form-section-title"><span class="material-icons-outlined" style="font-size:14px">attach_file</span> File đính kèm</div>
+                <div class="contract-upload-area">
+                    <label for="pdFileInput" class="upload-label"><span class="material-icons-outlined">cloud_upload</span><span>Nhấn để chọn file PDF hoặc Word</span>
+                        <span style="font-size:11px;color:var(--text-muted);font-weight:400">Hỗ trợ: .pdf, .doc, .docx — Tối đa 10MB/file</span></label>
+                    <input type="file" id="pdFileInput" accept=".pdf,.doc,.docx" multiple onchange="window.erpApp.handlePdFileUpload(event)" style="display:none">
+                </div>
+                <div id="pdFileList">${renderHsFileList(tempPdFiles, true, 'pd-edit')}</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="window.erpApp.closePdEditModal()">Hủy</button>
+                <button class="btn-save" onclick="window.erpApp.savePheDuyet()"><span class="material-icons-outlined">save</span> ${isEdit?'Cập nhật':'Lưu văn bản'}</button>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+    }
+
+    function closePdEditModal() { const m=document.getElementById('pdEditModal'); if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);} tempPdFiles=[]; }
+
+    function savePheDuyet() {
+        const id=document.getElementById('pdEditId').value, title=document.getElementById('pdTitle').value.trim();
+        const type=document.getElementById('pdType').value, status=document.getElementById('pdStatus').value;
+        const sender=document.getElementById('pdSender').value.trim(), department=document.getElementById('pdDepartment').value.trim();
+        const approver=document.getElementById('pdApprover').value.trim();
+        const submitDate=document.getElementById('pdSubmitDate').value, priority=document.getElementById('pdPriority').value;
+        const note=document.getElementById('pdNote').value.trim();
+        if(!title||!sender||!department||!approver||!submitDate){showToast('Vui lòng điền đầy đủ thông tin bắt buộc!');return;}
+        if(id){
+            const vb=pheDuyetList.find(v=>v.id===id);
+            if(vb){
+                Object.assign(vb,{title,type,status,sender,department,approver,submitDate,priority,note,files:[...tempPdFiles]});
+                if(window.FileStore) window.FileStore.saveAllFiles('pheDuyetList', id, vb.files);
+                if(window.CrudSync) window.CrudSync.saveItem('pheDuyetList',vb,'id');
+                showToast('Đã cập nhật '+id);
+            }
+        } else {
+            const newVb={id:nextPdId(),title,type,status,sender,department,approver,submitDate,priority,note,files:[...tempPdFiles]};
+            pheDuyetList.unshift(newVb);
+            if(window.FileStore) window.FileStore.saveAllFiles('pheDuyetList', newVb.id, newVb.files);
+            if(window.CrudSync) window.CrudSync.saveItem('pheDuyetList',newVb,'id');
+            showToast('Đã thêm văn bản mới');
+        }
+        closePdEditModal(); renderPheDuyetVanBan();
+    }
+
+    function confirmDeletePd(id) {
+        const vb=pheDuyetList.find(v=>v.id===id);if(!vb)return;
+        const modal=document.createElement('div');modal.className='modal-overlay';modal.id='pdDeleteModal';
+        modal.innerHTML=`<div class="modal-content" style="max-width:420px"><div class="modal-header"><h3><span class="material-icons-outlined" style="color:#DC2626">warning</span> Xác nhận xóa</h3><button class="modal-close" onclick="window.erpApp.closePdDeleteModal()"><span class="material-icons-outlined">close</span></button></div>
+            <div class="modal-body" style="text-align:center;padding:24px"><p style="font-size:15px">Xóa văn bản <strong>${vb.id}</strong>?</p><p style="color:var(--text-secondary);margin-top:8px;font-size:13px">${vb.title}</p></div>
+            <div class="modal-footer"><button class="btn-cancel" onclick="window.erpApp.closePdDeleteModal()">Hủy</button><button class="btn-save" style="background:#DC2626" onclick="window.erpApp.deletePheDuyet('${vb.id}')"><span class="material-icons-outlined">delete</span> Xóa</button></div></div>`;
+        document.body.appendChild(modal);
+    }
+    function deletePheDuyet(id){
+        pheDuyetList=pheDuyetList.filter(v=>v.id!==id);
+        if(window.CrudSync) window.CrudSync.deleteItem('pheDuyetList',id);
+        const m=document.getElementById('pdDeleteModal');
+        if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}
+        showToast('Đã xóa '+id);
+        renderPheDuyetVanBan();
+    }
+    function closePdDeleteModal(){const m=document.getElementById('pdDeleteModal');if(m){m.classList.add('closing');setTimeout(()=>m.remove(),200);}}
+
+    // ==========================================
     // CONFIGS: 4 Module Hành chính (generic)
     // ==========================================
 
     const hanhChinhModules = {
-        'Phê duyệt văn bản': {
-            title: 'Phê duyệt văn bản', badge: 'Hành chính', backPage: 'hanh-chinh',
-            stats: [
-                { icon: 'pending_actions', color: 'orange', value: '7', label: 'Chờ duyệt' },
-                { icon: 'check_circle', color: 'green', value: '143', label: 'Đã duyệt' },
-                { icon: 'cancel', color: 'red', value: '8', label: 'Từ chối' },
-                { icon: 'assignment_return', color: 'blue', value: '5', label: 'Yêu cầu sửa' }
-            ],
-            table: {
-                title: 'Văn bản chờ phê duyệt', icon: 'approval',
-                cols: ['Mã VB', 'Tiêu đề', 'Người gửi', 'Ngày gửi', 'Ưu tiên', 'Trạng thái'],
-                rows: [
-                    ['VB-087', 'Đề xuất mua thiết bị CNTT', 'Phạm Thúy Dung', '01/04', 'Cao', 'Chờ duyệt'],
-                    ['VB-086', 'Đề xuất tuyển dụng Q2', 'Lê Hoàng Cường', '31/03', 'Cao', 'Chờ duyệt'],
-                    ['VB-085', 'Xin phê duyệt ngân sách Marketing', 'Võ Kim Em', '30/03', 'Trung bình', 'Chờ duyệt'],
-                    ['VB-084', 'Đề xuất thay đổi quy trình KCS', 'Đặng Văn Phúc', '28/03', 'Thấp', 'Chờ duyệt'],
-                    ['VB-083', 'Hợp đồng thuê kho mới', 'Nguyễn Văn An', '27/03', 'Cao', 'Đã duyệt'],
-                    ['VB-082', 'Đề xuất nghỉ phép tập thể 30/4', 'Trần Thị Bích', '25/03', 'Trung bình', 'Đã duyệt'],
-                    ['VB-081', 'Điều chỉnh bảng lương T4', 'Phan Thị Hương', '24/03', 'Cao', 'Từ chối']
-                ],
-                badgeCols: { 4: { 'Cao': 'red', 'Trung bình': 'orange', 'Thấp': 'blue' }, 5: { 'Chờ duyệt': 'orange', 'Đã duyệt': 'green', 'Từ chối': 'red', 'Yêu cầu sửa': 'blue' } }
-            },
-            chart: {
-                title: 'Tỷ lệ phê duyệt 6 tháng gần đây', icon: 'bar_chart',
-                bars: [
-                    { label: 'T11', value: 18, color: '#16A34A' }, { label: 'T12', value: 25, color: '#16A34A' },
-                    { label: 'T1', value: 22, color: '#16A34A' }, { label: 'T2', value: 15, color: '#16A34A' },
-                    { label: 'T3', value: 30, color: '#16A34A' }, { label: 'T4', value: 7, color: '#F97316' }
-                ]
-            },
-            timeline: {
-                title: 'Hoạt động phê duyệt gần đây', icon: 'history',
-                items: [
-                    { dot: 'orange', icon: 'pending_actions', title: 'VB-087 chờ phê duyệt', desc: 'Đề xuất mua thiết bị CNTT — Phạm Thúy Dung', time: '2 giờ trước' },
-                    { dot: 'green', icon: 'check_circle', title: 'Đã duyệt VB-083', desc: 'Hợp đồng thuê kho mới — CEO đã ký duyệt', time: '5 ngày trước' },
-                    { dot: 'red', icon: 'cancel', title: 'Từ chối VB-081', desc: 'Điều chỉnh bảng lương — Cần bổ sung căn cứ pháp lý', time: '1 tuần trước' },
-                    { dot: 'blue', icon: 'assignment_return', title: 'Yêu cầu sửa VB-079', desc: 'Hợp đồng thuê VP — Sửa điều khoản giá', time: '2 tuần trước' }
-                ]
-            }
-        },
-
         'Quản lý phòng họp': {
             title: 'Quản lý phòng họp', badge: 'Hành chính', backPage: 'hanh-chinh',
             stats: [
@@ -4129,6 +4407,124 @@
             } else {
                 showToast('File này chưa có dữ liệu để xem trước.');
             }
+        },
+
+        // === Phê duyệt văn bản module handlers ===
+        pdSearch: (q) => { pdSearchQuery = q; pdCurrentPage = 1; renderPheDuyetVanBan(); },
+        pdSetTab: (tab) => { pdActiveTab = tab; pdCurrentPage = 1; renderPheDuyetVanBan(); },
+        pdToggleSort: () => { pdSortOrder = pdSortOrder === 'desc' ? 'asc' : 'desc'; pdCurrentPage = 1; renderPheDuyetVanBan(); },
+        pdGoPage: (page) => {
+            const filtered = getFilteredPheDuyet();
+            const totalPages = Math.ceil(filtered.length / pdPageSize);
+            if (page < 1 || page > totalPages) return;
+            pdCurrentPage = page; renderPheDuyetVanBan();
+        },
+        openPdModal: (id) => openPdModal(id),
+        closePdEditModal,
+        savePheDuyet,
+        viewPheDuyet,
+        confirmDeletePd,
+        deletePheDuyet,
+        closePdDeleteModal,
+        handlePdFileUpload: (event) => {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            Array.from(files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) { showToast(`File "${file.name}" quá lớn! Tối đa 10MB.`); return; }
+                const ext = file.name.split('.').pop().toLowerCase();
+                const fileType = ext === 'pdf' ? 'pdf' : 'doc';
+                const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    tempPdFiles.push({ name: file.name, size: sizeStr, type: fileType, dataUrl: e.target.result });
+                    const listEl = document.getElementById('pdFileList');
+                    if (listEl) listEl.innerHTML = renderHsFileList(tempPdFiles, true, 'pd-edit');
+                };
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        },
+        handlePdFileUploadDirect: (event, vbId) => {
+            const vb = pheDuyetList.find(v => v.id === vbId);
+            if (!vb) return;
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            Array.from(files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) { showToast(`File "${file.name}" quá lớn! Tối đa 10MB.`); return; }
+                const ext = file.name.split('.').pop().toLowerCase();
+                const fileType = ext === 'pdf' ? 'pdf' : 'doc';
+                const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const fileData = { name: file.name, size: sizeStr, type: fileType, dataUrl: e.target.result };
+                    vb.files.push(fileData);
+                    if (window.FileStore) await window.FileStore.saveFile('pheDuyetList', vbId, file.name, e.target.result);
+                    if (window.CrudSync) window.CrudSync.saveItem('pheDuyetList', vb, 'id');
+                    showToast(`Đã upload "${file.name}" vào ${vbId}`);
+                    const m = document.getElementById('pdViewModal');
+                    if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
+                    setTimeout(() => viewPheDuyet(vbId), 250);
+                };
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        },
+        previewPdFile: async (index, vbId) => {
+            let file;
+            if (vbId) { const vb = pheDuyetList.find(v => v.id === vbId); if (vb && vb.files && vb.files[index]) file = vb.files[index]; }
+            else { file = tempPdFiles[index]; }
+            if (!file) { showToast('Không tìm thấy file!'); return; }
+            if (!file.dataUrl && window.FileStore && vbId) {
+                const restored = await window.FileStore.getFile('pheDuyetList', vbId, file.name);
+                if (restored) file.dataUrl = restored;
+            }
+            if (file && file.dataUrl) {
+                const previewId = 'pdFilePreviewModal';
+                const old = document.getElementById(previewId); if (old) old.remove();
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay'; modal.id = previewId;
+                let contentHtml;
+                if (file.type === 'pdf') {
+                    contentHtml = `<iframe src="${file.dataUrl}" style="width:100%;height:75vh;border:none;border-radius:8px"></iframe>`;
+                } else {
+                    contentHtml = `<div style="text-align:center;padding:40px 20px">
+                        <span class="material-icons-outlined" style="font-size:64px;color:#2563EB">description</span>
+                        <h3 style="margin:16px 0 8px">📄 ${file.name}</h3>
+                        <p style="color:var(--text-secondary);margin-bottom:24px">File Word không thể xem trước trực tiếp trên web.<br>Bấm nút bên dưới để tải về máy.</p>
+                        <a href="${file.dataUrl}" download="${file.name}" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--primary);color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px">
+                            <span class="material-icons-outlined">download</span> Tải xuống
+                        </a>
+                    </div>`;
+                }
+                modal.innerHTML = `<div class="modal-content" style="max-width:900px;max-height:90vh">
+                    <div class="modal-header"><h3><span class="material-icons-outlined">${file.type === 'pdf' ? 'picture_as_pdf' : 'description'}</span> ${file.name}</h3>
+                        <div style="display:flex;gap:8px">
+                            <a href="${file.dataUrl}" download="${file.name}" class="btn-cancel" style="display:flex;align-items:center;gap:4px;text-decoration:none;font-size:13px"><span class="material-icons-outlined" style="font-size:16px">download</span> Tải về</a>
+                            <button class="modal-close" onclick="document.getElementById('${previewId}').classList.add('closing');setTimeout(()=>document.getElementById('${previewId}').remove(),200)"><span class="material-icons-outlined">close</span></button>
+                        </div>
+                    </div>
+                    <div class="modal-body" style="padding:12px">${contentHtml}</div>
+                </div>`;
+                document.body.appendChild(modal);
+            } else { showToast('File mẫu — chưa có dữ liệu thực. Hãy upload file mới!'); }
+        },
+        removePdFileTemp: (index) => {
+            tempPdFiles.splice(index, 1);
+            const listEl = document.getElementById('pdFileList');
+            if (listEl) listEl.innerHTML = renderHsFileList(tempPdFiles, true, 'pd-edit');
+        },
+        removePdFileDirect: async (index, vbId) => {
+            const vb = pheDuyetList.find(v => v.id === vbId);
+            if (!vb || !vb.files) return;
+            const fileName = vb.files[index]?.name || 'file';
+            if (!confirm(`Xóa file "${fileName}" khỏi văn bản ${vbId}?`)) return;
+            if (window.FileStore) await window.FileStore.deleteFile('pheDuyetList', vbId, fileName);
+            vb.files.splice(index, 1);
+            if (window.CrudSync) window.CrudSync.saveItem('pheDuyetList', vb, 'id');
+            showToast(`Đã xóa "${fileName}"`);
+            const m = document.getElementById('pdViewModal');
+            if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
+            setTimeout(() => viewPheDuyet(vbId), 250);
         },
 
         // === Công văn module handlers ===
