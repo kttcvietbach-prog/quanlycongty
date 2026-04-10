@@ -277,6 +277,12 @@
                 showSyncIndicator('Đồng bộ thành công!', 'success');
                 setTimeout(hideSyncIndicator, 2000);
 
+                // Final UI refresh after all collections are synced
+                if (window.erpApp && window.erpApp.renderPage && window.erpApp.getCurrentPage) {
+                    const current = window.erpApp.getCurrentPage();
+                    if (current) window.erpApp.renderPage(current);
+                }
+
                 // Resolve ready promise
                 if (this._resolveReady) this._resolveReady();
 

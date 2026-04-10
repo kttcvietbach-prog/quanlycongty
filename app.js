@@ -14661,10 +14661,6 @@
             case 'projects': danhSachDuAnData = data; break;
             case 'material_proposals': if (window.erpApp.mp_setData) window.erpApp.mp_setData(data); break;
         }
-        // Re-render current page if active
-        if (typeof window.erpApp.renderPage === 'function' && typeof window.erpApp.getCurrentPage === 'function') {
-            const current = window.erpApp.getCurrentPage();
-            if (current) window.erpApp.renderPage(current);
         }
     };
 

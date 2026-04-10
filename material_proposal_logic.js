@@ -537,11 +537,7 @@
     };
 
     // Safe Initialization
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMPModule);
-    } else {
-        initMPModule();
-    }
+    window.addEventListener('DOMContentLoaded', initMPModule);
 
     console.log('✅ MP Logic: Loaded and Ready.');
 })();
