@@ -14587,6 +14587,8 @@
     // ==========================================
     // EXPOSE DATA SOURCE FOR REPORTING & SYNC
     // ==========================================
+    window.erpApp.renderPage = renderPage;
+    window.erpApp.getCurrentPage = () => currentPage;
     window.erpApp.getPkList = () => pkList;
     window.erpApp.getAuditList = () => inventoryAuditData;
     window.erpApp.getGoodsReceipts = () => goodsReceipts;
@@ -14628,8 +14630,10 @@
             case 'material_proposals': if (window.erpApp.mp_setData) window.erpApp.mp_setData(data); break;
         }
         // Re-render current page if active
-        const currentPage = window.erpApp.getCurrentPage();
-        if (currentPage) window.erpApp.renderPage(currentPage);
+        if (typeof window.erpApp.renderPage === 'function' && typeof window.erpApp.getCurrentPage === 'function') {
+            const current = window.erpApp.getCurrentPage();
+            if (current) window.erpApp.renderPage(current);
+        }
     };
 
 })();
