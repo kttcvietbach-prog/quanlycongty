@@ -14661,7 +14661,6 @@
             case 'projects': danhSachDuAnData = data; break;
             case 'material_proposals': if (window.erpApp.mp_setData) window.erpApp.mp_setData(data); break;
         }
-        }
     };
 
 })();

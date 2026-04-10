@@ -209,8 +209,6 @@
         document.body.appendChild(modal);
         window.erpApp.updateRtTotals();
     };
-        window.erpApp.updateRtTotals();
-    };
 
     function renderRoutingStepRow(step = { op: '', workCenter: '', duration: 10, laborCost: 0, desc: '' }, index) {
         const wcOptions = workCenters.map(wc => `<option value="${wc.name}" ${step.workCenter === wc.name ? 'selected' : ''}>${wc.name}</option>`).join('');

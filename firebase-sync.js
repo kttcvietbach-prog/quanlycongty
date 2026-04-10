@@ -277,10 +277,14 @@
                 showSyncIndicator('Đồng bộ thành công!', 'success');
                 setTimeout(hideSyncIndicator, 2000);
 
-                // Final UI refresh after all collections are synced
+                // Final UI refresh after all collections are synced - only if app is already showing
                 if (window.erpApp && window.erpApp.renderPage && window.erpApp.getCurrentPage) {
-                    const current = window.erpApp.getCurrentPage();
-                    if (current) window.erpApp.renderPage(current);
+                    const appContainer = document.getElementById('appContainer');
+                    const isAppVisible = appContainer && appContainer.style.display === 'flex';
+                    if (isAppVisible) {
+                        const current = window.erpApp.getCurrentPage();
+                        if (current) window.erpApp.renderPage(current);
+                    }
                 }
 
                 // Resolve ready promise
