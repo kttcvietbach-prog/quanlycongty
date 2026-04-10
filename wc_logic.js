@@ -253,4 +253,3 @@ window.erpApp.closeWcModal = function () {
 
 window.erpApp.renderWorkCenters = renderWorkCenters;
 window.erpApp.workCenters = workCenters;
-}) ();

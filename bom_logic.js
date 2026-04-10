@@ -1,55 +1,55 @@
 
-    // ==========================================
-    // MODULE: Định mức nguyên vật liệu (BOM)
-    // ==========================================
-    let bomSearchQuery = '';
-    let bomActiveTab = 'all';
-    let boms = [
-        { 
-            id: 'BOM-A001', 
-            productName: 'Áo sơ mi nam công sở', 
-            version: '1.0', 
-            baseQty: 1, 
-            status: 'active',
-            items: [
-                { name: 'Vải Cotton', unit: 'Mét', qty: 1.5, scrapPercent: 5, estimatePrice: 120000 },
-                { name: 'Nút áo', unit: 'Cái', qty: 7, scrapPercent: 0, estimatePrice: 1000 },
-                { name: 'Chỉ may', unit: 'Cuộn', qty: 0.1, scrapPercent: 2, estimatePrice: 15000 }
-            ]
-        },
-        { 
-            id: 'BOM-Q001', 
-            productName: 'Quần tây Âu premium', 
-            version: '1.2', 
-            baseQty: 1, 
-            status: 'draft',
-            items: [
-                { name: 'Vải Wool', unit: 'Mét', qty: 1.8, scrapPercent: 10, estimatePrice: 350000 },
-                { name: 'Khóa kéo', unit: 'Cái', qty: 1, scrapPercent: 0, estimatePrice: 5000 },
-                { name: 'Cúc quần', unit: 'Cái', qty: 2, scrapPercent: 0, estimatePrice: 2000 }
-            ]
-        }
-    ];
+// ==========================================
+// MODULE: Định mức nguyên vật liệu (BOM)
+// ==========================================
+let bomSearchQuery = '';
+let bomActiveTab = 'all';
+let boms = [
+    {
+        id: 'BOM-A001',
+        productName: 'Áo sơ mi nam công sở',
+        version: '1.0',
+        baseQty: 1,
+        status: 'active',
+        items: [
+            { name: 'Vải Cotton', unit: 'Mét', qty: 1.5, scrapPercent: 5, estimatePrice: 120000 },
+            { name: 'Nút áo', unit: 'Cái', qty: 7, scrapPercent: 0, estimatePrice: 1000 },
+            { name: 'Chỉ may', unit: 'Cuộn', qty: 0.1, scrapPercent: 2, estimatePrice: 15000 }
+        ]
+    },
+    {
+        id: 'BOM-Q001',
+        productName: 'Quần tây Âu premium',
+        version: '1.2',
+        baseQty: 1,
+        status: 'draft',
+        items: [
+            { name: 'Vải Wool', unit: 'Mét', qty: 1.8, scrapPercent: 10, estimatePrice: 350000 },
+            { name: 'Khóa kéo', unit: 'Cái', qty: 1, scrapPercent: 0, estimatePrice: 5000 },
+            { name: 'Cúc quần', unit: 'Cái', qty: 2, scrapPercent: 0, estimatePrice: 2000 }
+        ]
+    }
+];
 
-    try {
-        const savedBoms = JSON.parse(localStorage.getItem('erp_boms'));
-        if (savedBoms && Array.isArray(savedBoms)) {
-            boms = savedBoms;
-        }
-    } catch (e) {}
+try {
+    const savedBoms = JSON.parse(localStorage.getItem('erp_boms'));
+    if (savedBoms && Array.isArray(savedBoms)) {
+        boms = savedBoms;
+    }
+} catch (e) { }
 
-    function renderBOM() {
-        breadcrumbCurrent.textContent = 'Định mức nguyên vật liệu (BOM)';
-        pageBadge.textContent = 'Sản xuất';
+function renderBOM() {
+    breadcrumbCurrent.textContent = 'Định mức nguyên vật liệu (BOM)';
+    pageBadge.textContent = 'Sản xuất';
 
-        const filteredBoms = boms.filter(bom => {
-            const matchesSearch = bom.id.toLowerCase().includes(bomSearchQuery.toLowerCase()) || 
-                                bom.productName.toLowerCase().includes(bomSearchQuery.toLowerCase());
-            const matchesTab = bomActiveTab === 'all' || bom.status === bomActiveTab;
-            return matchesSearch && matchesTab;
-        });
+    const filteredBoms = boms.filter(bom => {
+        const matchesSearch = bom.id.toLowerCase().includes(bomSearchQuery.toLowerCase()) ||
+            bom.productName.toLowerCase().includes(bomSearchQuery.toLowerCase());
+        const matchesTab = bomActiveTab === 'all' || bom.status === bomActiveTab;
+        return matchesSearch && matchesTab;
+    });
 
-        const html = `
+    const html = `
             <div class="bom-module" style="animation: fadeIn 0.4s ease-out;">
                 <div class="module-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                     <div style="display:flex; align-items:center; gap:16px;">
@@ -83,8 +83,8 @@
                             <div style="color:#64748b; font-weight:600;">Không tìm thấy định mức nào phù hợp</div>
                         </div>
                     ` : filteredBoms.map(bom => {
-                        const totalCost = bom.items.reduce((sum, item) => sum + (item.qty * item.estimatePrice * (1 + (item.scrapPercent || 0)/100)), 0);
-                        return `
+        const totalCost = bom.items.reduce((sum, item) => sum + (item.qty * item.estimatePrice * (1 + (item.scrapPercent || 0) / 100)), 0);
+        return `
                         <div class="bom-card" style="background:#fff; border:1px solid #e2e8f0; border-radius:24px; padding:24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition:all 0.3s; cursor:pointer; position:relative; overflow:hidden;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 20px 25px -5px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#ddd6fe'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.05)'; this.style.borderColor='#e2e8f0'">
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
                                 <div>
@@ -123,54 +123,54 @@
                             </div>
                         </div>
                         `;
-                    }).join('')}
+    }).join('')}
                 </div>
             </div>
         `;
-        pageContent.innerHTML = html;
-        window.erpApp.boms = boms;
-    }
+    pageContent.innerHTML = html;
+    window.erpApp.boms = boms;
+}
 
-    window.erpApp.handleBomSearch = function(val) {
-        bomSearchQuery = val;
-        renderBOM();
+window.erpApp.handleBomSearch = function (val) {
+    bomSearchQuery = val;
+    renderBOM();
+};
+
+window.erpApp.setBomTab = function (tab) {
+    bomActiveTab = tab;
+    renderBOM();
+};
+
+window.erpApp.cloneBOM = function (id) {
+    const source = boms.find(b => b.id === id);
+    if (!source) return;
+
+    const clone = JSON.parse(JSON.stringify(source));
+    clone.id = `BOM-CLONE-${Date.now().toString().slice(-4)}`;
+    clone.productName = `${source.productName} (Bản sao)`;
+    clone.status = 'draft';
+
+    boms.unshift(clone);
+    localStorage.setItem('erp_boms', JSON.stringify(boms));
+    showToast('Đã nhân bản định mức thành công!');
+    renderBOM();
+};
+
+window.erpApp.openBomModal = function (id = null) {
+    const bom = id ? boms.find(b => b.id === id) : {
+        id: `BOM-${Date.now().toString().slice(-4)}`,
+        productName: '',
+        version: '1.0',
+        baseQty: 1,
+        status: 'draft',
+        items: []
     };
 
-    window.erpApp.setBomTab = function(tab) {
-        bomActiveTab = tab;
-        renderBOM();
-    };
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'bomModal';
 
-    window.erpApp.cloneBOM = function(id) {
-        const source = boms.find(b => b.id === id);
-        if (!source) return;
-        
-        const clone = JSON.parse(JSON.stringify(source));
-        clone.id = `BOM-CLONE-${Date.now().toString().slice(-4)}`;
-        clone.productName = `${source.productName} (Bản sao)`;
-        clone.status = 'draft';
-        
-        boms.unshift(clone);
-        localStorage.setItem('erp_boms', JSON.stringify(boms));
-        showToast('Đã nhân bản định mức thành công!');
-        renderBOM();
-    };
-
-    window.erpApp.openBomModal = function(id = null) {
-        const bom = id ? boms.find(b => b.id === id) : {
-            id: `BOM-${Date.now().toString().slice(-4)}`,
-            productName: '',
-            version: '1.0',
-            baseQty: 1,
-            status: 'draft',
-            items: []
-        };
-
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.id = 'bomModal';
-
-        modal.innerHTML = `
+    modal.innerHTML = `
             <div class="modal-content" style="max-width: 900px; height: 90vh;">
                 <div class="modal-header">
                     <h2><span class="material-icons-outlined">account_tree</span> ${id ? 'Cập nhật Định mức' : 'Thiết lập Định mức mới'}</h2>
@@ -255,27 +255,18 @@
             </div>
         `;
 
-        document.body.appendChild(modal);
-        window.erpApp.updateBomTotal();
+    document.body.appendChild(modal);
+    window.erpApp.updateBomTotal();
 
-        document.getElementById('bomModal').addEventListener('input', (e) => {
-            if (e.target.tagName === 'INPUT') {
-                window.erpApp.updateBomTotal();
-            }
-        });
-    }
-        window.erpApp.updateBomTotal();
+    document.getElementById('bomModal').addEventListener('input', (e) => {
+        if (e.target.tagName === 'INPUT') {
+            window.erpApp.updateBomTotal();
+        }
+    });
+}
 
-        // Add auto-calculation listeners
-        document.getElementById('bomModal').addEventListener('input', (e) => {
-            if (e.target.tagName === 'INPUT') {
-                window.erpApp.updateBomTotal();
-            }
-        });
-    }
-
-    function renderBomItemRow(item = { name: '', unit: 'Mét', qty: 0, scrapPercent: 0, estimatePrice: 0 }, index) {
-        return `
+function renderBomItemRow(item = { name: '', unit: 'Mét', qty: 0, scrapPercent: 0, estimatePrice: 0 }, index) {
+    return `
             <tr class="bom-item-row" data-index="${index}" style="border-bottom:1px solid #f8fafc;">
                 <td style="padding:12px 0;"><input type="text" class="item-name form-control" value="${item.name}" placeholder="Tên vật liệu..." style="background:transparent; border:none; border-bottom:1px dashed #cbd5e1; border-radius:0; padding:4px 0; font-weight:700;"></td>
                 <td style="padding:12px 10px;"><input type="text" class="item-unit form-control" value="${item.unit}" style="background:transparent; border:none; padding:4px 0; font-size:13px; color:var(--text-muted);"></td>
@@ -289,65 +280,65 @@
                 </td>
             </tr>
         `;
-    }
+}
 
-    window.erpApp.addBomItemRow = function() {
-        const list = document.getElementById('bomItemsList');
-        const rows = list.querySelectorAll('.bom-item-row');
-        const newIndex = rows.length;
-        list.insertAdjacentHTML('beforeend', renderBomItemRow(undefined, newIndex));
-    };
+window.erpApp.addBomItemRow = function () {
+    const list = document.getElementById('bomItemsList');
+    const rows = list.querySelectorAll('.bom-item-row');
+    const newIndex = rows.length;
+    list.insertAdjacentHTML('beforeend', renderBomItemRow(undefined, newIndex));
+};
 
-    window.erpApp.updateBomTotal = function() {
-        const rows = document.querySelectorAll('.bom-item-row');
-        let total = 0;
-        rows.forEach(row => {
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const scrap = parseFloat(row.querySelector('.item-scrap').value) || 0;
-            const price = parseFloat(row.querySelector('.item-price').value) || 0;
-            total += qty * price * (1 + scrap/100);
+window.erpApp.updateBomTotal = function () {
+    const rows = document.querySelectorAll('.bom-item-row');
+    let total = 0;
+    rows.forEach(row => {
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const scrap = parseFloat(row.querySelector('.item-scrap').value) || 0;
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        total += qty * price * (1 + scrap / 100);
+    });
+    document.getElementById('bomTotalCost').textContent = new Intl.NumberFormat('vi-VN').format(total) + ' đ';
+};
+
+window.erpApp.saveBOM = function () {
+    const id = document.getElementById('bomCode').value;
+    const productName = document.getElementById('bomProductName').value;
+    if (!productName) { showToast('Vui lòng nhập tên thành phẩm!', 'error'); return; }
+
+    const items = [];
+    document.querySelectorAll('.bom-item-row').forEach(row => {
+        items.push({
+            name: row.querySelector('.item-name').value,
+            unit: row.querySelector('.item-unit').value,
+            qty: parseFloat(row.querySelector('.item-qty').value) || 0,
+            scrapPercent: parseFloat(row.querySelector('.item-scrap').value) || 0,
+            estimatePrice: parseFloat(row.querySelector('.item-price').value) || 0
         });
-        document.getElementById('bomTotalCost').textContent = new Intl.NumberFormat('vi-VN').format(total) + ' đ';
+    });
+
+    const newBom = {
+        id,
+        productName,
+        version: document.getElementById('bomVersion').value,
+        baseQty: parseFloat(document.getElementById('bomBaseQty').value) || 1,
+        status: document.getElementById('bomStatus').value,
+        items
     };
 
-    window.erpApp.saveBOM = function() {
-        const id = document.getElementById('bomCode').value;
-        const productName = document.getElementById('bomProductName').value;
-        if (!productName) { showToast('Vui lòng nhập tên thành phẩm!', 'error'); return; }
+    const idx = boms.findIndex(b => b.id === id);
+    if (idx > -1) boms[idx] = newBom;
+    else boms.unshift(newBom);
 
-        const items = [];
-        document.querySelectorAll('.bom-item-row').forEach(row => {
-            items.push({
-                name: row.querySelector('.item-name').value,
-                unit: row.querySelector('.item-unit').value,
-                qty: parseFloat(row.querySelector('.item-qty').value) || 0,
-                scrapPercent: parseFloat(row.querySelector('.item-scrap').value) || 0,
-                estimatePrice: parseFloat(row.querySelector('.item-price').value) || 0
-            });
-        });
+    localStorage.setItem('erp_boms', JSON.stringify(boms));
+    showToast('Đã lưu cấu hình định mức nguyên liệu thành công!');
+    window.erpApp.closeBomModal();
+    renderBOM();
+};
 
-        const newBom = {
-            id,
-            productName,
-            version: document.getElementById('bomVersion').value,
-            baseQty: parseFloat(document.getElementById('bomBaseQty').value) || 1,
-            status: document.getElementById('bomStatus').value,
-            items
-        };
+window.erpApp.closeBomModal = function () {
+    const m = document.getElementById('bomModal');
+    if (m) m.remove();
+};
 
-        const idx = boms.findIndex(b => b.id === id);
-        if (idx > -1) boms[idx] = newBom;
-        else boms.unshift(newBom);
-
-        localStorage.setItem('erp_boms', JSON.stringify(boms));
-        showToast('Đã lưu cấu hình định mức nguyên liệu thành công!');
-        window.erpApp.closeBomModal();
-        renderBOM();
-    };
-
-    window.erpApp.closeBomModal = function() {
-        const m = document.getElementById('bomModal');
-        if (m) m.remove();
-    };
-
-    window.erpApp.renderBOM = renderBOM;
+window.erpApp.renderBOM = renderBOM;
