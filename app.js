@@ -131,7 +131,7 @@
 
                     if (window.SyncManager && typeof window.SyncManager.init === 'function') {
                         try {
-                            await window.SyncManager.init();
+                            window.SyncManager.init(); // Non-blocking sync in background
                         } catch (err) {
                             console.warn('SyncManager failed to initialize:', err);
                         }

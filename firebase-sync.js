@@ -269,9 +269,8 @@
                 ];
 
 
-                for (const col of collections) {
-                    await this.syncCollection(col.name, col.idField);
-                }
+                // Synchronize all collections in parallel
+                await Promise.all(collections.map(col => this.syncCollection(col.name, col.idField)));
 
                 this.isInitialized = true;
                 console.log('✅ Đồng bộ Firebase hoàn tất!');
