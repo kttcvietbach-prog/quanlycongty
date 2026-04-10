@@ -11949,12 +11949,13 @@
         });
     }
 
-    function deletePhieuKho(id) {
-        pkList = pkList.filter(p => p.id !== id);
-        const m = document.getElementById('pkDeleteModal');
-        if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
-        showToast('Đã xóa ' + id); renderPhieuKho();
-    }
+        if (confirm('Bạn có chắc chắn muốn xóa phiếu ' + id + '?')) {
+            pkList = pkList.filter(p => p.id !== id);
+            if (window.CrudSync) window.CrudSync.deleteItem('warehousing_slips', id);
+            const m = document.getElementById('pkDeleteModal');
+            if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); }
+            showToast('Đã xóa ' + id); renderPhieuKho();
+        }
 
     function deletePkItemRow(pkId, itemIdx) {
         const pk = pkList.find(p => p.id === pkId);
@@ -11965,6 +11966,7 @@
         } else {
             const itemName = pk.items[itemIdx].name;
             pk.items.splice(itemIdx, 1);
+            if (window.CrudSync) window.CrudSync.saveItem('warehousing_slips', pk);
             showToast(`Đã xóa mặt hàng "${itemName}" khỏi phiếu ${pkId}`);
             renderPhieuKho();
         }
@@ -12282,6 +12284,11 @@
             danhMucHangHoaData.push({ id, name, parent, desc, order, status, updated: dateStr });
         }
 
+        if (window.CrudSync) {
+            const item = danhMucHangHoaData.find(d => d.id === (isEdit ? document.getElementById('dmhhOldId').value : id));
+            if (item) window.CrudSync.saveItem('product_categories', item);
+        }
+
         window.erpApp.closeDmhhModal();
         window.erpApp.renderDanhMucHangHoa();
         showToast(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
@@ -12296,6 +12303,7 @@
             }
 
             danhMucHangHoaData = danhMucHangHoaData.filter(d => d.id !== id);
+            if (window.CrudSync) window.CrudSync.deleteItem('product_categories', id);
             window.erpApp.renderDanhMucHangHoa();
             showToast('Đã xóa danh mục');
         }
@@ -12589,6 +12597,11 @@
             });
         }
 
+        if (window.CrudSync) {
+            const item = danhSachHangHoaData.find(d => d.id === id);
+            if (item) window.CrudSync.saveItem('inventory_items', item);
+        }
+
         window.erpApp.closeDshhModal();
         window.erpApp.renderDanhSachHangHoa();
         showToast(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
@@ -12605,6 +12618,7 @@
     window.erpApp.deleteDshh = function (id) {
         if (confirm(`Bạn có chắc muốn xóa hàng hóa ${id}?`)) {
             danhSachHangHoaData = danhSachHangHoaData.filter(d => d.id !== id);
+            if (window.CrudSync) window.CrudSync.deleteItem('inventory_items', id);
             window.erpApp.renderDanhSachHangHoa();
             showToast('Đã xóa hàng hóa');
         }
@@ -12869,6 +12883,11 @@
             danhSachKhoData.push({ id, name, location, manager, phone, status, desc, updated: dateStr });
         }
 
+        if (window.CrudSync) {
+            const item = danhSachKhoData.find(d => d.id === id);
+            if (item) window.CrudSync.saveItem('warehouses', item);
+        }
+
         window.erpApp.closeDskModal();
         window.erpApp.renderDanhSachKho();
         showToast(isEdit ? 'Cập nhật thành công' : 'Thêm kho thành công');
@@ -12885,6 +12904,7 @@
     window.erpApp.deleteDsk = function (id) {
         if (confirm(`Bạn có chắc muốn xóa kho ${id}?`)) {
             danhSachKhoData = danhSachKhoData.filter(d => d.id !== id);
+            if (window.CrudSync) window.CrudSync.deleteItem('warehouses', id);
             window.erpApp.renderDanhSachKho();
             showToast('Đã xóa kho');
         }
@@ -13176,6 +13196,11 @@
             danhSachDoiTacData.push({ id, name, group, taxId, address, phone, bankAccount, tags, order, status, updated: dateStr });
         }
 
+        if (window.CrudSync) {
+            const item = danhSachDoiTacData.find(d => d.id === id);
+            if (item) window.CrudSync.saveItem('partners', item);
+        }
+
         window.erpApp.closeDsdtModal();
         window.erpApp.renderDanhSachDoiTac();
         showToast(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
@@ -13192,6 +13217,7 @@
     window.erpApp.deleteDsdt = function (id) {
         if (confirm(`Bạn có chắc muốn xóa đối tác ${id}?`)) {
             danhSachDoiTacData = danhSachDoiTacData.filter(d => d.id !== id);
+            if (window.CrudSync) window.CrudSync.deleteItem('inventory_items', id); // Checking actual collection names below...
             window.erpApp.renderDanhSachDoiTac();
             showToast('Đã xóa đối tác');
         }
@@ -14608,6 +14634,9 @@
             case 'congVanList': return congVanList;
             case 'contracts': return contracts;
             case 'inventory_items': return danhSachHangHoaData;
+            case 'product_categories': return danhMucHangHoaData;
+            case 'warehouses': return danhSachKhoData;
+            case 'partners': return danhSachDoiTacData;
             case 'warehousing_slips': return pkList;
             case 'goods_receipts': return goodsReceipts;
             case 'projects': return danhSachDuAnData;
@@ -14624,6 +14653,9 @@
             case 'congVanList': congVanList = data; break;
             case 'contracts': contracts = data; break;
             case 'inventory_items': danhSachHangHoaData = data; break;
+            case 'product_categories': danhMucHangHoaData = data; break;
+            case 'warehouses': danhSachKhoData = data; break;
+            case 'partners': danhSachDoiTacData = data; break;
             case 'warehousing_slips': pkList = data; break;
             case 'goods_receipts': goodsReceipts = data; break;
             case 'projects': danhSachDuAnData = data; break;
