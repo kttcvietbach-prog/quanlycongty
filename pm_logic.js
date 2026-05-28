@@ -5220,7 +5220,7 @@ window.erpApp = window.erpApp || {};
                             </div>
                             <div>
                                 <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Giá trị thanh toán kỳ này (VNĐ)</label>
-                                <input type="text" name="actualValue" value="${window.erpApp.formatValue(initialData.actualValue)}" oninput="window.erpApp.formatNumberInput(this)" required style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; font-weight:700; color:#10b981;">
+                                <input type="text" name="actualValue" value="${window.erpApp.formatValue(initialData.actualValue)}" oninput="window.erpApp.formatNumberInput(this)" style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; font-weight:700; color:#10b981;">
                             </div>
                         </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
@@ -6550,8 +6550,8 @@ window.erpApp = window.erpApp || {};
                                             <div style="font-weight:700">${m.title}</div>
                                             <div style="font-size:11px; color:#64748b">ID: ${m.id}</div>
                                         </td>
-                                        <td class="text-right" style="font-weight:600; color:${color}">${sign}${fMoney(m.plannedValue || 0)}</td>
-                                        <td class="text-right" style="font-weight:700; color:${color}">${sign}${fMoney(m.actualValue)}</td>
+                                        <td class="text-right" style="font-weight:600; color:${color}">${Math.round(m.plannedValue || 0) === 0 ? '0' : `${sign}${fMoney(m.plannedValue || 0)}`}</td>
+                                        <td class="text-right" style="font-weight:700; color:${color}">${Math.round(m.actualValue || 0) === 0 ? '0' : `${sign}${fMoney(m.actualValue)}`}</td>
                                         <td class="text-center">${m.date}</td>
                                         <td class="text-center">
                                             <span class="pm-status-badge ${m.status === 'da-quyet-toan' ? 'hoan-thanh' : (m.status === 'da-thanh-toan' ? 'dang-thi-cong' : (m.status === 'cho-duyet' ? 'dang-hoan-thien' : (m.status === 'tam-ung' ? 'moi-ki' : (String(m.status).startsWith('custom-') ? 'dang-hoan-thien' : 'chua-bat-dau'))))}">
@@ -14435,7 +14435,7 @@ window.erpApp = window.erpApp || {};
                         </div>
                          <div class="form-group" style="margin-bottom:20px;">
                             <label style="display:block; font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:8px;">Số tiền Thực tế (VNĐ)</label>
-                            <input type="text" name="actualValue" required value="${window.erpApp.formatValue(milestone.actualValue)}" oninput="window.erpApp.formatNumberInput(this)" placeholder="0" style="width:100%; padding:12px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; font-weight:800; color:#10b981; outline:none;">
+                            <input type="text" name="actualValue" value="${window.erpApp.formatValue(milestone.actualValue)}" oninput="window.erpApp.formatNumberInput(this)" placeholder="0" style="width:100%; padding:12px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; font-weight:800; color:#10b981; outline:none;">
                         </div>
                         <div class="form-group" style="margin-bottom:20px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
