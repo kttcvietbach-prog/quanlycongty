@@ -5066,11 +5066,76 @@ window.erpApp = window.erpApp || {};
             actualValueInput.value = window.erpApp.formatValue(actualValue);
         }
     }
+
+    const defaultStatuses = [
+        { value: 'chua-den-han', label: 'Chưa đến hạn' },
+        { value: 'tam-ung', label: 'Đã tạm ứng' },
+        { value: 'cho-duyet', label: 'Chưa tạm ứng' },
+        { value: 'da-thanh-toan', label: 'Đã thanh toán' },
+        { value: 'da-quyet-toan', label: 'Đã Quyết toán' }
+    ];
+
+    window.erpApp.pmGetStatusLabel = (statusValue) => {
+        let custom = [];
+        try {
+            const stored = localStorage.getItem('erp_pm_custom_payment_statuses');
+            if (stored) {
+                custom = JSON.parse(stored);
+            }
+        } catch (e) { }
+        const found = [...defaultStatuses, ...custom].find(s => s.value === statusValue);
+        return found ? found.label : (statusValue || 'Chưa đến hạn');
+    };
+
+    window.erpApp.pmAddNewPaymentStatus = async () => {
+        const name = await window.erpApp.pmCustomPrompt('Thêm Trạng Thái Mới', 'Nhập tên trạng thái thanh toán mới...');
+        if (!name || !name.trim()) return;
+
+        const newLabel = name.trim();
+        const cleanSlug = newLabel.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[đĐ]/g, 'd')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        const newValue = 'custom-' + (cleanSlug || Date.now());
+
+        let custom = [];
+        try {
+            const stored = localStorage.getItem('erp_pm_custom_payment_statuses');
+            if (stored) {
+                custom = JSON.parse(stored);
+            }
+        } catch (e) { }
+
+        const defaultExists = defaultStatuses.some(st => st.value === newValue || st.label.toLowerCase() === newLabel.toLowerCase());
+        const customExists = custom.some(st => st.value === newValue || st.label.toLowerCase() === newLabel.toLowerCase());
+
+        if (defaultExists || customExists) {
+            window.erpApp.showToast('Trạng thái này đã tồn tại!', 'error');
+            return;
+        }
+
+        custom.push({ value: newValue, label: newLabel });
+        localStorage.setItem('erp_pm_custom_payment_statuses', JSON.stringify(custom));
+        window.erpApp.showToast('Đã thêm trạng thái mới thành công!', 'success');
+
+        const statusSelects = document.querySelectorAll('select[name="status"]');
+        statusSelects.forEach(select => {
+            const newOption = document.createElement('option');
+            newOption.value = newValue;
+            newOption.textContent = newLabel;
+            newOption.selected = true;
+            select.appendChild(newOption);
+        });
+    };
+
     function pmOpenPaymentModal(id = null, prefilledContractId = null) {
         const isEdit = !!id;
         const item = isEdit ? pmPaymentMilestones.find(m => m.id === id) : null;
 
-        window.tempContractFiles = item && item.vouchers ? [...item.vouchers] : (item && item.fileUrl ? [{name: 'Tài liệu hiện tại', type: 'link', data: item.fileUrl}] : []);
+        window.tempContractFiles = item && item.vouchers ? [...item.vouchers] : (item && item.fileUrl ? [{ name: 'Tài liệu hiện tại', type: 'link', data: item.fileUrl }] : []);
 
         // Find the selected contract to pre-populate its current value
         const contractId = item ? item.contractId : (prefilledContractId || '');
@@ -5106,6 +5171,18 @@ window.erpApp = window.erpApp || {};
             .filter(c => c.projectId === pmActiveProjectId)
             .map(c => `<option value="${c.id}" ${c.id === initialData.contractId ? 'selected' : ''}>${c.id} - ${c.title}</option>`)
             .join('');
+
+        let customStatuses = [];
+        try {
+            const stored = localStorage.getItem('erp_pm_custom_payment_statuses');
+            if (stored) {
+                customStatuses = JSON.parse(stored);
+            }
+        } catch (e) { }
+        const allStatuses = [...defaultStatuses, ...customStatuses];
+        const statusOptionsHtml = allStatuses.map(st =>
+            `<option value="${st.value}" ${initialData.status === st.value ? 'selected' : ''}>${st.label}</option>`
+        ).join('');
 
         const modalHtml = `
         <div class="modal-overlay" id="pmPaymentModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px); padding:20px;">
@@ -5152,13 +5229,14 @@ window.erpApp = window.erpApp || {};
                                 <input type="text" name="date" value="${window.erpApp.formatDate(initialData.date)}" required placeholder="DD/MM/YYYY" style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none;">
                             </div>
                             <div>
-                                <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Trạng thái</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin:0;">Trạng thái</label>
+                                    <button type="button" onclick="window.erpApp.pmAddNewPaymentStatus()" style="background:none; border:none; color:#2563eb; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:2px; padding:0;">
+                                        <span class="material-icons-outlined" style="font-size:14px;">add_circle</span>Thêm mới
+                                    </button>
+                                </div>
                                 <select name="status" style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; font-weight:700; background:#fff;">
-                                    <option value="chua-den-han" ${initialData.status === 'chua-den-han' ? 'selected' : ''}>Chưa đến hạn</option>
-                                    <option value="tam-ung" ${initialData.status === 'tam-ung' ? 'selected' : ''}>Đã tạm ứng</option>
-                                    <option value="cho-duyet" ${initialData.status === 'cho-duyet' ? 'selected' : ''}>Chờ duyệt TT</option>
-                                    <option value="da-thanh-toan" ${initialData.status === 'da-thanh-toan' ? 'selected' : ''}>Đã thanh toán</option>
-                                    <option value="da-quyet-toan" ${initialData.status === 'da-quyet-toan' ? 'selected' : ''}>Đã Quyết toán</option>
+                                    ${statusOptionsHtml}
                                 </select>
                             </div>
                         </div>
@@ -6476,8 +6554,8 @@ window.erpApp = window.erpApp || {};
                                         <td class="text-right" style="font-weight:700; color:${color}">${sign}${fMoney(m.actualValue)}</td>
                                         <td class="text-center">${m.date}</td>
                                         <td class="text-center">
-                                            <span class="pm-status-badge ${m.status === 'da-quyet-toan' ? 'hoan-thanh' : (m.status === 'da-thanh-toan' ? 'dang-thi-cong' : (m.status === 'cho-duyet' ? 'dang-hoan-thien' : (m.status === 'tam-ung' ? 'moi-ki' : 'chua-bat-dau')))}">
-                                                ${m.status === 'da-quyet-toan' ? 'Đã Quyết toán' : (m.status === 'da-thanh-toan' ? 'Đã thanh toán' : (m.status === 'cho-duyet' ? 'Chờ duyệt TT' : (m.status === 'tam-ung' ? 'Đã tạm ứng' : 'Chưa đến hạn')))}
+                                            <span class="pm-status-badge ${m.status === 'da-quyet-toan' ? 'hoan-thanh' : (m.status === 'da-thanh-toan' ? 'dang-thi-cong' : (m.status === 'cho-duyet' ? 'dang-hoan-thien' : (m.status === 'tam-ung' ? 'moi-ki' : (String(m.status).startsWith('custom-') ? 'dang-hoan-thien' : 'chua-bat-dau'))))}">
+                                                ${window.erpApp.pmGetStatusLabel(m.status)}
                                             </span>
                                         </td>
                                         <td class="text-center">
@@ -8981,9 +9059,7 @@ window.erpApp = window.erpApp || {};
                 }
                 const sign = isRevenue ? 1 : -1;
 
-                const statusText = m.status === 'da-quyet-toan' ? 'Đã Quyết toán' :
-                    (m.status === 'da-thanh-toan' ? 'Đã thanh toán' :
-                        (m.status === 'cho-duyet' ? 'Chờ duyệt TT' : 'Chưa đến hạn'));
+                const statusText = window.erpApp.pmGetStatusLabel(m.status);
 
                 return [
                     index + 1,
@@ -14318,6 +14394,18 @@ window.erpApp = window.erpApp || {};
             if (found) { milestone = { ...found }; }
         }
 
+        let customStatuses = [];
+        try {
+            const stored = localStorage.getItem('erp_pm_custom_payment_statuses');
+            if (stored) {
+                customStatuses = JSON.parse(stored);
+            }
+        } catch (e) {}
+        const allStatuses = [...defaultStatuses, ...customStatuses];
+        const statusOptionsHtml = allStatuses.map(st => 
+            `<option value="${st.value}" ${milestone.status === st.value ? 'selected' : ''}>${st.label}</option>`
+        ).join('');
+
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.style = 'background:rgba(15,23,42,0.6); backdrop-filter:blur(5px); position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; display:flex; align-items:center; justify-content:center;';
@@ -14350,12 +14438,14 @@ window.erpApp = window.erpApp || {};
                             <input type="text" name="actualValue" required value="${window.erpApp.formatValue(milestone.actualValue)}" oninput="window.erpApp.formatNumberInput(this)" placeholder="0" style="width:100%; padding:12px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; font-weight:800; color:#10b981; outline:none;">
                         </div>
                         <div class="form-group" style="margin-bottom:20px;">
-                            <label style="display:block; font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:8px;">Trạng thái</label>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <label style="display:block; font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin:0;">Trạng thái</label>
+                                <button type="button" onclick="window.erpApp.pmAddNewPaymentStatus()" style="background:none; border:none; color:#2563eb; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:2px; padding:0;">
+                                    <span class="material-icons-outlined" style="font-size:14px;">add_circle</span>Thêm mới
+                                </button>
+                            </div>
                             <select name="status" style="width:100%; padding:12px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; outline:none; background:#fff;">
-                                <option value="chua-den-han" ${milestone.status === 'chua-den-han' ? 'selected' : ''}>Chưa đến hạn</option>
-                                <option value="cho-duyet" ${milestone.status === 'cho-duyet' ? 'selected' : ''}>Chờ duyệt TT</option>
-                                <option value="da-thanh-toan" ${milestone.status === 'da-thanh-toan' ? 'selected' : ''}>Đã thanh toán</option>
-                                <option value="da-quyet-toan" ${milestone.status === 'da-quyet-toan' ? 'selected' : ''}>Đã Quyết toán</option>
+                                ${statusOptionsHtml}
                             </select>
                         </div>
                         <div class="form-group">
@@ -15626,7 +15716,7 @@ window.erpApp = window.erpApp || {};
 
     window.erpApp.pmOpenAddFinanceModal = (recordId = null) => {
         const record = recordId ? pmFinanceRecords.find(r => r.id === recordId) : null;
-        window.tempContractFiles = record && record.vouchers ? [...record.vouchers] : (record && record.fileUrl ? [{name: 'Tài liệu hiện tại', type: 'link', data: record.fileUrl}] : []);
+        window.tempContractFiles = record && record.vouchers ? [...record.vouchers] : (record && record.fileUrl ? [{ name: 'Tài liệu hiện tại', type: 'link', data: record.fileUrl }] : []);
         const today = new Date().toISOString().split('T')[0];
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -16104,7 +16194,7 @@ window.erpApp = window.erpApp || {};
 
     window.erpApp.pmOpenAddContractedExpenseModal = (contractId = null) => {
         const contract = contractId ? pmContracts.find(c => c.id === contractId) : null;
-        window.tempContractFiles = contract && contract.vouchers ? [...contract.vouchers] : (contract && contract.fileUrl ? [{name: 'Tài liệu hiện tại', type: 'link', data: contract.fileUrl}] : []);
+        window.tempContractFiles = contract && contract.vouchers ? [...contract.vouchers] : (contract && contract.fileUrl ? [{ name: 'Tài liệu hiện tại', type: 'link', data: contract.fileUrl }] : []);
         const today = new Date().toISOString().split('T')[0];
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -18396,12 +18486,12 @@ window.erpApp = window.erpApp || {};
 
     const pmShowPhotoSourceOptions = (event, targetId) => {
         event.stopPropagation();
-        
+
         const label = targetId === 'portrait' ? 'Ảnh chân dung' : (targetId === 'idFront' ? 'Mặt trước CCCD' : 'Mặt sau CCCD');
         const overlay = document.createElement('div');
         overlay.className = 'photo-options-overlay';
         overlay.style = 'background:rgba(15,23,42,0.4); backdrop-filter:blur(3px); position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000; display:flex; align-items:center; justify-content:center;';
-        
+
         overlay.innerHTML = `
             <div style="width:340px; background:#fff; border-radius:20px; padding:20px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); border:1px solid #f1f5f9; text-align:center; animation:modalPop 0.2s ease-out;">
                 <h3 style="margin:0 0 8px 0; font-size:16px; font-weight:800; color:#1e293b;">Tùy chọn tải lên</h3>
@@ -18438,7 +18528,7 @@ window.erpApp = window.erpApp || {};
         const overlay = document.createElement('div');
         overlay.className = 'webcam-modal-overlay';
         overlay.style = 'background:rgba(15,23,42,0.7); backdrop-filter:blur(5px); position:fixed; top:0; left:0; width:100%; height:100%; z-index:10001; display:flex; align-items:center; justify-content:center;';
-        
+
         overlay.innerHTML = `
             <div style="width:500px; background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); text-align:center; animation:modalPop 0.3s ease-out;">
                 <div style="padding:18px 24px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
@@ -18464,17 +18554,17 @@ window.erpApp = window.erpApp || {};
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(overlay);
-        
+
         const video = overlay.querySelector('#webcamVideo');
         const canvas = overlay.querySelector('#webcamCanvas');
         const loading = overlay.querySelector('#webcamLoading');
         const captureBtn = overlay.querySelector('#capturePhotoBtn');
         const closeBtn = overlay.querySelector('#closeWebcamBtn');
-        
+
         let localStream = null;
-        
+
         try {
             localStream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -18496,34 +18586,34 @@ window.erpApp = window.erpApp || {};
             captureBtn.disabled = true;
             captureBtn.style.opacity = '0.5';
         }
-        
+
         const stopStream = () => {
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
             }
             overlay.remove();
         };
-        
+
         closeBtn.onclick = stopStream;
-        
+
         captureBtn.onclick = () => {
             if (!localStream) return;
-            
+
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
             const ctx = canvas.getContext('2d');
-            
+
             if (targetId === 'portrait') {
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
             }
-            
+
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
+
             canvas.toBlob(async (blob) => {
                 const fileName = `${targetId}_camera_${Date.now()}.jpg`;
                 const file = new File([blob], fileName, { type: 'image/jpeg' });
-                
+
                 stopStream();
                 await window.erpApp.pmUploadWorkerPhotoToDrive(file, targetId);
             }, 'image/jpeg', 0.9);
@@ -18536,7 +18626,7 @@ window.erpApp = window.erpApp || {};
         const placeholder = zone.querySelector('.upload-placeholder');
         const matIcon = zone.querySelector('.material-icons-outlined');
         const hiddenInput = img.closest('.form-group').querySelector('input[type="hidden"]');
-        
+
         let spinner = zone.querySelector('.upload-spinner-overlay');
         if (!spinner) {
             spinner = document.createElement('div');
@@ -18550,27 +18640,27 @@ window.erpApp = window.erpApp || {};
         } else {
             spinner.style.display = 'flex';
         }
-        
+
         if (placeholder) placeholder.style.display = 'none';
         if (matIcon) matIcon.style.display = 'none';
-        
+
         try {
             const formData = new FormData();
             formData.append('files', file);
             formData.append('module', 'nhan-cong');
-            
+
             const res = await fetch((window.API_BASE_URL || '') + '/api/drive/upload', {
                 method: 'POST',
                 body: formData
             });
             const data = await res.json();
-            
+
             if (data.success && data.uploaded && data.uploaded.length > 0) {
                 const driveFile = data.uploaded[0];
                 const driveUrl = driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`;
-                
+
                 hiddenInput.value = driveUrl;
-                
+
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     img.src = e.target.result;
@@ -18581,14 +18671,14 @@ window.erpApp = window.erpApp || {};
                     spinner.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
-                
+
                 showToast(`✅ Đã tải ảnh lên Google Drive thành công`, 'success');
             } else {
                 throw new Error('Drive upload failure');
             }
         } catch (err) {
             console.warn('[Worker Photo Upload] Drive fallback to Base64:', err);
-            
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 hiddenInput.value = e.target.result;
@@ -18600,7 +18690,7 @@ window.erpApp = window.erpApp || {};
                 spinner.style.display = 'none';
             };
             reader.readAsDataURL(file);
-            
+
             showToast(`⚠️ Drive không khả dụng, đã lưu ảnh tạm thời cục bộ`, 'warning');
         }
     };
@@ -18872,25 +18962,25 @@ window.erpApp = window.erpApp || {};
         if (window.CrudSync) { window.CrudSync.saveItem('hsStorageLocations', hsStorageLocations, 'id'); }
     }
 
-    function getLocationById(locId) { 
+    function getLocationById(locId) {
         if (locId && (locId.startsWith('CN') || locId.includes('_') || hsStorageLocations.some(l => l.id === locId && (l.type === 'branch' || l.type === 'room')))) {
             syncLocationTreeWithBranches();
         }
-        return hsStorageLocations.find(l => l.id === locId) || null; 
+        return hsStorageLocations.find(l => l.id === locId) || null;
     }
-    
+
     function getLocationChildren(parentId, type) {
         if (!parentId || parentId.startsWith('CN') || parentId.includes('_') || type === 'branch' || type === 'room' || hsStorageLocations.some(l => l.id === parentId && (l.type === 'branch' || l.type === 'room'))) {
             syncLocationTreeWithBranches();
         }
         return hsStorageLocations.filter(l => l.parentId === parentId && (!type || l.type === type)).sort((a, b) => a.order - b.order);
     }
-    
-    function getLocationsByType(type) { 
+
+    function getLocationsByType(type) {
         if (type === 'branch' || type === 'room') {
             syncLocationTreeWithBranches();
         }
-        return hsStorageLocations.filter(l => l.type === type).sort((a, b) => a.order - b.order); 
+        return hsStorageLocations.filter(l => l.type === type).sort((a, b) => a.order - b.order);
     }
 
     function getLocationPath(locId) {
@@ -18950,7 +19040,7 @@ window.erpApp = window.erpApp || {};
         } else if (type === 'room') {
             const deptId = 'dept-' + Date.now().toString().slice(-4) + Math.floor(Math.random() * 10);
             locId = `${parentId}_${deptId}`; // parentId here is branchId
-            
+
             window.departments = window.departments || [];
             const newDept = {
                 id: deptId,
@@ -19078,12 +19168,12 @@ window.erpApp = window.erpApp || {};
             const select = selects[type];
             const label = HS_LOC_LABELS[type];
             select.innerHTML = `<option value="">— Chọn ${label} —</option>`;
-            
+
             const children = getLocationChildren(parentId, type);
             children.forEach(c => {
                 select.innerHTML += `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.name}</option>`;
             });
-            
+
             if (children.length > 0) {
                 select.disabled = false;
             } else {
@@ -19153,20 +19243,20 @@ window.erpApp = window.erpApp || {};
         const name = prompt(`Nhập tên ${label} mới:`);
         if (name && name.trim()) {
             const newLoc = addStorageLocation(parentId, type, name.trim());
-            
+
             // Re-populate the changed select list and select the new one!
             const select = document.getElementById('hsLocSelect_' + type);
             if (select) {
                 const parentVal = parentId || null;
                 const selectVal = newLoc.id;
-                
+
                 select.innerHTML = `<option value="">— Chọn ${label} —</option>`;
                 const children = getLocationChildren(parentVal, type);
                 children.forEach(c => {
                     select.innerHTML += `<option value="${c.id}" ${c.id === selectVal ? 'selected' : ''}>${c.name}</option>`;
                 });
                 select.disabled = false;
-                
+
                 // Trigger change event to cascade down
                 select.dispatchEvent(new Event('change'));
             }
@@ -19447,7 +19537,7 @@ window.erpApp = window.erpApp || {};
         if (hsViewMode === 'cabinet') {
             const branches = getLocationsByType('branch');
             cabinetHtml += `<div class="hs2-cabinet-container">`;
-            
+
             branches.forEach(branch => {
                 const bDocs = hoSoDocuments.filter(d => d.storageLocationId && isLocationDescendantOf(d.storageLocationId, branch.id));
                 cabinetHtml += `
@@ -19460,7 +19550,7 @@ window.erpApp = window.erpApp || {};
                         <span style="background:#334155;color:#94a3b8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">${bDocs.length} HS</span>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">`;
-                
+
                 const rooms = getLocationChildren(branch.id, 'room');
                 rooms.forEach(room => {
                     const rDocs = hoSoDocuments.filter(d => d.storageLocationId && isLocationDescendantOf(d.storageLocationId, room.id));
@@ -19471,12 +19561,12 @@ window.erpApp = window.erpApp || {};
                             ${room.name} (${rDocs.length})
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px">`;
-                    
+
                     const cabinets = getLocationChildren(room.id, 'cabinet');
                     cabinets.forEach(cabinet => {
                         const cDocs = hoSoDocuments.filter(d => d.storageLocationId && isLocationDescendantOf(d.storageLocationId, cabinet.id));
                         const isAct = hsFilterLocationId === cabinet.id || isLocationDescendantOf(hsFilterLocationId, cabinet.id);
-                        
+
                         cabinetHtml += `
                         <div class="hs2-drawer${isAct ? ' hs2-drawer-active' : ''}" onclick="window.erpApp.hsSelectCabinet('${cabinet.id}')" style="display:flex;flex-direction:column;align-items:stretch;gap:4px;cursor:pointer;padding:8px 12px;border-radius:8px;position:relative;transition:all .2s">
                             <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
@@ -19486,7 +19576,7 @@ window.erpApp = window.erpApp || {};
                                 </div>
                                 <div class="hs2-drawer-count" style="font-size:11px;font-weight:900;color:#fff;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">${cDocs.length}</div>
                             </div>`;
-                        
+
                         if (isAct) {
                             const shelves = getLocationChildren(cabinet.id, 'shelf');
                             if (shelves.length > 0) {
@@ -19495,14 +19585,14 @@ window.erpApp = window.erpApp || {};
                                 shelves.forEach(shelf => {
                                     const sDocs = hoSoDocuments.filter(d => d.storageLocationId && isLocationDescendantOf(d.storageLocationId, shelf.id));
                                     const isShelfAct = hsFilterLocationId === shelf.id || isLocationDescendantOf(hsFilterLocationId, shelf.id);
-                                    
+
                                     cabinetHtml += `
                                     <div style="padding:4px 6px;border-radius:6px;background:${isShelfAct ? 'rgba(16,185,129,0.15)' : 'transparent'}">
                                         <div onclick="event.stopPropagation();window.erpApp.hsSelectLocationFilter('${shelf.id}')" style="font-size:11px;font-weight:700;color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#e2e8f0'">
                                             <span style="display:flex;align-items:center;gap:3px"><span class="material-icons-outlined" style="font-size:13px;color:#10b981">shelves</span>${shelf.name}</span>
                                             <span>${sDocs.length}</span>
                                         </div>`;
-                                    
+
                                     const compartments = getLocationChildren(shelf.id, 'compartment');
                                     if (compartments.length > 0) {
                                         cabinetHtml += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;padding-left:14px">`;
@@ -19523,10 +19613,10 @@ window.erpApp = window.erpApp || {};
                         }
                         cabinetHtml += `</div>`;
                     });
-                    
+
                     cabinetHtml += `</div></div>`;
                 });
-                
+
                 cabinetHtml += `</div></div>`;
             });
             cabinetHtml += `</div>`;

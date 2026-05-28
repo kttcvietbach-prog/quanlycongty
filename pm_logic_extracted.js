@@ -3218,6 +3218,14 @@ function pmCalculatePayment(el) {
     }
 }
 
+const defaultStatuses = [
+    { value: 'chua-den-han', label: 'Chưa đến hạn' },
+    { value: 'tam-ung', label: 'Đã tạm ứng' },
+    { value: 'cho-duyet', label: 'Chưa tạm ứng' },
+    { value: 'da-thanh-toan', label: 'Đã thanh toán' },
+    { value: 'da-quyet-toan', label: 'Đã Quyết toán' }
+];
+
 function pmOpenPaymentModal(id = null, prefilledContractId = null) {
     const isEdit = !!id;
     const item = isEdit ? pmPaymentMilestones.find(m => m.id === id) : null;
@@ -3256,6 +3264,18 @@ function pmOpenPaymentModal(id = null, prefilledContractId = null) {
         .filter(c => c.projectId === pmActiveProjectId)
         .map(c => `<option value="${c.id}" ${c.id === initialData.contractId ? 'selected' : ''}>${c.id} - ${c.title}</option>`)
         .join('');
+
+    let customStatuses = [];
+    try {
+        const stored = localStorage.getItem('erp_pm_custom_payment_statuses');
+        if (stored) {
+            customStatuses = JSON.parse(stored);
+        }
+    } catch (e) {}
+    const allStatuses = [...defaultStatuses, ...customStatuses];
+    const statusOptionsHtml = allStatuses.map(st => 
+        `<option value="${st.value}" ${initialData.status === st.value ? 'selected' : ''}>${st.label}</option>`
+    ).join('');
 
     const modalHtml = `
         <div class="modal-overlay" id="pmPaymentModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px); padding:20px;">
@@ -3306,13 +3326,14 @@ function pmOpenPaymentModal(id = null, prefilledContractId = null) {
                                 <input type="text" name="date" value="${window.erpApp.formatDate(initialData.date)}" required placeholder="DD/MM/YYYY" style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none;">
                             </div>
                             <div>
-                                <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Trạng thái</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin:0;">Trạng thái</label>
+                                    <button type="button" onclick="window.erpApp.pmAddNewPaymentStatus()" style="background:none; border:none; color:#2563eb; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:2px; padding:0;">
+                                        <span class="material-icons-outlined" style="font-size:14px;">add_circle</span>Thêm mới
+                                    </button>
+                                </div>
                                 <select name="status" style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; font-weight:700; background:#fff;">
-                                    <option value="chua-den-han" ${initialData.status === 'chua-den-han' ? 'selected' : ''}>Chưa đến hạn</option>
-                                    <option value="tam-ung" ${initialData.status === 'tam-ung' ? 'selected' : ''}>Đã tạm ứng</option>
-                                    <option value="cho-duyet" ${initialData.status === 'cho-duyet' ? 'selected' : ''}>Chờ duyệt TT</option>
-                                    <option value="da-thanh-toan" ${initialData.status === 'da-thanh-toan' ? 'selected' : ''}>Đã thanh toán</option>
-                                    <option value="da-quyet-toan" ${initialData.status === 'da-quyet-toan' ? 'selected' : ''}>Đã Quyết toán</option>
+                                    ${statusOptionsHtml}
                                 </select>
                             </div>
                         </div>
@@ -4406,8 +4427,8 @@ function renderPmSettlement(project) {
                                         <td class="text-right" style="font-weight:700; color:${color}">${sign}${fMoney(m.actualValue)}</td>
                                         <td class="text-center">${m.date}</td>
                                         <td class="text-center">
-                                            <span class="pm-status-badge ${m.status === 'da-quyet-toan' ? 'hoan-thanh' : (m.status === 'da-thanh-toan' ? 'dang-thi-cong' : (m.status === 'cho-duyet' ? 'dang-hoan-thien' : (m.status === 'tam-ung' ? 'moi-ki' : 'chua-bat-dau')))}">
-                                                ${m.status === 'da-quyet-toan' ? 'Đã Quyết toán' : (m.status === 'da-thanh-toan' ? 'Đã thanh toán' : (m.status === 'cho-duyet' ? 'Chờ duyệt TT' : (m.status === 'tam-ung' ? 'Đã tạm ứng' : 'Chưa đến hạn')))}
+                                            <span class="pm-status-badge ${m.status === 'da-quyet-toan' ? 'hoan-thanh' : (m.status === 'da-thanh-toan' ? 'dang-thi-cong' : (m.status === 'cho-duyet' ? 'dang-hoan-thien' : (m.status === 'tam-ung' ? 'moi-ki' : (String(m.status).startsWith('custom-') ? 'dang-hoan-thien' : 'chua-bat-dau'))))}">
+                                                ${window.erpApp.pmGetStatusLabel(m.status)}
                                             </span>
                                         </td>
                                         <td class="text-center">
@@ -6397,9 +6418,7 @@ function pmExportPaymentExcel() {
             }
             const sign = isRevenue ? 1 : -1;
 
-            const statusText = m.status === 'da-quyet-toan' ? 'Đã Quyết toán' :
-                (m.status === 'da-thanh-toan' ? 'Đã thanh toán' :
-                    (m.status === 'cho-duyet' ? 'Chờ duyệt TT' : 'Chưa đến hạn'));
+            const statusText = window.erpApp.pmGetStatusLabel(m.status);
 
             return [
                 index + 1,
