@@ -1,0 +1,21 @@
+{
+  "servers": {
+    "github.com/postmanlabs/postman-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@postman/postman-mcp-server"
+      ],
+      "env": {
+        "POSTMAN_API_KEY": "${input:postman-api-key}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "postman-api-key",
+      "type": "promptString",
+      "description": "Enter your Postman API key from https://postman.postman.co/settings/me/api-keys"
+    }
+  ]
+}

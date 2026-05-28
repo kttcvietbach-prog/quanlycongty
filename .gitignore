@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+*.tmp
+*.temp
+
+# Backup & temp files
+*.backup
+*.old
+*.orig
+*~
+
+# Environment
+.env
+.env.local
+
+# Google Drive Credentials
+google-credentials.json
+oauth-credentials.json
+data/uploads_temp/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+
+
+# Large files & Installers
+*.exe
+OllamaSetup.exe

@@ -1,0 +1,468 @@
+/* ========================================
+   MOBILE RESPONSIVENESS FIXES
+   Add this to styles.css at the end
+   ======================================== */
+
+/* Fix 1: Touch-Friendly Button Sizes */
+@media (max-width: 768px) {
+    /* Ensure all buttons meet 44x44px minimum touch target */
+    button,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Header icon buttons */
+    .header-icon-btn {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+    }
+
+    /* Login button */
+    .login-btn {
+        padding: 14px 16px;
+        min-height: 48px;
+        font-size: 14px;
+    }
+
+    /* Password toggle button */
+    .toggle-password {
+        padding: 10px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Menu toggle button */
+    .menu-toggle {
+        padding: 10px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* Fix 2: Form Input Sizing & Font Size (prevents iOS auto-zoom) */
+@media (max-width: 768px) {
+    /* All text inputs must be 16px to prevent iOS zoom */
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="search"],
+    input[type="url"],
+    textarea,
+    select {
+        font-size: 16px;
+        padding: 12px 14px;
+        min-height: 44px;
+    }
+
+    /* Login form inputs */
+    .login-field input {
+        padding: 14px 16px;
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    /* Search boxes */
+    .search-box input {
+        font-size: 14px;
+        min-height: 40px;
+    }
+}
+
+/* Fix 3: Notification Panel Mobile Responsive */
+@media (max-width: 768px) {
+    .notification-panel {
+        position: fixed;
+        width: 90vw;
+        max-width: 340px;
+        max-height: 50vh;
+        right: 10px;
+        left: 10px;
+        margin: 0 auto;
+        overflow-y: auto;
+        top: calc(var(--header-height) + 8px);
+    }
+}
+
+@media (max-width: 480px) {
+    .notification-panel {
+        width: 95vw;
+        max-width: 320px;
+        max-height: 60vh;
+        right: 5px;
+        left: 5px;
+    }
+
+    .notification-panel-header {
+        padding: 10px 12px;
+    }
+
+    .notification-item {
+        padding: 10px 12px;
+    }
+}
+
+/* Fix 4: User Dropdown Mobile Positioning */
+@media (max-width: 768px) {
+    .user-dropdown {
+        position: fixed;
+        right: 10px;
+        top: calc(var(--header-height) + 8px);
+        width: 90vw;
+        max-width: 300px;
+        max-height: 70vh;
+        overflow-y: auto;
+        left: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-dropdown {
+        width: 95vw;
+        max-width: 280px;
+        right: 5px;
+    }
+}
+
+/* Fix 5: Modal/Dialog Mobile Optimization */
+@media (max-width: 768px) {
+    .modal,
+    .dialog,
+    .modal-content {
+        max-height: 85vh;
+        width: 95vw;
+        margin: auto;
+    }
+
+    .modal-body {
+        max-height: calc(85vh - 120px);
+        overflow-y: auto;
+    }
+}
+
+/* Fix 6: Table Horizontal Scroll on Mobile */
+@media (max-width: 768px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    table thead,
+    table tbody,
+    table tr,
+    table td,
+    table th {
+        display: block;
+    }
+}
+
+/* Fix 7: Improve touch target spacing */
+@media (max-width: 768px) {
+    /* Add spacing between interactive elements */
+    .nav-item,
+    .dropdown-menu-item,
+    .tab-item {
+        padding: 12px 16px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Ensure icons in buttons are centered */
+    button .material-icons-outlined,
+    .header-icon-btn .material-icons-outlined {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Fix 8: Prevent horizontal scrolling on mobile */
+@media (max-width: 768px) {
+    body,
+    html {
+        overflow-x: hidden;
+        max-width: 100vw;
+    }
+}
+
+/* Fix 9: Improve text readability on mobile */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+
+    body {
+        line-height: 1.6;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    h3 {
+        font-size: 18px;
+    }
+
+    p {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+}
+
+/* Fix 10: Sidebar overlay improvements */
+@media (max-width: 768px) {
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .sidebar-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* ========================================
+   PROJECT MANAGEMENT MOBILE ENHANCEMENTS
+   Specific improvements for project layout on phone
+   ======================================== */
+
+/* Project cards: Better stacking & readability on mobile */
+@media (max-width: 768px) {
+    /* Assume project cards use .module-card with project-specific class or data attr */
+    .module-card[data-module="projects"],
+    .project-card,
+    [class*="project"] .module-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 18px !important;
+        gap: 14px !important;
+        min-height: 120px;
+    }
+    
+    .project-card .card-icon {
+        width: 52px !important;
+        height: 52px !important;
+        align-self: flex-start !important;
+    }
+    
+    .project-card .card-title {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .project-card .card-desc {
+        font-size: 13px !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* Project progress bars full-width on mobile */
+    .project-progress,
+    .card-progress,
+    [class*="progress"] {
+        width: 100% !important;
+        height: 8px !important;
+        border-radius: 6px !important;
+        margin-top: 8px !important;
+    }
+    
+    /* Budget & status badges stack vertically */
+    .project-meta {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    
+    .project-status-badge,
+    .budget-badge {
+        align-self: flex-start !important;
+        font-size: 12px !important;
+        padding: 4px 10px !important;
+    }
+    
+    /* Action buttons: Larger touch targets */
+    .project-actions {
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: auto !important;
+    }
+    
+    .project-action-btn {
+        padding: 10px !important;
+        min-height: 44px !important;
+        border-radius: 10px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* Project modals: Forms & CRUD optimized for phone */
+@media (max-width: 768px) {
+    /* Project create/edit modals */
+    .modal-content[data-module="project"],
+    .project-modal .modal-content {
+        border-radius: 20px 20px 0 0 !important;
+    }
+    
+    .project-modal .form-grid,
+    .project-form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    .project-modal input,
+    .project-modal select,
+    .project-modal textarea {
+        min-height: 48px !important;
+        padding: 14px 16px !important;
+        font-size: 16px !important; /* Prevent iOS zoom */
+    }
+    
+    /* Members & tags: Chips scroll horizontally */
+    .project-members-input,
+    .project-tags-input {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .member-chip,
+    .tag-chip {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Progress preview in modal */
+    .project-progress-preview {
+        width: 100% !important;
+        height: 12px !important;
+        border-radius: 8px !important;
+        margin: 12px 0 !important;
+    }
+}
+
+/* Project task tables: Mobile card layout below 480px */
+@media (max-width: 480px) {
+    .project-tasks-table,
+    .tasks-table,
+    .pm-tasks-table {
+        border: none !important;
+    }
+    
+    .project-tasks-table thead,
+    .pm-tasks-table thead {
+        display: none !important;
+    }
+    
+    .project-tasks-table tr,
+    .pm-tasks-table tr {
+        display: block !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
+        background: var(--bg-surface) !important;
+        box-shadow: var(--shadow-sm) !important;
+    }
+    
+    .project-tasks-table td,
+    .pm-tasks-table td {
+        display: block !important;
+        padding: 12px 16px !important;
+        border: none !important;
+        border-bottom: 1px solid var(--border-light) !important;
+    }
+    
+    .project-tasks-table td:last-child,
+    .pm-tasks-table td:last-child {
+        border-bottom: none !important;
+    }
+    
+    .project-tasks-table td:before,
+    .pm-tasks-table td:before {
+        content: attr(data-label) ": ";
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+        font-size: 12px !important;
+        display: block !important;
+        margin-bottom: 4px !important;
+    }
+    
+    /* Action buttons compact row */
+    .project-task-actions,
+    .task-actions {
+        display: flex !important;
+        gap: 8px !important;
+        justify-content: flex-end !important;
+        margin-top: 8px !important;
+    }
+    
+    .task-status-badge {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+        align-self: flex-start !important;
+    }
+}
+
+/* Project Gantt/Scheduling mobile */
+@media (max-width: 768px) {
+    .pm-gantt,
+    .project-timeline {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .pm-gantt-header {
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 2 !important;
+    }
+}
+
+/* Project nav item: Prominent in sidebar */
+@media (max-width: 768px) {
+    .nav-item[data-page="van-hanh"],
+    .sidebar-nav [data-page="van-hanh"] {
+        background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05)) !important;
+        border: 1px solid rgba(139,92,246,0.2) !important;
+        border-radius: 12px !important;
+        margin: 6px 12px !important;
+        font-weight: 700 !important;
+    }
+    
+    .nav-item[data-page="van-hanh"] .material-icons-outlined {
+        color: #8B5CF6 !important;
+        font-size: 22px !important;
+    }
+}
+
+/* ========================================
+   END OF MOBILE FIXES
+   ======================================== */

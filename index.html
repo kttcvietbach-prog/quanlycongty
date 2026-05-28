@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hệ thống VIETBACCORP">
+    <title>VIETBACCORP</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=8">
+    <link rel="stylesheet" href="file_manager.css?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+</head>
+
+<body>
+    <!-- Hydration Gate - Blocking Loader -->
+    <div id="hydrationGate" class="hydration-gate">
+        <div class="gate-content">
+            <div class="gate-logo">
+                <img src="logo.png" alt="Logo">
+            </div>
+            <div class="gate-loader">
+                <div class="gate-spinner"></div>
+                <div class="gate-pulse"></div>
+            </div>
+            <div class="gate-status">
+                <h2 id="gateTitle">Khởi động hệ thống...</h2>
+                <p id="gateMessage">Đang đồng bộ dữ liệu bảo mật từ Cloud...</p>
+            </div>
+            <div class="gate-progress-bar">
+                <div id="gateProgress" class="gate-progress-inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-bg">
+            <div class="login-bg-shape shape-1"></div>
+            <div class="login-bg-shape shape-2"></div>
+            <div class="login-bg-shape shape-3"></div>
+        </div>
+        <div class="login-card">
+            <div class="login-logo" onclick="if(window.erpApp && window.erpApp.forceLogin) window.erpApp.forceLogin()"
+                style="cursor: pointer;">
+                <div class="login-logo-icon login-logo-img">
+                    <img src="logo.png" alt="VIETBACHCORP Logo">
+                </div>
+                <h1 class="login-logo-title">VIETBACCORP</h1>
+                <p class="login-logo-subtitle">Hệ thống quản lý công ty</p>
+            </div>
+            <!-- LOGIN FORM -->
+            <form class="login-form" id="loginForm">
+                <div class="login-field">
+                    <label for="loginUsername">
+                        <span class="material-icons-outlined">person</span>
+                        Tài khoản
+                    </label>
+                    <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập" autocomplete="username"
+                        required>
+                </div>
+                <div class="login-field">
+                    <label for="loginPassword">
+                        <span class="material-icons-outlined">lock</span>
+                        Mật khẩu
+                    </label>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" placeholder="Nhập mật khẩu"
+                            autocomplete="current-password" required>
+                        <button type="button" class="toggle-password" id="togglePassword">
+                            <span class="material-icons-outlined">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="login-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                </div>
+                <div class="login-error" id="loginError"></div>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span class="material-icons-outlined">login</span>
+                    Đăng nhập
+                </button>
+
+                <div class="login-divider">
+                    <span>hoặc</span>
+                </div>
+
+                <button type="button" class="google-login-btn" id="googleLoginBtn">
+                    <svg width="18" height="18" viewBox="0 0 48 48">
+                        <path fill="#EA4335"
+                            d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                        <path fill="#4285F4"
+                            d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                        <path fill="#FBBC05"
+                            d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                        <path fill="#34A853"
+                            d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    </svg>
+                    Đăng nhập bằng Google
+                </button>
+
+                <div class="login-register-link">
+                    Chưa có tài khoản? <a href="#" id="showRegisterBtn">Đăng ký ngay</a>
+                </div>
+            </form>
+
+            <!-- REGISTER FORM (hidden by default) -->
+            <form class="register-form" id="registerForm" style="display:none;">
+                <div class="register-header">
+                    <h2>Đăng ký tài khoản</h2>
+                    <p>Tạo tài khoản mới để truy cập hệ thống</p>
+                </div>
+                <div class="login-field">
+                    <label for="regFullName">
+                        <span class="material-icons-outlined">badge</span>
+                        Họ và tên
+                    </label>
+                    <input type="text" id="regFullName" placeholder="Nhập họ và tên đầy đủ" required>
+                </div>
+                <div class="login-field">
+                    <label for="regUsername">
+                        <span class="material-icons-outlined">person</span>
+                        Tên đăng nhập
+                    </label>
+                    <input type="text" id="regUsername" placeholder="Nhập tên đăng nhập" required>
+                </div>
+                <div class="login-field">
+                    <label for="regEmail">
+                        <span class="material-icons-outlined">email</span>
+                        Email
+                    </label>
+                    <input type="email" id="regEmail" placeholder="Nhập email công ty" required>
+                </div>
+                <div class="login-field">
+                    <label for="regPassword">
+                        <span class="material-icons-outlined">lock</span>
+                        Mật khẩu
+                    </label>
+                    <input type="password" id="regPassword" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                </div>
+                <div class="login-field">
+                    <label for="regConfirmPassword">
+                        <span class="material-icons-outlined">lock</span>
+                        Xác nhận mật khẩu
+                    </label>
+                    <input type="password" id="regConfirmPassword" placeholder="Nhập lại mật khẩu" required>
+                </div>
+                <div class="login-field">
+                    <label for="regDepartment">
+                        <span class="material-icons-outlined">apartment</span>
+                        Phòng ban
+                    </label>
+                    <select id="regDepartment">
+                        <option value="">-- Chọn phòng ban --</option>
+                        <option value="Phòng Hành chính">Phòng Hành chính</option>
+                        <option value="Phòng Kế toán">Phòng Kế toán</option>
+                        <option value="Phòng Kinh doanh">Phòng Kinh doanh</option>
+                        <option value="Phòng Kỹ thuật">Phòng Kỹ thuật</option>
+                        <option value="Phòng Sản xuất">Phòng Sản xuất</option>
+                        <option value="Phòng Marketing">Phòng Marketing</option>
+                        <option value="Ban Giám đốc">Ban Giám đốc</option>
+                    </select>
+                </div>
+                <div class="login-error" id="registerError"></div>
+                <button type="button" class="login-btn register-btn" id="registerBtn">
+                    <span class="material-icons-outlined">person_add</span>
+                    Đăng ký tài khoản
+                </button>
+
+                <div class="login-divider">
+                    <span>hoặc</span>
+                </div>
+
+                <button type="button" class="google-login-btn" id="googleRegisterBtn">
+                    <svg width="18" height="18" viewBox="0 0 48 48">
+                        <path fill="#EA4335"
+                            d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                        <path fill="#4285F4"
+                            d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                        <path fill="#FBBC05"
+                            d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                        <path fill="#34A853"
+                            d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    </svg>
+                    Đăng ký bằng Google
+                </button>
+
+                <div class="login-register-link">
+                    Đã có tài khoản? <a href="#" id="showLoginBtn">Đăng nhập</a>
+                </div>
+            </form>
+
+            <div class="login-footer">
+                <p>© 2026 VIETBACCORP. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Container (hidden until login) -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <div class="logo-icon logo-img">
+                        <img src="logo.png" alt="VIETBACHCORP Logo">
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-title">VIETBACCORP</span>
+                        <span class="logo-subtitle">Hệ thống quản lý công ty</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebarNav">
+                <ul class="nav-list">
+                    <li class="nav-item" data-page="trang-chu">
+                        <span class="material-icons-outlined" style="color: #6366f1;">grid_view</span>
+                        <span class="nav-label">Trang chủ</span>
+                    </li>
+                    <li class="nav-item" data-page="hanh-chinh">
+                        <span class="material-icons-outlined" style="color: #3b82f6;">corporate_fare</span>
+                        <span class="nav-label">Hành chính</span>
+                    </li>
+                    <li class="nav-item" data-page="van-hanh">
+                        <span class="material-icons-outlined" style="color: #10b981;">engineering</span>
+                        <span class="nav-label">Quản lý dự án</span>
+                    </li>
+                    <li class="nav-item" data-page="kinh-doanh">
+                        <span class="material-icons-outlined" style="color: #f59e0b;">monetization_on</span>
+                        <span class="nav-label">Kinh doanh</span>
+                    </li>
+                    <li class="nav-item" data-page="dau-thau">
+                        <span class="material-icons-outlined" style="color: #8b5cf6;">gavel</span>
+                        <span class="nav-label">Đấu thầu dự án</span>
+                    </li>
+                    <li class="nav-item" data-page="marketing">
+                        <span class="material-icons-outlined" style="color: #ec4899;">hub</span>
+                        <span class="nav-label">Marketing</span>
+                    </li>
+                    <li class="nav-item" data-page="tai-chinh">
+                        <span class="material-icons-outlined" style="color: #14b8a6;">account_balance_wallet</span>
+                        <span class="nav-label">Tài chính - Kế toán</span>
+                    </li>
+                    <li class="nav-item" data-page="mua-hang">
+                        <span class="material-icons-outlined" style="color: #f97316;">shopping_bag</span>
+                        <span class="nav-label">Mua hàng</span>
+                    </li>
+                    <li class="nav-item" data-page="san-xuat">
+                        <span class="material-icons-outlined" style="color: #ef4444;">factory</span>
+                        <span class="nav-label">Sản xuất</span>
+                    </li>
+                    <li class="nav-item" data-page="kho-van">
+                        <span class="material-icons-outlined" style="color: #06b6d4;">warehouse</span>
+                        <span class="nav-label">Xưởng sản xuất, kho</span>
+                    </li>
+                    <li class="nav-item" data-page="dieu-hanh">
+                        <span class="material-icons-outlined" style="color: #64748b;">query_stats</span>
+                        <span class="nav-label">Chiến lược kinh doanh</span>
+                    </li>
+                    <li class="nav-item" data-page="tai-lieu">
+                        <span class="material-icons-outlined" style="color: #0ea5e9;">cloud_upload</span>
+                        <span class="nav-label">Quản lý tài liệu</span>
+                    </li>
+                    <li class="nav-item" data-page="he-thong">
+                        <span class="material-icons-outlined" style="color: #4f46e5;">admin_panel_settings</span>
+                        <span class="nav-label">Hệ thống</span>
+                    </li>
+                    <li class="nav-item" data-page="tro-ly-ai">
+                        <span class="material-icons-outlined" style="color: #a855f7;">psychology_alt</span>
+                        <span class="nav-label">Trợ lý AI</span>
+                    </li>
+                    <li class="nav-item" data-page="ban-quyen">
+                        <span class="material-icons-outlined" style="color: #059669;">verified_user</span>
+                        <span class="nav-label">Thông tin bản quyền</span>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <span class="material-icons-outlined">menu</span>
+                    </button>
+                    <nav class="breadcrumb">
+                        <span class="material-icons-outlined breadcrumb-home" onclick="window.erpApp.goHome()"
+                            style="cursor:pointer">home</span>
+                        <span class="breadcrumb-item" onclick="window.erpApp.goHome()">Trang chủ</span>
+                        <span id="breadcrumbParentArea" style="display:none;">
+                            <span class="material-icons-outlined breadcrumb-sep">chevron_right</span>
+                            <span class="breadcrumb-item" id="breadcrumbParent" style="cursor:pointer">Hành chính</span>
+                        </span>
+                        <span class="material-icons-outlined breadcrumb-sep">chevron_right</span>
+                        <span class="breadcrumb-item current" id="breadcrumbCurrent"
+                            onclick="window.erpApp.navigateTo(window.erpApp.getCurrentPage())"
+                            style="cursor:pointer">Sản xuất</span>
+                    </nav>
+                    <div class="page-badge" id="pageBadge"
+                        onclick="window.erpApp.navigateTo(window.erpApp.getCurrentPage())" style="cursor:pointer">Sản
+                        xuất</div>
+                </div>
+                <div class="header-right">
+                    <div class="header-clock">
+                        <span class="material-icons-outlined">schedule</span>
+                        <span id="clockTime">07:41:03</span>
+                    </div>
+                    <div class="header-date">
+                        <span class="material-icons-outlined">calendar_today</span>
+                        <span id="clockDate">Thứ 5, 02/04/2026</span>
+                    </div>
+                    <button class="header-icon-btn notification-btn" id="notificationBtn">
+                        <span class="material-icons-outlined">notifications</span>
+                        <span class="notification-badge">4</span>
+                    </button>
+                    <!-- User Profile Area -->
+                    <div class="user-profile-area" id="userProfileArea">
+                        <div class="user-avatar-wrapper" id="userAvatarBtn">
+                            <div class="user-avatar" id="userAvatar">
+                                <span class="avatar-initials" id="avatarInitials">?</span>
+                            </div>
+                            <div class="online-indicator"></div>
+                        </div>
+                        <div class="user-info-header" id="userInfoHeader">
+                            <span class="user-name" id="headerUserName">Người dùng</span>
+                            <span class="user-role" id="headerUserRole">Admin</span>
+                        </div>
+                        <!-- User Dropdown -->
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="dropdown-user-info">
+                                <div class="dropdown-avatar">
+                                    <span class="avatar-initials" id="dropdownInitials">?</span>
+                                    <div class="online-indicator"></div>
+                                </div>
+                                <div class="dropdown-user-text">
+                                    <span class="dropdown-user-name" id="dropdownUserName">Người dùng</span>
+                                    <span class="dropdown-user-role" id="dropdownUserRole">Admin</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-menu-list">
+                                <button class="dropdown-menu-item" id="btnProfile">
+                                    <span class="material-icons-outlined">person</span>
+                                    Hồ sơ cá nhân
+                                </button>
+                                <button class="dropdown-menu-item" id="btnSettings">
+                                    <span class="material-icons-outlined">settings</span>
+                                    Cài đặt hệ thống
+                                </button>
+                                <button class="dropdown-menu-item" id="btnChangePassword">
+                                    <span class="material-icons-outlined">vpn_key</span>
+                                    Đổi mật khẩu
+                                </button>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-menu-item logout-item" id="btnLogout">
+                                <span class="material-icons-outlined">logout</span>
+                                Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content" id="pageContent">
+                <!-- The active page content will be rendered here -->
+            </main>
+        </div>
+        <!-- Floating AI Chat Button -->
+        <style>
+            .floating-ai-btn {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                z-index: 100000;
+                display: flex;
+                align-items: center;
+                cursor: move;
+                animation: floatBounce 2s infinite ease-in-out;
+                transition: transform 0.2s, opacity 0.3s;
+                user-select: none;
+                touch-action: none;
+            }
+
+            .floating-ai-btn:hover {
+                transform: scale(1.05);
+                animation-play-state: paused;
+            }
+
+            .floating-ai-btn:active {
+                cursor: grabbing;
+            }
+
+
+
+            .floating-ai-icon {
+                width: 60px;
+                height: 60px;
+                background: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                position: relative;
+                z-index: 10;
+                border: 2px solid #e2e8f0;
+            }
+
+            .floating-ai-badge {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 14px;
+                height: 14px;
+                background: #10b981;
+                border-radius: 50%;
+                border: 2px solid #fff;
+            }
+
+            @keyframes floatBounce {
+
+                0%,
+                100% {
+                    transform: translateY(0);
+                }
+
+                50% {
+                    transform: translateY(-10px);
+                }
+            }
+
+            /* Khi đang kéo thì ẩn tooltip và tắt animation */
+            .floating-ai-btn.dragging {
+                animation: none;
+                opacity: 0.8;
+            }
+        </style>
+
+        <div class="floating-ai-btn" id="floatingAiBtn">
+            <div class="floating-ai-icon">
+                <span class="material-icons-outlined" style="font-size: 36px; color: #3b82f6;">smart_toy</span>
+                <div class="floating-ai-badge"></div>
+            </div>
+        </div>
+
+        <script>
+            (function initDraggableChatbot() {
+                const btn = document.getElementById('floatingAiBtn');
+                if (!btn) return;
+
+                let isDragging = false;
+                let startX, startY, initialLeft, initialTop;
+                let dragThreshold = 5; // Pixels để phân biệt click và drag
+                let moveCount = 0;
+
+                // Khôi phục vị trí từ localStorage
+                const savedPos = localStorage.getItem('chatbot_pos');
+                if (savedPos) {
+                    const pos = JSON.parse(savedPos);
+                    btn.style.bottom = 'auto';
+                    btn.style.right = 'auto';
+                    btn.style.left = pos.left + 'px';
+                    btn.style.top = pos.top + 'px';
+                }
+
+                btn.addEventListener('mousedown', dragStart);
+                btn.addEventListener('touchstart', dragStart, { passive: false });
+
+                function dragStart(e) {
+                    moveCount = 0;
+                    const event = e.type === 'touchstart' ? e.touches[0] : e;
+
+                    startX = event.clientX;
+                    startY = event.clientY;
+
+                    const rect = btn.getBoundingClientRect();
+                    initialLeft = rect.left;
+                    initialTop = rect.top;
+
+                    document.addEventListener('mousemove', dragMove);
+                    document.addEventListener('touchmove', dragMove, { passive: false });
+                    document.addEventListener('mouseup', dragEnd);
+                    document.addEventListener('touchend', dragEnd);
+                }
+
+                function dragMove(e) {
+                    moveCount++;
+                    if (moveCount < dragThreshold) return;
+
+                    isDragging = true;
+                    btn.classList.add('dragging');
+
+                    const event = e.type === 'touchmove' ? e.touches[0] : e;
+                    if (e.type === 'touchmove') e.preventDefault();
+
+                    let newLeft = initialLeft + (event.clientX - startX);
+                    let newTop = initialTop + (event.clientY - startY);
+
+                    // Giới hạn trong màn hình
+                    const padding = 10;
+                    const maxX = window.innerWidth - btn.offsetWidth - padding;
+                    const maxY = window.innerHeight - btn.offsetHeight - padding;
+
+                    newLeft = Math.max(padding, Math.min(newLeft, maxX));
+                    newTop = Math.max(padding, Math.min(newTop, maxY));
+
+                    btn.style.bottom = 'auto';
+                    btn.style.right = 'auto';
+                    btn.style.left = newLeft + 'px';
+                    btn.style.top = newTop + 'px';
+                }
+
+                function dragEnd() {
+                    document.removeEventListener('mousemove', dragMove);
+                    document.removeEventListener('touchmove', dragMove);
+                    document.removeEventListener('mouseup', dragEnd);
+                    document.removeEventListener('touchend', dragEnd);
+
+                    if (isDragging) {
+                        setTimeout(() => { isDragging = false; }, 50);
+                        btn.classList.remove('dragging');
+
+                        // Lưu vị trí
+                        const rect = btn.getBoundingClientRect();
+                        localStorage.setItem('chatbot_pos', JSON.stringify({
+                            left: rect.left,
+                            top: rect.top
+                        }));
+                    } else {
+                        // Đây là một cú Click bình thường
+                        if (window.erpApp && window.erpApp.openModule) {
+                            window.erpApp.openModule('Chatbot hỗ trợ');
+                        }
+                    }
+                }
+            })();
+        </script>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Firebase SDK (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <!-- firebase-auth-compat.js removed: system uses local auth, Firebase Auth not configured -->
+
+    <!-- Firebase Init -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsi-AeVn7tbyeiOjTRdWqZzktQbq0dcIs",
+            authDomain: "vietbachcorp-6cd8c.firebaseapp.com",
+            databaseURL: "https://vietbachcorp-6cd8c-default-rtdb.firebaseio.com",
+            projectId: "vietbachcorp-6cd8c",
+            storageBucket: "vietbachcorp-6cd8c.firebasestorage.app",
+            messagingSenderId: "1097895214700",
+            appId: "1:1097895214700:web:1548986376fd9af3162249",
+            measurementId: "G-QZCXXQHN8M"
+        };
+
+        const firebaseApp = firebase.initializeApp(firebaseConfig);
+        const analytics = firebase.analytics();
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+        const storage = firebase.storage();
+
+        // Firebase Auth is NOT initialized - system uses local username/password authentication
+        // To enable Google Login: add firebase-auth-compat.js and enable Auth in Firebase Console
+        window.auth = null;
+
+        window.firebaseApp = firebaseApp;
+        window.db = db;
+        window.rtdb = rtdb;
+        window.storage = storage;
+
+        console.log('✅ Firebase initialized:', firebaseConfig.projectId);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-sync.js?v=7"></script>
+    <script src="gemini_logic.js?v=7"></script>
+
+    <script src="lib/polyfills.js"></script>
+    <script src="app.js?v=25.4.3"></script>
+    <script src="pm_modals.js?v=7"></script>
+    <script src="pm_logic.js?v=216"></script>
+    <script type="module" src="index.js"></script>
+    <script src="zalo_service.js?v=1"></script>
+    <script src="bom_logic.js?v=1003"></script>
+    <script src="production_dashboard_logic.js?v=1"></script>
+    <script src="wc_logic.js?v=6"></script>
+    <script src="routing_logic.js?v=1"></script>
+    <script src="maintenance_logic.js?v=6"></script>
+    <script src="scheduling_logic.js?v=6"></script>
+    <script src="mo_logic.js?v=7"></script>
+    <script src="mrp_logic.js?v=6"></script>
+    <script src="qc_logic.js?v=6"></script>
+    <script src="production_log.js?v=6"></script>
+    <script src="oee_logic.js?v=6"></script>
+    <script src="cost_logic.js?v=6"></script>
+    <script src="training_logic.js?v=1"></script>
+    <script src="gl_logic.js?v=6"></script>
+    <script src="ar_logic.js?v=6"></script>
+    <script src="ap_logic.js?v=6"></script>
+    <script src="balance_sheet_logic.js?v=6"></script>
+    <script src="pnl_logic.js?v=6"></script>
+    <script src="cashflow_logic.js?v=6"></script>
+    <script src="biz_analysis_logic.js?v=6"></script>
+    <script src="marketing_logic.js?v=1"></script>
+    <script src="dauthau_logic.js?v=1"></script>
+    <script src="material_proposal_logic.js?v=3"></script>
+    <script src="inventory_report_logic.js?v=2"></script>
+    <script src="thu_chi_logic.js?v=1"></script>
+    <script src="vehicle_logic.js?v=25.4.3"></script>
+    <script src="gr_logic.js?v=1"></script>
+    <script src="po_append.js?v=1"></script>
+    <script src="suppliers_logic.js?v=1"></script>
+    <script src="rfq_logic.js?v=1"></script>
+    <script src="report_logic.js?v=1"></script>
+    <script src="office_expense_logic.js?v=6"></script>
+    <script src="other_expense_logic.js?v=1"></script>
+    <script src="features/hr/salary_logic.js?v=1"></script>
+    <script src="file_manager_logic.js?v=1"></script>
+    <!-- <script src="nuclear_reset.js?v=1"></script> -->
+</body>
+
+</html>
