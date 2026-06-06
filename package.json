@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint pm_logic.js pm_logic_extracted.js",
+    "lint": "eslint pm_logic.js",
     "lint:fix": "eslint . --ext .js --fix",
     "test": "vitest run",
     "test:ui": "vitest --ui",
