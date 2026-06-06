@@ -394,6 +394,8 @@
 
     let otherExpenses = [];
     let currentTab = 'dashboard'; 
+    let dashboardMonth = new Date().getMonth() + 1; // 1-12
+    let dashboardYear = new Date().getFullYear();
     let selectedForPrint = new Set();
     let filterMonth = 'all';
     let filterYear = new Date().getFullYear().toString();
@@ -556,10 +558,7 @@
                         <span class="material-icons-outlined">request_quote</span>
                         <span class="tab-label">Đề xuất chi phí</span>
                     </button>
-                    <button class="tab-btn-modern tab-print ${currentTab === 'print' ? 'active' : ''}" onclick="window.erpApp.setOtherExpenseTab('print')">
-                        <span class="material-icons-outlined">print</span>
-                        <span class="tab-label">In phiếu</span>
-                    </button>
+
                 </div>
 
                 <div id="otherExpenseModuleBody">
@@ -578,7 +577,7 @@
         switch (currentTab) {
             case 'dashboard': return renderDashboard();
             case 'requests': return renderRequests();
-            case 'print': return renderPrintTab();
+
             default: return '';
         }
     }
@@ -616,18 +615,53 @@
         window.erpApp.applyOtherExpenseFilters();
     };
 
+    // Dashboard filter handler
+    window.erpApp.setOtherExpenseDashboardFilter = function () {
+        const mEl = document.getElementById('otherDashMonthFilter');
+        const yEl = document.getElementById('otherDashYearFilter');
+        if (mEl) dashboardMonth = parseInt(mEl.value);
+        if (yEl) dashboardYear = parseInt(yEl.value);
+        window.erpApp.renderOtherExpense();
+    };
+
+    function getFilteredByMonthOther(expenses, month, year) {
+        return expenses.filter(e => {
+            const d = window.erpApp.toJsDate(e.date);
+            return d.getMonth() + 1 === month && d.getFullYear() === year;
+        });
+    }
+
     function renderDashboard() {
-        const totalSpent = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const filtered = getFilteredByMonthOther(otherExpenses, dashboardMonth, dashboardYear);
+        const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0);
+
+        const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
         return `
             <div class="expense-dashboard-v2 animated fadeInUp">
+                <!-- Dashboard Filter -->
+                <div class="glass-card" style="margin-bottom:20px; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-radius:16px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="material-icons-outlined" style="color:#64748b; font-size:22px;">filter_list</span>
+                        <span style="font-weight:700; color:#334155; font-size:14px;">Bộ lọc biểu đồ</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <select id="otherDashMonthFilter" onchange="window.erpApp.setOtherExpenseDashboardFilter()" style="padding:10px 16px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:13px; font-weight:700; background:#fff; cursor:pointer; outline:none; min-width:130px;">
+                            ${monthNames.map((name, i) => `<option value="${i+1}" ${dashboardMonth === i+1 ? 'selected' : ''}>${name}</option>`).join('')}
+                        </select>
+                        <select id="otherDashYearFilter" onchange="window.erpApp.setOtherExpenseDashboardFilter()" style="padding:10px 16px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:13px; font-weight:700; background:#fff; cursor:pointer; outline:none; min-width:100px;">
+                            ${[2024, 2025, 2026, 2027].map(y => `<option value="${y}" ${dashboardYear === y ? 'selected' : ''}>Năm ${y}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
                 <div class="stats-row-v2">
                     <div class="glass-card stat-card-v2">
-                        <span class="stat-label-v2">TỔNG CHI TIÊU THÁNG NÀY</span>
+                        <span class="stat-label-v2">TỔNG CHI TIÊU ${monthNames[dashboardMonth - 1].toUpperCase()}</span>
                         <div class="stat-value-v2">${window.erpApp.formatValue(totalSpent)}</div>
                         <div class="stat-trend positive">
                             <span class="material-icons-outlined">trending_up</span>
-                            <span>Tính trên tổng đề xuất đã tạo</span>
+                            <span>Tính trên ${filtered.length} đề xuất đã tạo trong tháng</span>
                         </div>
                     </div>
                 </div>
@@ -635,7 +669,7 @@
                 <div class="charts-row-v2">
                     <div class="glass-card chart-main-v2">
                         <div class="chart-header-v2">
-                            <h3>Xu hướng chi phí hàng tháng</h3>
+                            <h3>Chi phí các tháng trong năm ${dashboardYear}</h3>
                         </div>
                         <div class="main-chart-container">
                             <canvas id="otherMonthlyTrendChart"></canvas>
@@ -643,7 +677,7 @@
                     </div>
                     <div class="glass-card chart-side-v2">
                         <div class="chart-header-v2">
-                            <h3>Chi phí theo hạng mục</h3>
+                            <h3>Chi phí theo hạng mục (${monthNames[dashboardMonth - 1]})</h3>
                         </div>
                         <div class="donut-chart-container">
                             <canvas id="otherExpenseCategoryChart"></canvas>
@@ -653,7 +687,7 @@
 
                 <div class="glass-card recent-requests-card animated fadeInUp" style="margin-top: 24px;">
                     <div class="card-header-v2">
-                        <h3>Đề xuất gần đây</h3>
+                        <h3>Đề xuất trong ${monthNames[dashboardMonth - 1]}/${dashboardYear}</h3>
                         <button class="btn-text" onclick="window.erpApp.setOtherExpenseTab('requests')">Xem tất cả</button>
                     </div>
                     <div class="table-responsive-pro">
@@ -668,7 +702,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${otherExpenses.slice(0, 5).map(e => {
+                                ${filtered.slice(0, 10).map(e => {
             const cat = EXPENSE_CATEGORIES[e.category] || EXPENSE_CATEGORIES['KHAC'];
             const isPaid = e.paymentStatus === 'paid';
             return `
@@ -708,9 +742,11 @@
         const ctx = document.getElementById('otherExpenseCategoryChart');
         if (!ctx) {return;}
 
+        const filtered = getFilteredByMonthOther(otherExpenses, dashboardMonth, dashboardYear);
+
         const dataByCat = {};
         Object.keys(EXPENSE_CATEGORIES).forEach(key => {
-            const total = otherExpenses
+            const total = filtered
                 .filter(e => e.category === key)
                 .reduce((sum, e) => sum + e.amount, 0);
             if (total > 0) {dataByCat[key] = total;}
@@ -721,6 +757,11 @@
         const colors = Object.keys(dataByCat).map(k => EXPENSE_CATEGORIES[k].color);
 
         if (window.myOtherExpenseChart) {window.myOtherExpenseChart.destroy();}
+
+        if (data.length === 0) {
+            ctx.parentElement.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#94a3b8; font-size:13px; font-weight:600;"><span class="material-icons-outlined" style="margin-right:8px;">info</span>Không có dữ liệu trong tháng này</div>';
+            return;
+        }
 
         window.myOtherExpenseChart = new Chart(ctx, {
             type: 'doughnut',
@@ -754,43 +795,42 @@
 
         const months = [];
         const data = [];
-        const now = new Date();
+        const bgColors = [];
+        const borderColors = [];
 
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            months.push(`T${d.getMonth() + 1}`);
-
+        for (let i = 1; i <= 12; i++) {
+            months.push(`T${i}`);
             const monthTotal = otherExpenses
                 .filter(e => {
                     const eDate = window.erpApp.toJsDate(e.date);
-                    return eDate.getMonth() === d.getMonth() && eDate.getFullYear() === d.getFullYear();
+                    return eDate.getMonth() + 1 === i && eDate.getFullYear() === dashboardYear;
                 })
                 .reduce((sum, e) => sum + e.amount, 0);
             data.push(monthTotal);
+
+            if (i === dashboardMonth) {
+                bgColors.push('#64748b');
+                borderColors.push('#475569');
+            } else {
+                bgColors.push('#e2e8f0');
+                borderColors.push('#cbd5e1');
+            }
         }
 
         if (window.myOtherTrendChart) {window.myOtherTrendChart.destroy();}
 
-        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(100, 116, 139, 0.2)');
-        gradient.addColorStop(1, 'rgba(100, 116, 139, 0)');
-
         window.myOtherTrendChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: months,
                 datasets: [{
                     label: 'Chi phí',
                     data: data,
-                    borderColor: '#64748b',
-                    borderWidth: 4,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#64748b',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    fill: true,
-                    backgroundColor: gradient,
-                    tension: 0.4
+                    backgroundColor: bgColors,
+                    borderColor: borderColors,
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false
                 }]
             },
             options: {
@@ -807,15 +847,27 @@
                     y: {
                         beginAtZero: true,
                         grid: { color: '#f1f5f9' },
-                        ticks: { callback: value => value >= 1000000 ? (value / 1000000) + 'tr' : value }
+                        ticks: { callback: value => value >= 1000000 ? (value / 1000000) + 'tr' : window.erpApp.formatValue(value) }
                     },
                     x: { grid: { display: false } }
+                },
+                onClick: function(evt, elements) {
+                    if (elements && elements.length > 0) {
+                        const idx = elements[0].index;
+                        dashboardMonth = idx + 1;
+                        const mEl = document.getElementById('otherDashMonthFilter');
+                        if (mEl) mEl.value = dashboardMonth;
+                        window.erpApp.renderOtherExpense();
+                    }
                 }
             }
         });
     }
 
     function renderRequests() {
+        const selCount = selectedForPrint.size;
+        const selTotal = otherExpenses.filter(e => selectedForPrint.has(e.id)).reduce((sum, e) => sum + e.amount, 0);
+
         return `
             <div class="requests-container animated fadeInUp">
                 <div class="table-toolbar-pro glass-card">
@@ -839,11 +891,38 @@
                     </div>
                 </div>
 
+                <!-- Batch Print Toolbar -->
+                <div class="glass-card batch-print-toolbar" style="margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-radius: 16px; ${selCount > 0 ? 'border: 1.5px solid #3b82f6; background: #f0f7ff;' : ''}">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span class="material-icons-outlined" style="color:${selCount > 0 ? '#3b82f6' : '#94a3b8'}; font-size:22px;">checklist</span>
+                        <span style="font-weight:700; color:${selCount > 0 ? '#1e3a8a' : '#64748b'}; font-size:14px;">
+                            ${selCount > 0 ? `Đã chọn <strong>${selCount}</strong> phiếu • Tổng: <strong>${window.erpApp.formatValue(selTotal)} VNĐ</strong>` : 'Chưa chọn phiếu nào — Tích chọn để in đề xuất'}
+                        </span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        ${selCount > 0 ? `
+                            <button class="btn-text" style="color:#ef4444;" onclick="window.erpApp.clearOtherPrintSelection()">
+                                <span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">clear_all</span>
+                                Bỏ chọn tất cả
+                            </button>
+                        ` : ''}
+                        <button class="btn-primary-pro" style="padding: 10px 20px; font-size: 13px; ${selCount < 1 ? 'opacity:0.4; pointer-events:none;' : ''}" onclick="window.erpApp.printMultipleOtherExpenses()">
+                            <span class="material-icons-outlined" style="font-size:18px;">print</span>
+                            In đề xuất đã chọn (${selCount})
+                        </button>
+                    </div>
+                </div>
+
                 <div class="glass-card table-container-pro">
                     <div class="table-responsive-pro">
                         <table class="pro-table">
                             <thead>
                                 <tr>
+                                    <th style="width:40px; text-align:center;">
+                                        <input type="checkbox" id="selectAllOtherExpensePrint" ${selCount === otherExpenses.length && selCount > 0 ? 'checked' : ''}
+                                            onchange="window.erpApp.toggleAllOtherPrintSelection(this.checked)"
+                                            style="width:18px; height:18px; cursor:pointer; accent-color:#3b82f6;">
+                                    </th>
                                     <th>Mã số</th>
                                     <th>Ngày</th>
                                     <th>Hạng mục</th>
@@ -1003,12 +1082,18 @@
 
     function renderTableRows(data) {
         if (!data || data.length === 0) {
-            return '<tr><td colspan="9" class="text-center" style="padding: 40px; color: #94a3b8;">Không tìm thấy đề xuất nào</td></tr>';
+            return '<tr><td colspan="10" class="text-center" style="padding: 40px; color: #94a3b8;">Không tìm thấy đề xuất nào</td></tr>';
         }
         return data.map(e => {
             const cat = EXPENSE_CATEGORIES[e.category] || EXPENSE_CATEGORIES['KHAC'];
+            const isSelected = selectedForPrint.has(e.id);
             return `
-                <tr>
+                <tr style="${isSelected ? 'background:#f0f7ff;' : ''}">
+                    <td style="text-align:center;" data-label="Chọn">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''}
+                            onchange="window.erpApp.toggleOtherPrintSelection('${e.id}', this.checked)"
+                            style="width:18px; height:18px; cursor:pointer; accent-color:#3b82f6;">
+                    </td>
                     <td data-label="Mã số"><span class="code-badge">${e.id}</span></td>
                     <td data-label="Ngày"><div class="date-cell">${window.erpApp.formatDate(e.date)}</div></td>
                     <td data-label="Hạng mục">
