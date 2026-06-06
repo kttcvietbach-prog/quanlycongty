@@ -20346,6 +20346,8 @@ window.erpApp = window.erpApp || {};
     }
 
     async function saveHoSo() {
+        console.log('[saveHoSo] ✅ Hàm saveHoSo ĐƯỢC GỌI');
+        try {
         const id = document.getElementById('hsEditId').value;
         const title = document.getElementById('hsTitle').value.trim();
         const category = document.getElementById('hsCategory').value;
@@ -20358,13 +20360,19 @@ window.erpApp = window.erpApp || {};
         const value = parseFloat(valueStr) || 0;
         const issueDate = document.getElementById('hsIssueDate').value;
         const startDate = document.getElementById('hsStartDate') ? document.getElementById('hsStartDate').value : '';
-        const executionTime = parseInt(document.getElementById('hsExecutionTime').value) || 0;
-        const expiryDate = document.getElementById('hsExpiryDate').value;
-        const transDate = document.getElementById('hsTransDate').value;
+        const executionTimeEl = document.getElementById('hsExecutionTime');
+        const executionTime = executionTimeEl ? (parseInt(executionTimeEl.value) || 0) : 0;
+        const expiryDateEl = document.getElementById('hsExpiryDate');
+        const expiryDate = expiryDateEl ? expiryDateEl.value : '';
+        const transDateEl = document.getElementById('hsTransDate');
+        const transDate = transDateEl ? transDateEl.value : '';
         const note = document.getElementById('hsNote').value.trim();
-        const originalCopies = parseInt(document.getElementById('hsOriginalCopies').value) || 0;
-        const notarizedCopies = parseInt(document.getElementById('hsNotarizedCopies').value) || 0;
-        const storageLocationId = document.getElementById('hsStorageLocationId').value;
+        const origEl = document.getElementById('hsOriginalCopies');
+        const originalCopies = origEl ? (parseInt(origEl.value) || 0) : 0;
+        const notarEl = document.getElementById('hsNotarizedCopies');
+        const notarizedCopies = notarEl ? (parseInt(notarEl.value) || 0) : 0;
+        const locEl = document.getElementById('hsStorageLocationId');
+        const storageLocationId = locEl ? locEl.value : '';
         const locPath = getLocationPath(storageLocationId);
         const storageBranch = locPath[0] ? locPath[0].name : '';
         const storageRoom = locPath[1] ? locPath[1].name : '';
@@ -20394,7 +20402,10 @@ window.erpApp = window.erpApp || {};
             const doc = hoSoDocuments.find(d => d.id === id);
             if (doc) {
                 Object.assign(doc, payload);
-                if (window.CrudSync) { await window.CrudSync.saveItem('hoSoDocuments', doc, 'id'); }
+                localStorage.setItem('erp_hoSoDocuments', JSON.stringify(hoSoDocuments));
+                if (window.CrudSync) {
+                    window.CrudSync.saveItem('hoSoDocuments', doc, 'id').catch(err => console.error('[saveHoSo Sync Error]:', err));
+                }
                 if (window.notifyCRUD) {
                     const moduleName = doc.category === 'hop-dong' ? 'Hợp đồng' : (doc.category === 'cong-van-den' ? 'Công văn đến' : 'Hồ sơ');
                     window.notifyCRUD(moduleName, 'update', { name: doc.title, page: 'hanh-chinh' });
@@ -20408,23 +20419,43 @@ window.erpApp = window.erpApp || {};
                 createdAt: new Date().toISOString()
             };
             hoSoDocuments.unshift(newDoc);
-            if (window.CrudSync) { await window.CrudSync.saveItem('hoSoDocuments', newDoc, 'id'); }
+            localStorage.setItem('erp_hoSoDocuments', JSON.stringify(hoSoDocuments));
+            if (window.CrudSync) {
+                window.CrudSync.saveItem('hoSoDocuments', newDoc, 'id').catch(err => console.error('[saveHoSo Sync Error]:', err));
+            }
             syncArchiveWithContract(newDoc);
             if (window.notifyCRUD) {
                 const moduleName = newDoc.category === 'hop-dong' ? 'Hợp đồng' : (newDoc.category === 'cong-van-den' ? 'Công văn đến' : 'Hồ sơ');
                 window.notifyCRUD(moduleName, 'add', { name: newDoc.title, page: 'hanh-chinh' });
-                // Thêm thông báo phê duyệt nếu cần
                 if (newDoc.status === 'pending') {
                     window.notifyCRUD('Phê duyệt văn bản', 'add', { name: `Cần duyệt: ${newDoc.title}`, page: 'hanh-chinh' });
                 }
             }
             showToast('Đã thêm hồ sơ mới', 'success');
-            // Reset trang về 1 và tự động mở nhóm dự án để hiển thị ngay dòng mới thêm
             if (typeof hsCurrentPage !== 'undefined') hsCurrentPage = 1;
             if (typeof hsExpandedProjects !== 'undefined') hsExpandedProjects.add(payload.project || 'Không thuộc dự án');
         }
-        closeHsEditModal();
-        renderLuuTruHoSo();
+        } catch (err) {
+            console.error('[saveHoSo] ❌ LỖI:', err);
+            showToast('Có lỗi xảy ra khi lưu!', 'error');
+        } finally {
+            console.log('[saveHoSo] 🔄 FINALLY - Đóng modal...');
+            // Đóng modal trực tiếp bằng DOM removal để đảm bảo 100%
+            const modal = document.getElementById('hsEditModal');
+            if (modal) {
+                modal.classList.add('closing');
+                setTimeout(() => { if (modal.parentNode) modal.parentNode.removeChild(modal); }, 200);
+            }
+            // Cũng xóa tất cả overlay còn sót
+            document.querySelectorAll('.modal-overlay').forEach(el => {
+                if (el.id === 'hsEditModal') {
+                    el.classList.add('closing');
+                    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
+                }
+            });
+            renderLuuTruHoSo();
+            console.log('[saveHoSo] ✅ FINALLY hoàn tất');
+        }
     }
 
     async function deleteHoSo(id) {
@@ -20438,8 +20469,10 @@ window.erpApp = window.erpApp || {};
                 if (idx !== -1) {
                     const docToDelete = hoSoDocuments[idx];
                     hoSoDocuments.splice(idx, 1);
-                    if (window.CrudSync) await window.CrudSync.deleteItem('hoSoDocuments', id, 'id');
                     localStorage.setItem('erp_hoSoDocuments', JSON.stringify(hoSoDocuments));
+                    if (window.CrudSync) {
+                        window.CrudSync.deleteItem('hoSoDocuments', id, 'id').catch(err => console.error('[deleteHoSo Sync Error]:', err));
+                    }
 
                     // Standardized Audit Logging
                     window.erpApp.notifyCRUD('Hồ sơ', 'delete', {

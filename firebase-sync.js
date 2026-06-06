@@ -482,7 +482,7 @@
 
             if (data === null) {
                 // Lỗi kết nối/permission/quota → giữ mock data local, KHÔNG đè
-                console.warn(`⚠️ Không thể đọc "${name}" từ Firestore. Sử dụng dữ liệu local.`);
+                console.log(`⚠️ Không thể đọc "${name}" từ Firestore. Sử dụng dữ liệu local.`);
                 const localData = this.getLocalDataFromStorage(name);
                 if (localData) { this.setLocalData(name, localData); }
                 this.syncStatus[name] = 'local-only';

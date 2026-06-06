@@ -919,7 +919,6 @@
                 invoiceNo: formData.get('invoiceNo'),
                 evidenceUrl: tempExpenseFiles.length > 0 ? (tempExpenseFiles[0].url || tempExpenseFiles[0].dataUrl || '') : '',
                 files: [...tempExpenseFiles],
-                status: 'pending',
                 paymentStatus: 'unpaid',
                 createdAt: new Date().toISOString()
             };
@@ -1207,7 +1206,6 @@
                     <div class="modal-body">
                         <div class="detail-grid">
                             <div class="detail-item"><label>Mã số</label><div class="val font-bold">${expense.id}</div></div>
-                            <div class="detail-item"><label>Trạng thái</label><div class="val"><span class="status-pill ${expense.status}">${expense.status}</span></div></div>
                             <div class="detail-item full-width"><label>Nội dung</label><div class="val">${expense.desc}</div></div>
                             <div class="detail-item"><label>Hạng mục</label><div class="val">${cat.label}</div></div>
                             <div class="detail-item"><label>Số tiền đề xuất</label><div class="val font-bold text-primary">${window.erpApp.formatValue(expense.amount)} VNĐ</div></div>
@@ -1253,26 +1251,6 @@
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-    };
-
-    window.erpApp.handleExpenseAction = async function (id, action) {
-        const index = officeExpenses.findIndex(e => e.id === id);
-        if (index === -1) { return; }
-        const expense = officeExpenses[index];
-
-        if (action === 'approve') {
-            expense.status = 'approved';
-            window.erpApp.showToast('Đã phê duyệt!');
-        } else if (action === 'revert') {
-            expense.status = 'pending';
-            window.erpApp.showToast('Đã hoàn tác trạng thái!');
-        }
-
-        window.erpApp._setData(COLLECTION_EXPENSES, officeExpenses);
-        if (window.CrudSync) {
-            await window.CrudSync.saveItem(COLLECTION_EXPENSES, expense, 'id');
-        }
-        window.erpApp.renderOfficeExpense();
     };
 
     window.erpApp.deleteExpense = function (id) {
@@ -1583,10 +1561,6 @@
                             <span class="sig-label">Thủ quỹ</span>
                             <div class="sig-name">..........................</div>
                         </div>
-                        <div class="sig-item">
-                            <span class="sig-label">Người phê duyệt</span>
-                            <div class="sig-name">..........................</div>
-                        </div>
                     </div>
                 </div>
 
@@ -1887,9 +1861,6 @@
             }
 
             /* Status Badges */
-            .status-pill { padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; }
-            .status-pill.approved { background: #dcfce7; color: #15803d; }
-            .status-pill.pending { background: #fef3c7; color: #b45309; }
             .code-badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
 
             /* Glass Card Base */

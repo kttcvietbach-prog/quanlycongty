@@ -697,6 +697,7 @@
             appendixDate, appendixValue, appendixExtend, appendixStatus,
             files: [...tempHsFiles]
         };
+        try {
         if (id) {
             const doc = hoSoDocuments.find(d => d.id === id);
             if (doc) {
@@ -704,7 +705,7 @@
                 if (window.FileStore) { await window.FileStore.saveAllFiles('hoSoDocuments', doc.id, doc.files); }
                 if (window.CrudSync) { await window.CrudSync.saveItem('hoSoDocuments', doc, 'id'); }
                 // 🔄 Đồng bộ ngược lại Quản lý dự án nếu có liên kết
-                syncArchiveWithContract(doc);
+                if (typeof window.erpApp.syncArchiveWithContract === 'function') window.erpApp.syncArchiveWithContract(doc);
                 showToast('Đã cập nhật hồ sơ ' + id + (doc.linkedPmId ? ` (đã đồng bộ HĐ ${doc.linkedPmId})` : ''), 'success');
             }
         } else {
@@ -713,12 +714,15 @@
             if (window.FileStore) { await window.FileStore.saveAllFiles('hoSoDocuments', newDoc.id, newDoc.files); }
             if (window.CrudSync) { await window.CrudSync.saveItem('hoSoDocuments', newDoc, 'id'); }
             // 🔄 Đồng bộ sang Quản lý dự án
-            syncArchiveWithContract(newDoc);
+            if (typeof window.erpApp.syncArchiveWithContract === 'function') window.erpApp.syncArchiveWithContract(newDoc);
             showToast('Đã thêm hồ sơ mới', 'success');
         }
-        closeHsEditModal();
-        renderLuuTruHoSo();
-    }
+        } catch (err) {
+            console.error('Lỗi lưu hồ sơ:', err);
+        } finally {
+            closeHsEditModal();
+            renderLuuTruHoSo();
+        }
 
     function confirmDeleteHoSo(id) {
         const doc = hoSoDocuments.find(d => d.id === id);

@@ -169,8 +169,8 @@
             if (window.CrudSync) { window.CrudSync.saveItem('pmContracts', pmContract, 'id'); }
         }
 
-        // ðŸ”„ Refresh UI náº¿u Ä‘ang á»Ÿ tab Quáº£n lÃ½ dá»± Ã¡n
-        if (pmContract && typeof renderQuanLyDuAn === 'function' && breadcrumbCurrent && breadcrumbCurrent.textContent === 'Quáº£n lÃ½ dá»± Ã¡n') {
+        // 🔄 Refresh UI nếu đang ở tab Quản lý dự án
+        if (pmContract && typeof renderQuanLyDuAn === 'function' && typeof breadcrumbCurrent !== 'undefined' && breadcrumbCurrent && breadcrumbCurrent.textContent === 'Quản lý dự án') {
             renderQuanLyDuAn();
         }
     }
@@ -973,7 +973,8 @@
             appendixDate, appendixValue, appendixExtend, appendixStatus,
             files: [...tempHsFiles]
         };
-        if (id) {
+        try {
+    if (id) {
             const doc = hoSoDocuments.find(d => d.id === id);
             if (doc) {
                 Object.assign(doc, payload);
@@ -992,6 +993,9 @@
             syncArchiveWithContract(newDoc);
             showToast('ÄÃ£ thÃªm há»“ sÆ¡ má»›i', 'success');
         }
+        } catch (err) {
+        console.error('Lỗi lưu hồ sơ:', err);
+    } finally {
         closeHsEditModal();
         renderLuuTruHoSo();
     }

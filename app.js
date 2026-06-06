@@ -4542,9 +4542,9 @@
             window.erpApp.addNotification(title, 'notifications', 'blue', target);
         }
 
-        // 2. Gửi Email qua API thật
+        // 2. Đưa Email vào hàng đợi (Queue) để gửi định kỳ 8h sáng
         if (channels.includes('email')) {
-            console.log(`%c[Email Service] %cSending to %c${recipientName}%c: %c${title}`,
+            console.log(`%c[Email Service] %cĐã thêm vào hàng đợi (Gửi lúc 8h sáng) gửi tới %c${recipientName}%c: %c${title}`,
                 'color: #3b82f6; font-weight: bold', 'color: inherit', 'color: #1d4ed8; font-weight: bold', 'color: inherit', 'font-style: italic');
 
             // Tìm email của nhân viên dựa trên recipientId hoặc recipientName
@@ -4563,23 +4563,21 @@
                 toEmail = emp.email;
             }
 
-            fetch((window.API_BASE_URL || '') + '/api/send-notification-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: toEmail, // Có thể trống để backend tự lấy email trong cấu hình mặc định
-                    subject: title,
-                    body: message
-                })
-            }).then(response => {
-                if (response.ok) {
-                    console.log('✅ [Email Service] Gửi email thành công!');
-                } else {
-                    console.warn('❌ [Email Service] Gửi email thất bại!');
-                }
-            }).catch(err => {
-                console.error('❌ [Email Service] Lỗi kết nối gửi email:', err);
+            // Lưu vào queue
+            let emailQueue = [];
+            try {
+                emailQueue = JSON.parse(localStorage.getItem('erp_email_queue')) || [];
+            } catch (e) {}
+            
+            emailQueue.push({
+                recipientId,
+                recipientName,
+                toEmail,
+                title,
+                message,
+                timestamp: new Date().toISOString()
             });
+            localStorage.setItem('erp_email_queue', JSON.stringify(emailQueue));
         }
 
         // 3. Mô phỏng gửi Zalo
@@ -4595,9 +4593,66 @@
         if (channels.includes('zalo')) { channelNames.push('Zalo'); }
 
         if (typeof showToast === 'function') {
-            showToast(`Đã gửi thông báo đến ${recipientName} qua ${channelNames.join(', ')}`, 'success');
+            showToast(`Đã lưu thông báo gửi tới ${recipientName} qua ${channelNames.join(', ')}`, 'success');
         }
     };
+
+    // Hàm kiểm tra và gửi email định kỳ lúc 8h sáng
+    function checkAndSendPeriodicEmails() {
+        const now = new Date();
+        const lastSentDate = localStorage.getItem('erp_last_daily_email_date');
+        const todayStr = now.toDateString();
+
+        // Kiểm tra nếu đã đến 8h sáng và chưa gửi ngày hôm nay
+        if (now.getHours() >= 8 && lastSentDate !== todayStr) {
+            let emailQueue = [];
+            try {
+                emailQueue = JSON.parse(localStorage.getItem('erp_email_queue')) || [];
+            } catch (e) {}
+
+            if (emailQueue.length > 0) {
+                console.log(`[Email Service] Gửi tự động ${emailQueue.length} email đang chờ lúc 8h sáng...`);
+                
+                // Group by toEmail
+                const grouped = {};
+                emailQueue.forEach(item => {
+                    if (!grouped[item.toEmail]) {
+                        grouped[item.toEmail] = [];
+                    }
+                    grouped[item.toEmail].push(item);
+                });
+
+                // Send one summary email per recipient
+                Object.keys(grouped).forEach(email => {
+                    const items = grouped[email];
+                    const bodyLines = items.map((it, idx) => `${idx + 1}. [${it.title}]\n${it.message}`).join('\n\n');
+                    
+                    fetch((window.API_BASE_URL || '') + '/api/send-notification-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: email,
+                            subject: `[Thông báo định kỳ 8h] Bạn có ${items.length} thông báo mới`,
+                            body: `Chào bạn,\n\nDưới đây là tổng hợp ${items.length} thông báo từ hệ thống ERP:\n\n${bodyLines}\n\nTrân trọng,\nVIETBACHCORP ERP System`
+                        })
+                    }).catch(err => console.error('Lỗi gửi email định kỳ:', err));
+                });
+                
+                // Xóa hàng đợi sau khi gửi
+                localStorage.removeItem('erp_email_queue');
+                if (typeof showToast === 'function') {
+                    showToast(`Đã tự động gửi ${emailQueue.length} thông báo định kỳ (8h sáng)`, 'info');
+                }
+            }
+            
+            // Đánh dấu đã quét ngày hôm nay (kể cả có email hay không)
+            localStorage.setItem('erp_last_daily_email_date', todayStr);
+        }
+    }
+
+    // Chạy kiểm tra ngay khi mở app và chạy định kỳ mỗi phút
+    checkAndSendPeriodicEmails();
+    setInterval(checkAndSendPeriodicEmails, 60000);
 
     notificationBtn.addEventListener('click', (e) => {
         e.stopPropagation();
