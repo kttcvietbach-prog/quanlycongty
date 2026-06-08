@@ -1904,7 +1904,7 @@
                             <div class="sig-name">..........................</div>
                         </div>
                         <div class="sig-item">
-                            <span class="sig-label">Người phê duyệt</span>
+                            <span class="sig-label">Giám đốc</span>
                             <div class="sig-name">..........................</div>
                         </div>
                     </div>

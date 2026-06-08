@@ -49,8 +49,9 @@
     // ==========================================
     const COLLECTION_EXPENSES = 'office_expenses';
     const COLLECTION_NORMS = 'expense_norms';
+    const COLLECTION_CATEGORIES = 'office_categories';
 
-    const EXPENSE_CATEGORIES = {
+    let EXPENSE_CATEGORIES = {
         'VPP': { label: 'Văn phòng phẩm', icon: 'auto_stories', color: '#3B82F6', tk: '6422' },
         'DIEN': { label: 'Điện & Nước', icon: 'electric_bolt', color: '#F59E0B', tk: '642' },
         'NUOC': { label: 'Tiền nước', icon: 'opacity', color: '#0EA5E9', tk: '642' },
@@ -80,6 +81,14 @@
         // 1. Tải nhanh từ LocalStorage
         officeExpenses = window.erpApp._getData(COLLECTION_EXPENSES) || [];
         expenseNorms = window.erpApp._getData(COLLECTION_NORMS) || [];
+        const savedCats = window.erpApp._getData(COLLECTION_CATEGORIES);
+        if (savedCats) {
+            if (Array.isArray(savedCats) && savedCats.length > 0 && savedCats[0].data) {
+                EXPENSE_CATEGORIES = savedCats[0].data;
+            } else if (!Array.isArray(savedCats) && Object.keys(savedCats).length > 0) {
+                EXPENSE_CATEGORIES = savedCats;
+            }
+        }
 
         console.log(`📦 [OfficeExpense] Load nhanh: ${officeExpenses.length} đề xuất, ${expenseNorms.length} định mức.`);
 
@@ -91,9 +100,17 @@
             await window.SyncManager.ready;
             const cloudExpenses = window.erpApp._getData(COLLECTION_EXPENSES);
             const cloudNorms = window.erpApp._getData(COLLECTION_NORMS);
+            const cloudCats = window.erpApp._getData(COLLECTION_CATEGORIES);
 
             if (cloudExpenses && cloudExpenses.length > 0) { officeExpenses = cloudExpenses; }
             if (cloudNorms && cloudNorms.length > 0) { expenseNorms = cloudNorms; }
+            if (cloudCats) {
+                if (Array.isArray(cloudCats) && cloudCats.length > 0 && cloudCats[0].data) {
+                    EXPENSE_CATEGORIES = cloudCats[0].data;
+                } else if (!Array.isArray(cloudCats) && Object.keys(cloudCats).length > 0) {
+                    EXPENSE_CATEGORIES = cloudCats;
+                }
+            }
 
             console.log(`☁️ [OfficeExpense] Đã đồng bộ từ Cloud: ${officeExpenses.length} đề xuất.`);
             window.erpApp.renderOfficeExpense();
@@ -169,6 +186,10 @@
                         <span class="material-icons-outlined">request_quote</span>
                         <span class="tab-label">Đề xuất chi phí</span>
                     </button>
+                    <button class="tab-btn-modern tab-categories ${currentTab === 'categories' ? 'active' : ''}" onclick="window.erpApp.setExpenseTab('categories')">
+                        <span class="material-icons-outlined">category</span>
+                        <span class="tab-label">Hạng mục chi phí</span>
+                    </button>
 
                 </div>
 
@@ -199,6 +220,7 @@
             case 'dashboard': return renderDashboard();
             case 'requests': return renderRequests();
             case 'norms': return renderNorms();
+            case 'categories': return renderCategories();
 
             default: return '';
         }
@@ -1561,6 +1583,10 @@
                             <span class="sig-label">Thủ quỹ</span>
                             <div class="sig-name">..........................</div>
                         </div>
+                        <div class="sig-item">
+                            <span class="sig-label">Giám đốc</span>
+                            <div class="sig-name">..........................</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1625,6 +1651,208 @@
         result = result.charAt(0).toUpperCase() + result.slice(1);
         return result + " đồng chẵn./.";
     }
+
+    // ==========================================
+    // Category Management
+    // ==========================================
+    function renderCategories() {
+        return `
+            <div class="glass-card animated fadeInUp" style="padding: 24px; border-radius: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                    <h2 style="margin:0; font-size: 18px; color:#1e293b;">Danh mục hạng mục chi phí</h2>
+                    <button class="btn-primary-pro" style="padding: 10px 20px; font-size: 13px;" onclick="window.erpApp.openCategoryModal()">
+                        <span class="material-icons-outlined">add</span> Thêm danh mục
+                    </button>
+                </div>
+                <div class="table-responsive-pro">
+                    <table class="pro-table">
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Tên hạng mục</th>
+                                <th>Tài khoản kế toán</th>
+                                <th>Màu sắc</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.keys(EXPENSE_CATEGORIES).map(k => {
+                                const c = EXPENSE_CATEGORIES[k];
+                                return `
+                                <tr>
+                                    <td><strong>${k}</strong></td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span class="material-icons-outlined" style="color:${c.color}">${c.icon || 'folder'}</span>
+                                            ${c.label}
+                                        </div>
+                                    </td>
+                                    <td><span class="code-badge">${c.tk || 'N/A'}</span></td>
+                                    <td>
+                                        <div style="width:20px; height:20px; border-radius:4px; background:${c.color}"></div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="row-actions">
+                                            <button class="action-btn-v2" onclick="window.erpApp.openCategoryModal('${k}')">
+                                                <span class="material-icons-outlined">edit</span>
+                                            </button>
+                                            <button class="action-btn-v2" style="color:#ef4444;" onclick="window.erpApp.deleteCategory('${k}')">
+                                                <span class="material-icons-outlined">delete</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                `
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    window.erpApp.openCategoryModal = function (catId = null) {
+        let cat = catId ? EXPENSE_CATEGORIES[catId] : { label: '', icon: 'pending_actions', color: '#3b82f6', tk: '' };
+        
+        const modalHtml = `
+            <div class="modal-overlay-pro animated fadeIn" id="categoryModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(8px); z-index:9999; display:flex; align-items:center; justify-content:center;">
+                <div class="modal-content-pro glass-card animated zoomIn" style="width: 480px; padding: 24px; border-radius: 24px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(15,23,42,0.25);">
+                    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+                        <div class="header-title" style="display:flex; align-items:center; gap: 12px;">
+                            <div style="width:40px; height:40px; border-radius:12px; background:#eff6ff; color:#3b82f6; display:flex; align-items:center; justify-content:center;">
+                                <span class="material-icons-outlined" style="font-size:24px;">category</span>
+                            </div>
+                            <h2 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">${catId ? 'Sửa danh mục' : 'Thêm danh mục mới'}</h2>
+                        </div>
+                        <button class="close-btn" onclick="document.getElementById('categoryModal').remove()" style="background:none; border:none; cursor:pointer; color:#94a3b8; transition:color 0.2s; padding:4px;">
+                            <span class="material-icons-outlined" style="font-size:24px;">close</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="categoryForm" onsubmit="window.erpApp.saveCategory(event, '${catId || ''}')" style="display:flex; flex-direction:column; gap: 16px;">
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:13px; font-weight:700; color:#475569;">Mã danh mục (Viết liền không dấu) <span style="color:#ef4444">*</span></label>
+                                <input type="text" id="catCode" value="${catId || ''}" required ${catId ? 'readonly style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:600; color:#94a3b8; outline:none;"' : 'style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:600; color:#1e293b; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor=\'#3b82f6\'; this.style.boxShadow=\'0 0 0 3px rgba(59,130,246,0.1)\'" onblur="this.style.borderColor=\'#cbd5e1\'; this.style.boxShadow=\'none\'"'} placeholder="VD: VPP">
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:13px; font-weight:700; color:#475569;">Tên danh mục <span style="color:#ef4444">*</span></label>
+                                <input type="text" id="catLabel" value="${cat.label}" required placeholder="VD: Văn phòng phẩm" style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:600; color:#1e293b; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor=\'#3b82f6\'; this.style.boxShadow=\'0 0 0 3px rgba(59,130,246,0.1)\'" onblur="this.style.borderColor=\'#cbd5e1\'; this.style.boxShadow=\'none\'">
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div style="display:flex; flex-direction:column; gap:6px;">
+                                    <label style="font-size:13px; font-weight:700; color:#475569;">Tài khoản kế toán</label>
+                                    <input type="text" id="catTk" value="${cat.tk || ''}" placeholder="VD: 6422" style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:600; color:#1e293b; outline:none; transition:all 0.2s;" onfocus="this.style.borderColor=\'#3b82f6\'; this.style.boxShadow=\'0 0 0 3px rgba(59,130,246,0.1)\'" onblur="this.style.borderColor=\'#cbd5e1\'; this.style.boxShadow=\'none\'">
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:6px;">
+                                    <label style="font-size:13px; font-weight:700; color:#475569;">Màu sắc</label>
+                                    <div style="position:relative; width:100%; height:46px; border-radius:12px; overflow:hidden; border:1.5px solid #cbd5e1;">
+                                        <input type="color" id="catColor" value="${cat.color || '#3b82f6'}" style="position:absolute; top:-10px; left:-10px; width:150%; height:150%; cursor:pointer; border:none; padding:0; background:none;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:13px; font-weight:700; color:#475569;">Biểu tượng (Material Icon)</label>
+                                <div style="display:flex; align-items:center; gap:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 16px; transition:all 0.2s;" id="catIconWrapper">
+                                    <span class="material-icons-outlined" id="catIconPreview" style="font-size:24px; color:${cat.color || '#3b82f6'};">${cat.icon || 'pending_actions'}</span>
+                                    <input type="text" id="catIcon" value="${cat.icon || 'pending_actions'}" placeholder="Tên icon (VD: auto_stories)" style="border:none; background:none; flex:1; font-size:14px; font-weight:600; color:#1e293b; outline:none;" oninput="document.getElementById('catIconPreview').innerText = this.value || 'pending_actions'" onfocus="document.getElementById('catIconWrapper').style.borderColor='#3b82f6'; document.getElementById('catIconWrapper').style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'" onblur="document.getElementById('catIconWrapper').style.borderColor='#e2e8f0'; document.getElementById('catIconWrapper').style.boxShadow='none'">
+                                </div>
+                                <a href="https://fonts.google.com/icons?icon.set=Material+Icons" target="_blank" style="font-size:11px; color:#3b82f6; text-decoration:none; margin-top:2px;">Tra cứu thư viện icon</a>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                        <button type="button" class="btn-secondary-pro" onclick="document.getElementById('categoryModal').remove()" style="padding:10px 20px; border-radius:12px; border:1px solid #e2e8f0; background:#fff; color:#64748b; font-weight:700; cursor:pointer;">Hủy bỏ</button>
+                        <button type="submit" form="categoryForm" class="btn-primary-pro" style="padding:10px 20px; border-radius:12px; border:none; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3);">Lưu danh mục</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Cập nhật màu sắc icon khi chọn màu
+        setTimeout(() => {
+            const colorInput = document.getElementById('catColor');
+            const iconPreview = document.getElementById('catIconPreview');
+            if(colorInput && iconPreview) {
+                colorInput.addEventListener('input', (e) => {
+                    iconPreview.style.color = e.target.value;
+                });
+            }
+        }, 100);
+    };
+
+    window.erpApp.saveCategory = async function (event, oldId) {
+        event.preventDefault();
+        const newId = document.getElementById('catCode').value.trim().toUpperCase();
+        const label = document.getElementById('catLabel').value.trim();
+        const tk = document.getElementById('catTk').value.trim();
+        const icon = document.getElementById('catIcon').value.trim();
+        const color = document.getElementById('catColor').value;
+
+        if (!newId || !label) {
+            window.erpApp.showToast('Vui lòng nhập đủ Mã và Tên danh mục!', 'error');
+            return;
+        }
+
+        if (!oldId && EXPENSE_CATEGORIES[newId]) {
+            window.erpApp.showToast('Mã danh mục đã tồn tại!', 'error');
+            return;
+        }
+
+        EXPENSE_CATEGORIES[newId] = { label, tk, icon, color };
+        
+        window.erpApp._setData(COLLECTION_CATEGORIES, [{ id: 'global', data: EXPENSE_CATEGORIES }]);
+        if (window.CrudSync) {
+            await window.CrudSync.saveItem(COLLECTION_CATEGORIES, { id: 'global', data: EXPENSE_CATEGORIES }, 'id');
+        }
+
+        const existingNorm = expenseNorms.find(n => n.category === newId);
+        if (!existingNorm) {
+            const newNorm = {
+                id: window.erpApp.generateId ? window.erpApp.generateId('N-') : `N-${Date.now()}-${Math.floor(Math.random()*100)}`,
+                category: newId,
+                limit: 5000000 
+            };
+            expenseNorms.push(newNorm);
+            window.erpApp._setData(COLLECTION_NORMS, expenseNorms);
+            if (window.CrudSync) {
+                await window.CrudSync.saveItem(COLLECTION_NORMS, newNorm, 'category');
+            }
+        }
+
+        document.getElementById('categoryModal').remove();
+        window.erpApp.showToast('Đã lưu danh mục!', 'success');
+        window.erpApp.renderOfficeExpense();
+    };
+
+    window.erpApp.deleteCategory = async function (catId) {
+        const used = officeExpenses.some(e => e.category === catId);
+        if (used) {
+            window.erpApp.showToast('Không thể xóa danh mục đã phát sinh chi phí!', 'error');
+            return;
+        }
+
+        window.erpApp.showDeleteConfirmation(`Bạn có chắc chắn muốn xóa danh mục <strong>${EXPENSE_CATEGORIES[catId].label}</strong>?`, async function () {
+            delete EXPENSE_CATEGORIES[catId];
+            window.erpApp._setData(COLLECTION_CATEGORIES, [{ id: 'global', data: EXPENSE_CATEGORIES }]);
+            if (window.CrudSync) {
+                await window.CrudSync.saveItem(COLLECTION_CATEGORIES, { id: 'global', data: EXPENSE_CATEGORIES }, 'id');
+            }
+            
+            const normIdx = expenseNorms.findIndex(n => n.category === catId);
+            if (normIdx !== -1) {
+                const nId = expenseNorms[normIdx].id;
+                expenseNorms.splice(normIdx, 1);
+                window.erpApp._setData(COLLECTION_NORMS, expenseNorms);
+                if (window.CrudSync) {
+                    await window.CrudSync.deleteItem(COLLECTION_NORMS, nId);
+                }
+            }
+
+            window.erpApp.showToast('Đã xóa danh mục!', 'success');
+            window.erpApp.renderOfficeExpense();
+        });
+    };
 
     // ==========================================
     // Responsive Styles (Fluid UI)
