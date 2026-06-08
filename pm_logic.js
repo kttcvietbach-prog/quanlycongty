@@ -501,7 +501,7 @@ window.erpApp = window.erpApp || {};
         const isNewDoc = !hsDoc;
 
         if (isNewDoc) {
-            const nextId = (typeof window.erpApp.nextHsIdForContract === 'function') ? window.erpApp.nextHsIdForContract(contractData.id, projectName) : `HS-K-${Date.now().toString().slice(-4)}`;
+            const nextId = contractData.id;
             hsDoc = {
                 id: nextId,
                 files: []
@@ -583,7 +583,7 @@ window.erpApp = window.erpApp || {};
             const isNew = !hsDoc;
 
             if (isNew) {
-                const nextId = (typeof window.erpApp.nextHsIdForContract === 'function') ? window.erpApp.nextHsIdForContract(contract.id, projectName) : `HS-K-${Date.now().toString().slice(-4)}`;
+                const nextId = contract.id;
                 hsDoc = { id: nextId, files: [] };
                 hoSoDocuments.unshift(hsDoc);
                 contract.linkedHsId = nextId;
@@ -3354,7 +3354,8 @@ window.erpApp = window.erpApp || {};
         let contracts = pmContracts.filter(c => c.projectId === project.id);
         const seen = new Set();
         contracts = contracts.filter(c => {
-            const key = c.id ? String(c.id).trim() : `${c.contractNo}_${c.projectId}`;
+            const contractNo = (c.contractNo || '').trim().toLowerCase();
+            const key = contractNo ? `symbol_${contractNo}` : `id_${c.id}`;
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
@@ -3777,9 +3778,17 @@ window.erpApp = window.erpApp || {};
                 return;
             }
 
+            let finalId = contractId || `HĐ-AUTO-${Date.now().toString().slice(-6)}`;
+            const contractNo = formData.get('contractNo');
+            if (contractNo) {
+                const sym = contractNo.toLowerCase().trim();
+                const doc = typeof hoSoDocuments !== 'undefined' ? hoSoDocuments.find(d => (d.symbol || '').toLowerCase().trim() === sym) : null;
+                if (doc) finalId = doc.id;
+            }
+
             const newContract = {
-                id: contractId || `HĐ-AUTO-${Date.now().toString().slice(-6)}`,
-                contractNo: formData.get('contractNo'),
+                id: finalId,
+                contractNo: contractNo,
                 projectId: projectId,
                 type: formData.get('type'),
                 title: title,
@@ -3805,7 +3814,7 @@ window.erpApp = window.erpApp || {};
             // 🔄 Tự động tạo hồ sơ lưu trữ tương ứng
             const projectInfo = pmProjects.find(p => p.id === newContract.projectId);
             const isOutbound = newContract.type === 'outbound';
-            const newHsId = nextHsIdForContract(newContract.id, newContract.title);
+            const newHsId = newContract.id;
             
             const newHsDoc = {
                 id: newHsId,
@@ -3857,7 +3866,8 @@ window.erpApp = window.erpApp || {};
         let contracts = pmContracts.filter(c => String(c.projectId) === String(project.id));
         const seen = new Set();
         contracts = contracts.filter(c => {
-            const key = c.id ? String(c.id).trim() : `${c.contractNo}_${c.projectId}`;
+            const contractNo = (c.contractNo || '').trim().toLowerCase();
+            const key = contractNo ? `symbol_${contractNo}` : `id_${c.id}`;
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
@@ -4244,9 +4254,17 @@ window.erpApp = window.erpApp || {};
 
         const cleanNum = (str) => parseFloat(str.replace(/\./g, '')) || 0;
 
+        const contractNo = formData.get('contractNo');
+        let finalId = formData.get('id');
+        if (contractNo) {
+            const sym = contractNo.toLowerCase().trim();
+            const doc = typeof hoSoDocuments !== 'undefined' ? hoSoDocuments.find(d => (d.symbol || '').toLowerCase().trim() === sym) : null;
+            if (doc) finalId = doc.id;
+        }
+
         const newContract = {
-            id: formData.get('id'),
-            contractNo: formData.get('contractNo'),
+            id: finalId,
+            contractNo: contractNo,
             projectId: formData.get('projectId'),
             type: formData.get('type'),
             title: formData.get('title'),
@@ -4278,7 +4296,7 @@ window.erpApp = window.erpApp || {};
         // 🔄 Tự động tạo hồ sơ lưu trữ tương ứng
         const projectInfo = pmProjects.find(p => p.id === newContract.projectId);
         const isOutbound = newContract.type === 'outbound';
-        const newHsId = nextHsIdForContract(newContract.id, newContract.title);
+        const newHsId = newContract.id;
         const newHsDoc = {
             id: newHsId,
             title: newContract.title,
@@ -4340,7 +4358,7 @@ window.erpApp = window.erpApp || {};
                 if (!hsDoc) {
                     // Create new document
                     const isOutbound = contract.type === 'outbound';
-                    const newHsId = nextHsIdForContract(contract.id, projectName);
+                    const newHsId = contract.id;
                     hsDoc = {
                         id: newHsId,
                         title: contract.title,
@@ -5511,7 +5529,8 @@ window.erpApp = window.erpApp || {};
         let contracts = pmContracts.filter(c => c.projectId === project.id);
         const seen = new Set();
         contracts = contracts.filter(c => {
-            const key = c.id ? String(c.id).trim() : `${c.contractNo}_${c.projectId}`;
+            const contractNo = (c.contractNo || '').trim().toLowerCase();
+            const key = contractNo ? `symbol_${contractNo}` : `id_${c.id}`;
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
@@ -16410,7 +16429,7 @@ window.erpApp = window.erpApp || {};
         const isNewDoc = !hsDoc;
 
         if (isNewDoc) {
-            const nextId = nextHsIdForContract ? nextHsIdForContract(contractData.id, projectName) : `HS-K-${Date.now().toString().slice(-4)}`;
+            const nextId = contractData.id;
             hsDoc = {
                 id: nextId,
                 files: []
@@ -16491,7 +16510,7 @@ window.erpApp = window.erpApp || {};
             const isNew = !hsDoc;
 
             if (isNew) {
-                const nextId = (typeof nextHsIdForContract === 'function') ? nextHsIdForContract(contract.id, projectName) : `HS-K-${Date.now().toString().slice(-4)}`;
+                const nextId = contract.id;
                 hsDoc = { id: nextId, files: [] };
                 hoSoDocuments.unshift(hsDoc);
                 contract.linkedHsId = nextId;
@@ -17523,7 +17542,7 @@ window.erpApp = window.erpApp || {};
                 const supplierStr = (doc.supplier || '').toUpperCase();
                 const isOutbound = supplierStr.includes('VIETBACHCORP') || supplierStr.includes('CÔNG TY VIỆT BÁCH');
                 const newContract = {
-                    id: doc.linkedPmId || ('HĐ-' + Date.now().toString().slice(-4)),
+                    id: doc.linkedPmId || doc.id,
                     projectId: projectId,
                     title: doc.title || '',
                     contractNo: doc.symbol || '',
@@ -19316,8 +19335,51 @@ window.erpApp = window.erpApp || {};
         return 'doc';
     }
 
+    function getDeduplicatedDocuments(docs) {
+        const seen = new Map();
+        const result = [];
+        
+        for (const doc of docs) {
+            const symbol = (doc.symbol || '').trim().toLowerCase();
+            const key = symbol ? `symbol_${symbol}` : `id_${doc.id}`;
+            
+            if (seen.has(key)) {
+                const originalDoc = seen.get(key);
+                if (doc.files && doc.files.length > 0) {
+                    if (!originalDoc.files) {
+                        originalDoc.files = [];
+                    }
+                    for (const file of doc.files) {
+                        const fileExists = originalDoc.files.some(f => 
+                            f.name === file.name || (f.url && f.url === file.url)
+                        );
+                        if (!fileExists) {
+                            originalDoc.files.push(file);
+                        }
+                    }
+                }
+            } else {
+                const clonedDoc = { ...doc };
+                if (clonedDoc.files) {
+                    clonedDoc.files = [...clonedDoc.files];
+                } else {
+                    clonedDoc.files = [];
+                }
+                seen.set(key, clonedDoc);
+                result.push(clonedDoc);
+            }
+        }
+        return result;
+    }
+
+    function getDeduplicatedDocById(id) {
+        const docs = getDeduplicatedDocuments(hoSoDocuments);
+        return docs.find(d => d.id === id);
+    }
+
     function getFilteredHoSo() {
-        let data = [...hoSoDocuments];
+        const uniqueDocs = getDeduplicatedDocuments(hoSoDocuments);
+        let data = [...uniqueDocs];
         if (hsActiveTab !== 'all') { data = data.filter(d => d.category === hsActiveTab); }
         if (hsFilterProject) { data = data.filter(d => d.project === hsFilterProject); }
         if (hsFilterDept) { data = data.filter(d => (d.department || '').toLowerCase().includes(hsFilterDept.toLowerCase())); }
@@ -19835,7 +19897,7 @@ window.erpApp = window.erpApp || {};
             const isOutbound = supplierStr.includes('VIETBACHCORP') || supplierStr.includes('CÔNG TY VIỆT BÁCH');
 
             pmContract = {
-                id: 'HĐ-' + hsDoc.id,
+                id: hsDoc.id,
                 projectId: project.id,
                 title: hsDoc.title || '',
                 contractNo: hsDoc.symbol || hsDoc.id,
@@ -19952,7 +20014,7 @@ window.erpApp = window.erpApp || {};
     }
 
     function viewHoSo(id) {
-        const doc = hoSoDocuments.find(d => d.id === id);
+        const doc = getDeduplicatedDocById(id);
         if (!doc) { return; }
         const cat = getHsCatById(doc.category);
         const modal = document.createElement('div');
@@ -20143,7 +20205,7 @@ window.erpApp = window.erpApp || {};
     };
 
     function openHsModal(id) {
-        const doc = id ? hoSoDocuments.find(d => d.id === id) : null;
+        const doc = id ? getDeduplicatedDocById(id) : null;
         const isEdit = !!doc;
         tempHsFiles = doc ? [...(doc.files || [])] : [];
         const catOpts = hsCategories.map(c => `<option value="${c.id}" ${isEdit && doc.category === c.id ? 'selected' : ''}>${c.label}</option>`).join('');
@@ -20413,8 +20475,14 @@ window.erpApp = window.erpApp || {};
                 showToast('Đã cập nhật hồ sơ ' + id, 'success');
             }
         } else {
+            let commonId = null;
+            if (payload.symbol) {
+                const sym = payload.symbol.toLowerCase().trim();
+                const contract = typeof pmContracts !== 'undefined' ? pmContracts.find(c => (c.contractNo || '').toLowerCase().trim() === sym) : null;
+                if (contract) commonId = contract.id;
+            }
             const newDoc = {
-                id: nextHsId(),
+                id: commonId || nextHsId(),
                 ...payload,
                 createdAt: new Date().toISOString()
             };
@@ -20725,7 +20793,7 @@ window.erpApp = window.erpApp || {};
     }
 
     function openHsPreview(docId) {
-        const doc = hoSoDocuments.find(d => d.id === docId);
+        const doc = getDeduplicatedDocById(docId);
         if (!doc || !doc.files || doc.files.length === 0) { showToast('Hồ sơ này chưa có file đính kèm.'); return; }
         if (doc.files.length === 1) { window.erpApp.previewHsFile(0, docId); return; }
         const modal = document.createElement('div');
@@ -20741,7 +20809,7 @@ window.erpApp = window.erpApp || {};
     }
 
     function shareHoSo(docId) {
-        const doc = hoSoDocuments.find(d => d.id === docId);
+        const doc = getDeduplicatedDocById(docId);
         if (!doc) { return; }
         const shareData = { id: doc.id, title: doc.title, project: doc.project, status: doc.status, issueDate: doc.issueDate };
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
@@ -20755,7 +20823,7 @@ window.erpApp = window.erpApp || {};
     }
 
     function shareHsFile(fileIdx, docId) {
-        const doc = hoSoDocuments.find(d => d.id === docId);
+        const doc = getDeduplicatedDocById(docId);
         if (!doc || !doc.files || !doc.files[fileIdx]) { return; }
         const f = doc.files[fileIdx];
         const href = f.dataUrl || f.url;
@@ -21050,7 +21118,7 @@ window.erpApp = window.erpApp || {};
     window.erpApp.previewHsFile = async (index, docId) => {
         let file;
         if (docId) {
-            const doc = hoSoDocuments.find(d => d.id === docId);
+            const doc = getDeduplicatedDocById(docId);
             if (doc && doc.files && doc.files[index]) {
                 file = doc.files[index];
             }
