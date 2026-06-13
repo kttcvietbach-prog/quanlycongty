@@ -20350,7 +20350,7 @@ window.erpApp = window.erpApp || {};
                 <div class="form-section-title"><span class="material-icons-outlined" style="font-size:14px">attach_file</span> File đính kèm</div>
                 <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                     <label style="font-size:13px;font-weight:600;color:var(--text-secondary);white-space:nowrap"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">folder</span>Lưu vào thư mục:</label>
-                    <select id="hsDriveFolderSelect" style="flex:1;min-width:200px;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer" onchange="">
+                    <select id="hsDriveFolderSelect" style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer" onchange="window.erpApp.loadDriveFolderChain(null, 0)">
                         <option value="hop-dong">📝 Hợp Đồng (mặc định)</option>
                         <option value="du-an">📋 Dự Án</option>
                         <option value="tai-chinh">💰 Tài Chính</option>
@@ -20360,10 +20360,8 @@ window.erpApp = window.erpApp || {};
                         <option value="san-xuat">🏭 Sản Xuất</option>
                         <option value="chung">📁 Chung</option>
                     </select>
-                    <select id="hsDriveSubfolderSelect" style="flex:1;min-width:200px;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer;display:none">
-                        <option value="">— Subfolder (tuỳ chọn) —</option>
-                    </select>
-                    <button type="button" onclick="window.erpApp.loadDriveSubfolders()" style="padding:8px;border:1.5px solid var(--border-color);border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center" title="Tải subfolder"><span class="material-icons-outlined" style="font-size:18px;color:var(--primary)">refresh</span></button>
+                    <div id="hsDriveFolderChain" style="display:contents"></div>
+                    <button type="button" onclick="window.erpApp.loadDriveFolderChain(null, 0)" style="padding:8px;border:1.5px solid var(--border-color);border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center" title="Tải thư mục"><span class="material-icons-outlined" style="font-size:18px;color:var(--primary)">refresh</span></button>
                     <button type="button" onclick="window.erpApp.createDriveSubfolderFromModal()" style="padding:6px 12px;border:1.5px solid #22c55e;border-radius:8px;background:#f0fdf4;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#16a34a;transition:all .15s" onmouseover="this.style.background='#22c55e';this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4';this.style.color='#16a34a'" title="Tạo folder mới trên Drive"><span class="material-icons-outlined" style="font-size:16px">create_new_folder</span>Tạo Folder</button>
                 </div>
                 <div class="contract-upload-area">
@@ -20958,8 +20956,9 @@ window.erpApp = window.erpApp || {};
                 const folderSelect = document.getElementById('hsDriveFolderSelect');
                 const subfolderSelect = document.getElementById('hsDriveSubfolderSelect');
                 const selectedModule = folderSelect ? folderSelect.value : 'hop-dong';
-                if (subfolderSelect && subfolderSelect.value) {
-                    formData.append('folderId', subfolderSelect.value);
+                const effectiveFolderId = window.erpApp.getDeepestDriveFolderId();
+                if (effectiveFolderId) {
+                    formData.append('folderId', effectiveFolderId);
                 } else {
                     formData.append('module', selectedModule);
                 }
@@ -20971,14 +20970,15 @@ window.erpApp = window.erpApp || {};
                     const driveFile = data.uploaded[0];
                     // Update placeholder with actual Drive info
                     const folderLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : 'Hợp Đồng';
-                    const subLabel = (subfolderSelect && subfolderSelect.value) ? ' / ' + subfolderSelect.options[subfolderSelect.selectedIndex].text : '';
+                    const chainPath = window.erpApp.getDriveFolderChainPath();
+                    const drivePath = folderLabel.replace(/^[^\s]+\s/, '') + (chainPath ? ' / ' + chainPath : '');
                     tempHsFiles[placeholderIdx] = {
                         name: file.name,
                         size: sizeStr,
                         type: fType,
                         url: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
                         driveFileId: driveFile.id,
-                        drivePath: folderLabel.replace(/^[^\s]+\s/, '') + subLabel
+                        drivePath
                     };
                     showToast(`✅ Đã tải "${file.name}" lên Google Drive`, 'success');
                 } else {
@@ -21006,66 +21006,105 @@ window.erpApp = window.erpApp || {};
         });
         event.target.value = '';
     };
-    window.erpApp.loadDriveSubfolders = async () => {
+    // ─── Dynamic N-level folder chain ───────────────────────────────────────
+    // Helpers
+    window.erpApp.getDeepestDriveFolderId = () => {
+        const chain = document.getElementById('hsDriveFolderChain');
+        if (!chain) return null;
+        const selects = chain.querySelectorAll('select[data-chain-level]');
+        let deepest = null;
+        selects.forEach(sel => { if (sel.value) deepest = sel.value; });
+        return deepest;
+    };
+    window.erpApp.getDriveFolderChainPath = () => {
+        const chain = document.getElementById('hsDriveFolderChain');
+        if (!chain) return '';
+        const selects = chain.querySelectorAll('select[data-chain-level]');
+        const parts = [];
+        selects.forEach(sel => {
+            if (sel.value) parts.push(sel.options[sel.selectedIndex].text);
+        });
+        return parts.join(' / ');
+    };
+    // Trim all chain dropdowns from level `fromLevel` onward
+    const _trimFolderChain = (fromLevel) => {
+        const chain = document.getElementById('hsDriveFolderChain');
+        if (!chain) return;
+        chain.querySelectorAll(`select[data-chain-level]`).forEach(sel => {
+            if (parseInt(sel.dataset.chainLevel, 10) >= fromLevel) sel.remove();
+        });
+    };
+    // Append a new dropdown at `level` populated with `folders`
+    const _appendFolderDropdown = (level, folders) => {
+        const chain = document.getElementById('hsDriveFolderChain');
+        if (!chain) return;
+        const sel = document.createElement('select');
+        sel.id = `hsDriveChainSel_${level}`;
+        sel.dataset.chainLevel = level;
+        sel.style.cssText = 'flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer';
+        sel.innerHTML = `<option value="">— Chọn thư mục —</option>` +
+            folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        sel.addEventListener('change', () => window.erpApp.loadDriveFolderChain(sel.value, level + 1));
+        chain.appendChild(sel);
+    };
+    // Core: load children of `parentFolderId` and render at chain position `level`
+    // If parentFolderId is null => load from module root (level 0 = first chain position)
+    window.erpApp.loadDriveFolderChain = async (parentFolderId, level) => {
+        _trimFolderChain(level); // remove any deeper dropdowns
         const folderSelect = document.getElementById('hsDriveFolderSelect');
-        const subSelect = document.getElementById('hsDriveSubfolderSelect');
-        if (!folderSelect || !subSelect) return;
-        const module = folderSelect.value;
-        subSelect.style.display = 'block';
-        subSelect.innerHTML = '<option value="">⏳ Đang tải...</option>';
+        const module = folderSelect ? folderSelect.value : 'hop-dong';
+        let url;
+        if (!parentFolderId) {
+            url = (window.API_BASE_URL || '') + `/api/drive/files?module=${module}`;
+        } else {
+            url = (window.API_BASE_URL || '') + `/api/drive/files?folderId=${parentFolderId}`;
+        }
         try {
-            const res = await fetch((window.API_BASE_URL || '') + `/api/drive/files?module=${module}`);
+            const res = await fetch(url);
             const data = await res.json();
             if (data.success) {
                 const folders = (data.files || []).filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-                subSelect.innerHTML = '<option value="">— Lưu vào thư mục gốc —</option>' +
-                    folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-            } else {
-                subSelect.innerHTML = '<option value="">Không tải được</option>';
+                if (folders.length > 0) _appendFolderDropdown(level, folders);
             }
-        } catch (e) {
-            subSelect.innerHTML = '<option value="">Lỗi kết nối</option>';
-        }
+        } catch (e) { /* silent fail */ }
     };
+    // Legacy aliases kept for backward compat (used by refresh button)
+    window.erpApp.loadDriveSubfolders = () => window.erpApp.loadDriveFolderChain(null, 0);
+    window.erpApp.loadDriveSubSubfolders = () => {}; // no-op, handled by chain
     window.erpApp.createDriveSubfolderFromModal = async () => {
         const name = prompt('Nhập tên folder mới trên Google Drive:');
         if (!name || !name.trim()) return;
-
         const folderSelect = document.getElementById('hsDriveFolderSelect');
-        const subSelect = document.getElementById('hsDriveSubfolderSelect');
         const selectedModule = folderSelect ? folderSelect.value : 'hop-dong';
-
         try {
             showToast('⏳ Đang tạo folder...', 'info');
-
-            // First get module folder ID
-            const statusRes = await fetch((window.API_BASE_URL || '') + '/api/drive/status');
-            const statusData = await statusRes.json();
-            let parentId = null;
-
-            if (statusData.modules) {
-                const mod = statusData.modules.find(m => m.key === selectedModule);
-                if (mod) parentId = mod.id;
+            // Use deepest selected folder as parent, else fall back to module root
+            let parentId = window.erpApp.getDeepestDriveFolderId();
+            if (!parentId) {
+                const statusRes = await fetch((window.API_BASE_URL || '') + '/api/drive/status');
+                const statusData = await statusRes.json();
+                if (statusData.modules) {
+                    const mod = statusData.modules.find(m => m.key === selectedModule);
+                    if (mod) parentId = mod.id;
+                }
             }
-
-            // If subfolder is selected, use it as parent
-            if (subSelect && subSelect.value) {
-                parentId = subSelect.value;
-            }
-
             const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name.trim(), parentId: parentId })
+                body: JSON.stringify({ name: name.trim(), parentId })
             });
             const data = await res.json();
-
             if (data.success) {
                 showToast(`✅ Đã tạo folder "${name.trim()}"`, 'success');
-                // Refresh subfolder list and select the new folder
-                await window.erpApp.loadDriveSubfolders();
-                if (subSelect && data.folder && data.folder.id) {
-                    subSelect.value = data.folder.id;
+                // Refresh the chain from the current deepest level and select the new folder
+                const chain = document.getElementById('hsDriveFolderChain');
+                const selects = chain ? chain.querySelectorAll('select[data-chain-level]') : [];
+                const currentLevel = selects.length; // next level index
+                await window.erpApp.loadDriveFolderChain(parentId || null, currentLevel);
+                // Auto-select the newly created folder in the last dropdown
+                if (data.folder && data.folder.id) {
+                    const newSel = document.getElementById(`hsDriveChainSel_${currentLevel}`);
+                    if (newSel) { newSel.value = data.folder.id; newSel.dispatchEvent(new Event('change')); }
                 }
             } else {
                 showToast(`❌ Lỗi: ${data.error || 'Không tạo được folder'}`, 'error');
