@@ -19283,8 +19283,8 @@ window.erpApp = window.erpApp || {};
     };
 
     function getHsCatById(id) { return hsCategories.find(c => c.id === id) || { label: id, icon: 'folder', color: '#64748B', bg: '#F1F5F9' }; }
-    function getHsStatusLabel(s) { if (!s) { return '—'; } return { 'pending-sign': 'Đang trình ký', pending: 'Đang trình ký', active: 'Đang thi công', completed: 'Đã nghiệm thu hoàn thành', liquidated: 'Đã thanh lý', expired: 'Đã thanh lý', cancelled: 'Đã thanh lý', 'da-hoan-thien': 'Đã hoàn thiện' }[s] || s; }
-    function getHsStatusColor(s) { if (!s) { return 'gray'; } return { 'pending-sign': 'orange', pending: 'orange', active: 'green', completed: 'blue', liquidated: 'gray', expired: 'gray', cancelled: 'gray', 'da-hoan-thien': 'teal' }[s] || 'gray'; }
+    function getHsStatusLabel(s) { if (!s) { return '—'; } return { 'pending-sign': 'Đang trình ký', pending: 'Đang trình ký', signed: 'Đã ký hai bên', active: 'Đang thi công', completed: 'Đã nghiệm thu hoàn thành', liquidated: 'Đã thanh lý', expired: 'Đã thanh lý', cancelled: 'Đã thanh lý', 'da-hoan-thien': 'Đã hoàn thiện' }[s] || s; }
+    function getHsStatusColor(s) { if (!s) { return 'gray'; } return { 'pending-sign': 'orange', pending: 'orange', signed: 'purple', active: 'green', completed: 'blue', liquidated: 'gray', expired: 'gray', cancelled: 'gray', 'da-hoan-thien': 'teal' }[s] || 'gray'; }
 
     function fmtCurrency(v) { if (!v) { return '—'; } if (v >= 1e9) { return (v / 1e9).toFixed(1).replace('.0', '') + ' tỷ'; } if (v >= 1e6) { return Math.round(v / 1e6) + ' triệu'; } return window.erpApp.formatValue(v) + ' đ'; }
     function fmtCurrencyFull(v) { if (!v) { return '—'; } return window.erpApp.formatValue(v) + ' VNĐ'; }
@@ -19340,8 +19340,7 @@ window.erpApp = window.erpApp || {};
         const result = [];
         
         for (const doc of docs) {
-            const symbol = (doc.symbol || '').trim().toLowerCase();
-            const key = symbol ? `symbol_${symbol}` : `id_${doc.id}`;
+            const key = `id_${doc.id}`;
             
             if (seen.has(key)) {
                 const originalDoc = seen.get(key);
@@ -20266,6 +20265,7 @@ window.erpApp = window.erpApp || {};
                     <div class="form-group"><label>Trạng thái</label>
                         <select id="hsStatus">
                             <option value="pending-sign" ${isEdit && (doc.status === 'pending-sign' || doc.status === 'pending') ? 'selected' : ''}>🟡 Đang trình ký</option>
+                            <option value="signed" ${isEdit && doc.status === 'signed' ? 'selected' : ''}>🟣 Đã ký hai bên</option>
                             <option value="active" ${isEdit && doc.status === 'active' ? 'selected' : ''}>🟢 Đang thi công</option>
                             <option value="completed" ${isEdit && doc.status === 'completed' ? 'selected' : ''}>🔵 Đã nghiệm thu hoàn thành</option>
                             <option value="da-hoan-thien" ${isEdit && doc.status === 'da-hoan-thien' ? 'selected' : ''}>🟠 Đã hoàn thiện</option>
@@ -20472,6 +20472,7 @@ window.erpApp = window.erpApp || {};
                     const moduleName = doc.category === 'hop-dong' ? 'Hợp đồng' : (doc.category === 'cong-van-den' ? 'Công văn đến' : 'Hồ sơ');
                     window.notifyCRUD(moduleName, 'update', { name: doc.title, page: 'hanh-chinh' });
                 }
+                syncArchiveWithContract(doc);
                 showToast('Đã cập nhật hồ sơ ' + id, 'success');
             }
         } else {
@@ -20479,7 +20480,12 @@ window.erpApp = window.erpApp || {};
             if (payload.symbol) {
                 const sym = payload.symbol.toLowerCase().trim();
                 const contract = typeof pmContracts !== 'undefined' ? pmContracts.find(c => (c.contractNo || '').toLowerCase().trim() === sym) : null;
-                if (contract) commonId = contract.id;
+                if (contract) {
+                    const existingDoc = hoSoDocuments.find(d => d.id === contract.id);
+                    if (!existingDoc) {
+                        commonId = contract.id;
+                    }
+                }
             }
             const newDoc = {
                 id: commonId || nextHsId(),
