@@ -19716,7 +19716,7 @@ window.erpApp = window.erpApp || {};
             .hs2-title-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
             .hs2-cat-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;width:fit-content}
             .hs2-title-text{font-size:13px;font-weight:500;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
-            .hs2-project-tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#7C3AED;background:#F5F3FF;padding:3px 8px;border-radius:5px;font-weight:500;white-space:nowrap}
+            .hs2-project-tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#7C3AED;background:#F5F3FF;padding:3px 8px;border-radius:5px;font-weight:500;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
             .hs2-value{font-weight:700;color:#16A34A;font-size:13px}
             .hs2-actions{display:flex;gap:4px;align-items:center}
             .hs2-btn{width:28px;height:28px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
@@ -19828,17 +19828,17 @@ window.erpApp = window.erpApp || {};
                     <div class="table-scroll erp-drag-scroll" style="cursor: grab;">
                         <table class="data-table hs2-table">
                             <thead><tr>
-                                <th style="width:100px;text-align:center">Mã HS</th>
-                                <th style="width:300px">Tên hồ sơ / Phân loại</th>
-                                <th style="width:180px">Tên dự án (nội bộ)</th>
-                                <th style="width:180px">Gói Thầu/Dự án</th>
+                                <th style="width:70px;text-align:center">Mã HS</th>
+                                <th style="width:220px">Tên hồ sơ / Phân loại</th>
+                                <th style="width:120px">Tên dự án (nội bộ)</th>
+                                <th style="width:200px">Gói Thầu/Dự án</th>
                                 <th style="width:120px">Số hợp đồng</th>
-                                <th style="width:180px">Đối tác (Chủ ĐT/KH/NCC)</th>
-                                <th style="width:130px;text-align:right">Giá trị</th>
-                                <th style="width:110px;text-align:center">Ngày ký HĐ</th>
-                                <th style="width:130px;text-align:center">Ngày hoàn thành</th>
-                                <th style="width:130px;text-align:center">Trạng thái</th>
-                                <th style="width:140px;text-align:center">Tác vụ</th>
+                                <th style="width:160px">Đối tác (Chủ ĐT/KH/NCC)</th>
+                                <th style="width:100px;text-align:right">Giá trị</th>
+                                <th style="width:90px;text-align:center">Ngày ký HĐ</th>
+                                <th style="width:110px;text-align:center">Ngày hoàn thành</th>
+                                <th style="width:120px;text-align:center">Trạng thái</th>
+                                <th style="width:100px;text-align:center">Tác vụ</th>
                             </tr></thead>
                             <tbody>${tableBody}</tbody>
                         </table>
