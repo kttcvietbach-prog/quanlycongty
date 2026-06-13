@@ -831,22 +831,20 @@
                                     <!-- Google Drive folder chain selectors -->
                                     <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                         <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
-                                        <select id="hsDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadDriveFolderChain(null, 0)">
-                                            <option value="tai-chinh">💰 Tài Chính (mặc định)</option>
-                                            <option value="hop-dong">📝 Hợp Đồng</option>
-                                            <option value="du-an">📋 Dự Án</option>
-                                            <option value="van-ban">📑 Văn Bản</option>
-                                            <option value="chung">📁 Chung</option>
+                                        <select id="expenseDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadExpenseDriveFolderChain(null, 0)">
+                                            <option value="">⏳ Đang tải danh sách thư mục...</option>
                                         </select>
-                                        <div id="hsDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
+                                        <div id="expenseDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
                                             <!-- Các subfolder sẽ load động vào đây -->
                                         </div>
-                                        <button type="button" onclick="window.erpApp.loadDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                        <button type="button" onclick="window.erpApp.loadExpenseDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
                                             <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
                                         </button>
-                                        <button type="button" onclick="window.erpApp.createDriveSubfolderFromModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                        <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
                                             <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
                                         </button>
+                                        <input type="hidden" id="expenseDriveFolderIdInput" name="driveFolderId" value="">
+                                        <input type="hidden" id="expenseDriveFolderPathInput" name="driveFolderPath" value="">
                                     </div>
 
                                     <!-- Upload Area -->
@@ -896,7 +894,7 @@
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
         // Initialize dynamic Google Drive folders
-        window.erpApp.initializeExpenseDriveFolders('Tài Chính');
+        window.erpApp.loadExpenseDriveRootFolders();
     };
 
     window.erpApp.closeExpenseModal = function () {
@@ -1015,24 +1013,6 @@
                                         <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ chứng từ đính kèm
                                     </label>
                                     
-                                    <!-- Google Drive selectors -->
-                                    <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#f8fafc; border:1.5px solid #e2e8f0; padding:12px 16px; border-radius:16px;">
-                                        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
-                                            <span class="material-icons-outlined" style="font-size:20px; color:#f59e0b;">folder</span>
-                                            <div style="display:flex; flex-direction:column; text-align:left;">
-                                                <span style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Thư mục lưu trữ trên Drive</span>
-                                                <div id="expenseDrivePathBreadcrumb" style="font-size:13px; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
-                                                    ⏳ Đang kết nối Google Drive...
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style="display:flex; gap:8px; align-items:center;">
-                                            <button type="button" onclick="window.erpApp.openExpenseDrivePickerModal()" style="padding:10px 16px; background:#eff6ff; border:1.5px solid #bfdbfe; color:#2563eb; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
-                                                <span class="material-icons-outlined" style="font-size:16px;">folder_shared</span>Duyệt Drive
-                                            </button>
-                                            <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromModal()" style="padding:10px 16px; background:#f0fdf4; border:1.5px solid #bbf7d0; color:#16a34a; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-                                                <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Tạo Folder
-                                            </button>
                                         </div>
                                         <input type="hidden" id="expenseDriveFolderIdInput" name="driveFolderId" value="${expense.driveFolderId || ''}">
                                         <input type="hidden" id="expenseDriveFolderPathInput" name="driveFolderPath" value="${expense.driveFolderPath || ''}">
@@ -1045,7 +1025,7 @@
                                          onclick="document.getElementById('expenseFileInput').click()">
                                         <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6; margin-bottom:8px; display:block;">cloud_upload</span>
                                         <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                        <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                                        <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                         <input type="file" id="expenseFileInput" multiple onchange="window.erpApp.handleExpenseFileUpload(event)" style="display:none">
                                     </div>
 
@@ -1088,7 +1068,7 @@
         }
 
         // Initialize dynamic Google Drive folders
-        window.erpApp.initializeExpenseDriveFolders('Tài Chính');
+        window.erpApp.loadExpenseDriveRootFolders(expense.driveFolderId || null);
     };
 
     window.erpApp.closeEditExpenseModal = function () {
@@ -2309,64 +2289,167 @@
     // ==========================================
     // Google Drive & Voucher Attachments Helpers
     // ==========================================
-    window.erpApp.loadExpenseDriveSubfolders = async () => {
+    // ─── Dynamic N-level folder chain for Office Expense ────────────────────
+    window.erpApp.getDeepestExpenseDriveFolderId = () => {
+        const chain = document.getElementById('expenseDriveFolderChain');
+        if (!chain) return null;
+        const selects = chain.querySelectorAll('select[data-chain-level]');
+        let deepest = null;
+        selects.forEach(sel => { if (sel.value) deepest = sel.value; });
+        return deepest;
+    };
+
+    window.erpApp.getExpenseDriveFolderChainPath = () => {
+        const chain = document.getElementById('expenseDriveFolderChain');
+        if (!chain) return '';
+        const selects = chain.querySelectorAll('select[data-chain-level]');
+        const parts = [];
+        selects.forEach(sel => {
+            if (sel.value) parts.push(sel.options[sel.selectedIndex].text);
+        });
+        return parts.join(' ➔ ');
+    };
+
+    const _trimExpenseFolderChain = (fromLevel) => {
+        const chain = document.getElementById('expenseDriveFolderChain');
+        if (!chain) return;
+        chain.querySelectorAll(`select[data-chain-level]`).forEach(sel => {
+            if (parseInt(sel.dataset.chainLevel, 10) >= fromLevel) sel.remove();
+        });
+    };
+
+    const _appendExpenseFolderDropdown = (level, folders) => {
+        const chain = document.getElementById('expenseDriveFolderChain');
+        if (!chain) return;
+        const sel = document.createElement('select');
+        sel.id = `expenseDriveChainSel_${level}`;
+        sel.dataset.chainLevel = level;
+        sel.style.cssText = 'flex:1;min-width:160px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;background:#fff;cursor:pointer;font-weight:600;outline:none;';
+        sel.innerHTML = `<option value="">— Chọn thư mục —</option>` +
+            folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        sel.addEventListener('change', () => {
+            window.erpApp.loadExpenseDriveFolderChain(sel.value, level + 1);
+            window.erpApp.updateExpenseDriveFolderInputs();
+        });
+        chain.appendChild(sel);
+    };
+
+    window.erpApp.loadExpenseDriveFolderChain = async (parentFolderId, level) => {
+        _trimExpenseFolderChain(level);
         const folderSelect = document.getElementById('expenseDriveFolderSelect');
-        const subSelect = document.getElementById('expenseDriveSubfolderSelect');
-        if (!folderSelect || !subSelect) return;
-        const folderId = folderSelect.value;
-        if (!folderId) {
-            subSelect.style.display = 'none';
+        const rootFolderId = folderSelect ? folderSelect.value : '';
+        const activeFolderId = parentFolderId || rootFolderId;
+
+        if (!activeFolderId) {
+            window.erpApp.updateExpenseDriveFolderInputs();
             return;
         }
-        subSelect.style.display = 'block';
-        subSelect.innerHTML = '<option value="">⏳ Đang tải...</option>';
+
         try {
-            const res = await fetch((window.API_BASE_URL || '') + `/api/drive/files?folderId=${folderId}`);
+            const url = (window.API_BASE_URL || '') + `/api/drive/files?folderId=${activeFolderId}`;
+            const res = await fetch(url);
             const data = await res.json();
             if (data.success) {
                 const folders = (data.files || []).filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-                subSelect.innerHTML = '<option value="">— Lưu vào thư mục gốc —</option>' +
-                    folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-            } else {
-                subSelect.innerHTML = '<option value="">Không tải được</option>';
+                if (folders.length > 0) {
+                    _appendExpenseFolderDropdown(level, folders);
+                }
             }
-        } catch (e) {
-            subSelect.innerHTML = '<option value="">Lỗi kết nối</option>';
+        } catch (e) { /* silent fail */ }
+
+        window.erpApp.updateExpenseDriveFolderInputs();
+    };
+
+    window.erpApp.createExpenseDriveSubfolderFromChainModal = async () => {
+        const deepestParentId = window.erpApp.getDeepestExpenseDriveFolderId() || document.getElementById('expenseDriveFolderSelect')?.value || '';
+        if (!deepestParentId) {
+            window.erpApp.showToast('Vui lòng chọn thư mục gốc trước khi tạo thư mục con!', 'error');
+            return;
+        }
+
+        const name = await window.erpApp.expenseCustomPrompt('Tạo Thư Mục Mới', 'Nhập tên folder mới...');
+        if (!name || !name.trim()) return;
+
+        try {
+            window.erpApp.showToast('⏳ Đang tạo folder...', 'info');
+            const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim(), parentId: deepestParentId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.erpApp.showToast(`✅ Đã tạo folder "${name.trim()}"`, 'success');
+                const chain = document.getElementById('expenseDriveFolderChain');
+                const selects = chain ? chain.querySelectorAll('select[data-chain-level]') : [];
+                const currentLevel = selects.length;
+                await window.erpApp.loadExpenseDriveFolderChain(deepestParentId, currentLevel);
+                // Auto select
+                if (data.folder && data.folder.id) {
+                    const newSel = document.getElementById(`expenseDriveChainSel_${currentLevel}`);
+                    if (newSel) {
+                        newSel.value = data.folder.id;
+                        newSel.dispatchEvent(new Event('change'));
+                    }
+                }
+            } else {
+                window.erpApp.showToast(`❌ Lỗi: ${data.error || 'Không tạo được folder'}`, 'error');
+            }
+        } catch (err) {
+            window.erpApp.showToast(`❌ Lỗi kết nối: ${err.message}`, 'error');
         }
     };
 
-    window.erpApp.initializeExpenseDriveFolders = async (defaultFolderName = 'Tài Chính') => {
-        const folderSelect = document.getElementById('expenseDriveFolderSelect');
-        if (!folderSelect) return;
+    window.erpApp.updateExpenseDriveFolderInputs = () => {
+        const idInput = document.getElementById('expenseDriveFolderIdInput');
+        const pathInput = document.getElementById('expenseDriveFolderPathInput');
+        if (!idInput || !pathInput) return;
 
-        folderSelect.innerHTML = '<option value="">⏳ Đang tải thư mục...</option>';
+        const deepestId = window.erpApp.getDeepestExpenseDriveFolderId();
+        const folderSelect = document.getElementById('expenseDriveFolderSelect');
+        if (deepestId) {
+            idInput.value = deepestId;
+            const rootLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : '';
+            const chainPath = window.erpApp.getExpenseDriveFolderChainPath();
+            pathInput.value = rootLabel + (chainPath ? ' ➔ ' + chainPath : '');
+        } else if (folderSelect && folderSelect.value) {
+            idInput.value = folderSelect.value;
+            pathInput.value = folderSelect.options[folderSelect.selectedIndex].text;
+        } else {
+            idInput.value = '';
+            pathInput.value = 'My Drive';
+        }
+    };
+
+    window.erpApp.loadExpenseDriveRootFolders = async (selectedId = null) => {
+        const rootSelect = document.getElementById('expenseDriveFolderSelect');
+        if (!rootSelect) return;
+        rootSelect.innerHTML = '<option value="">⏳ Đang tải...</option>';
         try {
             const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders');
             const data = await res.json();
-            if (data.success && data.folders && data.folders.length > 0) {
-                folderSelect.innerHTML = data.folders.map(f => {
-                    let emoji = '📁';
-                    if (f.name.includes('Tài Chính')) emoji = '💰';
-                    else if (f.name.includes('Hợp Đồng')) emoji = '📝';
-                    else if (f.name.includes('Dự Án')) emoji = '🏗️';
-                    else if (f.name.includes('Nhân Sự')) emoji = '👥';
-                    return `<option value="${f.id}">${emoji} ${f.name}</option>`;
-                }).join('');
-
-                // Select 'Tài Chính' by default if found
-                const targetFolder = data.folders.find(f => f.name.includes(defaultFolderName));
-                if (targetFolder) {
-                    folderSelect.value = targetFolder.id;
+            if (data.success && data.folders) {
+                rootSelect.innerHTML = data.folders.map(f => `<option value="${f.id}" ${selectedId === f.id ? 'selected' : ''}>${f.name}</option>`).join('');
+                
+                if (!selectedId) {
+                    // Default to 'Tài Chính'
+                    const targetFolder = data.folders.find(f => f.name.includes('Tài Chính'));
+                    if (targetFolder) {
+                        rootSelect.value = targetFolder.id;
+                    } else if (data.folders.length > 0) {
+                        rootSelect.value = data.folders[0].id;
+                    }
                 }
+                
+                window.erpApp.loadExpenseDriveFolderChain(null, 0);
             } else {
-                folderSelect.innerHTML = '<option value="">❌ Không tải được thư mục</option>';
+                rootSelect.innerHTML = '<option value="">Không tải được</option>';
+                window.erpApp.updateExpenseDriveFolderInputs();
             }
         } catch (e) {
-            folderSelect.innerHTML = '<option value="">❌ Lỗi kết nối Drive</option>';
+            rootSelect.innerHTML = '<option value="">Lỗi kết nối</option>';
+            window.erpApp.updateExpenseDriveFolderInputs();
         }
-
-        // Load subfolders of the active selection
-        await window.erpApp.loadExpenseDriveSubfolders();
     };
 
     window.erpApp.expenseCustomPrompt = (title, placeholder, defaultValue = '') => {
@@ -2506,37 +2589,7 @@
         });
     };
 
-    window.erpApp.createExpenseDriveSubfolderFromModal = async () => {
-        const folderSelect = document.getElementById('expenseDriveFolderSelect');
-        const subSelect = document.getElementById('expenseDriveSubfolderSelect');
-        if (!folderSelect) return;
-        const parentId = folderSelect.value;
-
-        const name = await window.erpApp.expenseCustomPrompt('Tạo Thư Mục Mới', 'Nhập tên folder mới...');
-        if (!name || !name.trim()) return;
-
-        try {
-            window.erpApp.showToast('⏳ Đang tạo folder trên Google Drive...', 'info');
-            const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name.trim(), parentId: parentId })
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                window.erpApp.showToast(`✅ Đã tạo folder "${name.trim()}"`, 'success');
-                await window.erpApp.loadExpenseDriveSubfolders();
-                if (subSelect && data.folder && data.folder.id) {
-                    subSelect.value = data.folder.id;
-                }
-            } else {
-                window.erpApp.showToast(`❌ Lỗi: ${data.error || 'Không tạo được folder'}`, 'error');
-            }
-        } catch (err) {
-            window.erpApp.showToast(`❌ Lỗi kết nối: ${err.message}`, 'error');
-        }
-    };
+    // Removed legacy createExpenseDriveSubfolderFromModal function
 
     window.erpApp.handleExpenseFileUpload = (event) => {
         const files = event.target.files;
@@ -2545,7 +2598,6 @@
         const listEl = document.getElementById('expenseFileList');
 
         Array.from(files).forEach(async (file) => {
-            if (file.size > 20 * 1024 * 1024) { window.erpApp.showToast(`File "${file.name}" quá lớn (>20MB)`, 'error'); return; }
             const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
             const fType = window.erpApp.getHsFileTypeFromName ? window.erpApp.getHsFileTypeFromName(file.name) : 'pdf';
 
@@ -2556,12 +2608,9 @@
             try {
                 const formData = new FormData();
                 formData.append('files', file);
-                const folderSelect = document.getElementById('expenseDriveFolderSelect');
-                const subfolderSelect = document.getElementById('expenseDriveSubfolderSelect');
-                if (subfolderSelect && subfolderSelect.value) {
-                    formData.append('folderId', subfolderSelect.value);
-                } else if (folderSelect && folderSelect.value) {
-                    formData.append('folderId', folderSelect.value);
+                const deepestId = window.erpApp.getDeepestExpenseDriveFolderId() || document.getElementById('expenseDriveFolderSelect')?.value || '';
+                if (deepestId) {
+                    formData.append('folderId', deepestId);
                 } else {
                     formData.append('module', 'tai-chinh');
                 }
@@ -2571,15 +2620,17 @@
 
                 if (data.success && data.uploaded && data.uploaded.length > 0) {
                     const driveFile = data.uploaded[0];
+                    const folderSelect = document.getElementById('expenseDriveFolderSelect');
                     const folderLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : 'Tài Chính';
-                    const subLabel = (subfolderSelect && subfolderSelect.value) ? ' / ' + subfolderSelect.options[subfolderSelect.selectedIndex].text : '';
+                    const chainPath = window.erpApp.getExpenseDriveFolderChainPath();
+                    const drivePath = folderLabel.replace(/^[^\s]+\s/, '') + (chainPath ? ' ➔ ' + chainPath : '');
                     tempExpenseFiles[placeholderIdx] = {
                         name: file.name,
                         size: sizeStr,
                         type: fType,
                         url: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
                         driveFileId: driveFile.id,
-                        drivePath: folderLabel.replace(/^[^\s]+\s/, '') + subLabel
+                        drivePath
                     };
                     window.erpApp.showToast(`✅ Đã tải "${file.name}" lên Google Drive`, 'success');
                 } else {

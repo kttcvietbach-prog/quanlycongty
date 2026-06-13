@@ -5154,6 +5154,7 @@ window.erpApp = window.erpApp || {};
         const item = isEdit ? pmPaymentMilestones.find(m => m.id === id) : null;
 
         window.tempContractFiles = item && item.vouchers ? [...item.vouchers] : (item && item.fileUrl ? [{ name: 'Tài liệu hiện tại', type: 'link', data: item.fileUrl }] : []);
+        const existingDrivePath = (window.tempContractFiles && window.tempContractFiles.find(f => f.drivePath)?.drivePath) || '';
 
         // Find the selected contract to pre-populate its current value
         const contractId = item ? item.contractId : (prefilledContractId || '');
@@ -5265,28 +5266,27 @@ window.erpApp = window.erpApp || {};
                             
                             <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                 <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
-                                <select id="pmContractDriveFolderSelect" style="flex:1; min-width:160px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadContractDriveSubfolders()">
-                                    <option value="thanh-toan">💰 Thanh Toán (mặc định)</option>
-                                    <option value="hop-dong">📝 Hợp Đồng</option>
-                                    <option value="du-an">📋 Dự Án</option>
-                                    <option value="chung">📁 Chung</option>
+                                <select id="pmContractDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadContractDriveFolderChain(null, 0)">
+                                    <option value="">⏳ Đang tải thư mục...</option>
                                 </select>
-                                <select id="pmContractDriveSubfolderSelect" style="flex:1; min-width:160px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none; display:none;">
-                                    <option value="">— Subfolder (tuỳ chọn) —</option>
-                                </select>
-                                <button type="button" onclick="window.erpApp.loadContractDriveSubfolders()" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải subfolder" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                <div id="pmContractDriveFolderChain" style="display:contents"></div>
+                                <button type="button" onclick="window.erpApp.loadContractDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
                                     <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
                                 </button>
-                                <button type="button" onclick="window.erpApp.createContractDriveSubfolderFromModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                <button type="button" onclick="window.erpApp.createContractDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
                                     <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>+ Folder
                                 </button>
+                            </div>
+
+                            <div id="pmContractDriveFolderPathText" style="font-size:12px; color:#0d9488; font-weight:700; margin-top:4px; margin-bottom:8px; display:${existingDrivePath ? 'block' : 'none'};" data-initial-path="${existingDrivePath}">
+                                ${existingDrivePath ? `Thư mục hiện tại: ${existingDrivePath}` : ''}
                             </div>
 
                             <div class="contract-upload-area" style="margin-bottom: 16px;">
                                 <label for="pmContractFileInput" class="upload-label" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; border:2px dashed #3b82f6; border-radius:16px; cursor:pointer; background:#f8fafc; transition: 0.2s; min-height:100px;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#f8fafc'">
                                     <span class="material-icons-outlined" style="font-size:32px; color:#3b82f6;">cloud_upload</span>
                                     <span style="font-weight:700; color:#2563eb; font-size:13px;">Chọn file để tải lên Google Drive</span>
-                                    <span style="font-size:11px; color:#64748b; font-weight:500;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG...</span>
+                                    <span style="font-size:11px; color:#64748b; font-weight:500;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                 </label>
                                 <input type="file" id="pmContractFileInput" multiple onchange="window.erpApp.pmHandleContractFileUpload(event)" style="display:none;">
                             </div>
@@ -5327,9 +5327,9 @@ window.erpApp = window.erpApp || {};
         modalElement.addEventListener('click', closeListener);
         document.body.appendChild(modalElement);
 
-        if (typeof window.erpApp.loadContractDriveSubfolders === 'function') {
+        if (typeof window.erpApp.loadContractDriveRootFolders === 'function') {
             setTimeout(() => {
-                window.erpApp.loadContractDriveSubfolders();
+                window.erpApp.loadContractDriveRootFolders(null, 'thanh-toan');
             }, 100);
         }
 
@@ -15736,6 +15736,7 @@ window.erpApp = window.erpApp || {};
     window.erpApp.pmOpenAddFinanceModal = (recordId = null) => {
         const record = recordId ? pmFinanceRecords.find(r => r.id === recordId) : null;
         window.tempContractFiles = record && record.vouchers ? [...record.vouchers] : (record && record.fileUrl ? [{ name: 'Tài liệu hiện tại', type: 'link', data: record.fileUrl }] : []);
+        const existingDrivePath = (window.tempContractFiles && window.tempContractFiles.find(f => f.drivePath)?.drivePath) || '';
         const today = new Date().toISOString().split('T')[0];
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -15821,22 +15822,20 @@ window.erpApp = window.erpApp || {};
                                 
                                 <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                     <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
-                                    <select id="pmContractDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadContractDriveSubfolders()">
-                                        <option value="tai-chinh">💰 Tài Chính (mặc định)</option>
-                                        <option value="du-an">📋 Dự Án</option>
-                                        <option value="hop-dong">📝 Hợp Đồng</option>
-                                        <option value="dau-thau">🏗️ Đấu Thầu</option>
-                                        <option value="chung">📁 Chung</option>
+                                    <select id="pmContractDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadContractDriveFolderChain(null, 0)">
+                                        <option value="">⏳ Đang tải thư mục...</option>
                                     </select>
-                                    <select id="pmContractDriveSubfolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none; display:none;">
-                                        <option value="">— Subfolder (tuỳ chọn) —</option>
-                                    </select>
-                                    <button type="button" onclick="window.erpApp.loadContractDriveSubfolders()" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải subfolder" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                    <div id="pmContractDriveFolderChain" style="display:contents"></div>
+                                    <button type="button" onclick="window.erpApp.loadContractDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
                                         <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
                                     </button>
-                                    <button type="button" onclick="window.erpApp.createContractDriveSubfolderFromModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                    <button type="button" onclick="window.erpApp.createContractDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
                                         <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
                                     </button>
+                                </div>
+
+                                <div id="pmContractDriveFolderPathText" style="font-size:12px; color:#0d9488; font-weight:700; margin-top:4px; margin-bottom:8px; display:${existingDrivePath ? 'block' : 'none'};" data-initial-path="${existingDrivePath}">
+                                    ${existingDrivePath ? `Thư mục hiện tại: ${existingDrivePath}` : ''}
                                 </div>
 
                                 <div class="contract-upload-area" style="margin-bottom: 16px;">
@@ -15880,9 +15879,9 @@ window.erpApp = window.erpApp || {};
             `;
         document.body.appendChild(overlay);
 
-        if (typeof window.erpApp.loadContractDriveSubfolders === 'function') {
+        if (typeof window.erpApp.loadContractDriveRootFolders === 'function') {
             setTimeout(() => {
-                window.erpApp.loadContractDriveSubfolders();
+                window.erpApp.loadContractDriveRootFolders(null, 'tai-chinh');
             }, 100);
         }
 
@@ -16214,6 +16213,7 @@ window.erpApp = window.erpApp || {};
     window.erpApp.pmOpenAddContractedExpenseModal = (contractId = null) => {
         const contract = contractId ? pmContracts.find(c => c.id === contractId) : null;
         window.tempContractFiles = contract && contract.vouchers ? [...contract.vouchers] : (contract && contract.fileUrl ? [{ name: 'Tài liệu hiện tại', type: 'link', data: contract.fileUrl }] : []);
+        const existingDrivePath = (window.tempContractFiles && window.tempContractFiles.find(f => f.drivePath)?.drivePath) || '';
         const today = new Date().toISOString().split('T')[0];
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -16296,22 +16296,20 @@ window.erpApp = window.erpApp || {};
                                 
                                 <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                     <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
-                                    <select id="pmContractDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadContractDriveSubfolders()">
-                                        <option value="hop-dong">📝 Hợp Đồng (mặc định)</option>
-                                        <option value="tai-chinh">💰 Tài Chính</option>
-                                        <option value="du-an">📋 Dự Án</option>
-                                        <option value="dau-thau">🏗️ Đấu Thầu</option>
-                                        <option value="chung">📁 Chung</option>
+                                    <select id="pmContractDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadContractDriveFolderChain(null, 0)">
+                                        <option value="">⏳ Đang tải thư mục...</option>
                                     </select>
-                                    <select id="pmContractDriveSubfolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none; display:none;">
-                                        <option value="">— Subfolder (tuỳ chọn) —</option>
-                                    </select>
-                                    <button type="button" onclick="window.erpApp.loadContractDriveSubfolders()" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải subfolder" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                    <div id="pmContractDriveFolderChain" style="display:contents"></div>
+                                    <button type="button" onclick="window.erpApp.loadContractDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
                                         <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
                                     </button>
-                                    <button type="button" onclick="window.erpApp.createContractDriveSubfolderFromModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                    <button type="button" onclick="window.erpApp.createContractDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
                                         <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
                                     </button>
+                                </div>
+
+                                <div id="pmContractDriveFolderPathText" style="font-size:12px; color:#0d9488; font-weight:700; margin-top:4px; margin-bottom:8px; display:${existingDrivePath ? 'block' : 'none'};" data-initial-path="${existingDrivePath}">
+                                    ${existingDrivePath ? `Thư mục hiện tại: ${existingDrivePath}` : ''}
                                 </div>
 
                                 <div class="contract-upload-area" style="margin-bottom: 16px;">
@@ -16357,9 +16355,9 @@ window.erpApp = window.erpApp || {};
             `;
         document.body.appendChild(overlay);
 
-        if (typeof window.erpApp.loadContractDriveSubfolders === 'function') {
+        if (typeof window.erpApp.loadContractDriveRootFolders === 'function') {
             setTimeout(() => {
-                window.erpApp.loadContractDriveSubfolders();
+                window.erpApp.loadContractDriveRootFolders(null, 'hop-dong');
             }, 100);
         }
 
