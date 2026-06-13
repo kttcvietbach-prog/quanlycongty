@@ -822,33 +822,31 @@
                                     <input type="text" name="invoiceNo" placeholder="VD: HD00123...">
                                 </div>
 
-                                <!-- Chứng từ tài liệu đính kèm (Google Drive UI) -->
+                                <!-- Chứng từ tài liệu đính kèm (Google Drive UI - N-level folder chain) -->
                                 <div class="form-group full-width" style="border-top: 1px dashed #cbd5e1; padding-top: 20px; margin-top: 10px;">
                                     <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:16px;">
                                         <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ chứng từ đính kèm
                                     </label>
                                     
-                                    <!-- Google Drive selectors -->
-                                    <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#f8fafc; border:1.5px solid #e2e8f0; padding:12px 16px; border-radius:16px;">
-                                        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
-                                            <span class="material-icons-outlined" style="font-size:20px; color:#f59e0b;">folder</span>
-                                            <div style="display:flex; flex-direction:column; text-align:left;">
-                                                <span style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Thư mục lưu trữ trên Drive</span>
-                                                <div id="expenseDrivePathBreadcrumb" style="font-size:13px; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
-                                                    ⏳ Đang kết nối Google Drive...
-                                                </div>
-                                            </div>
+                                    <!-- Google Drive folder chain selectors -->
+                                    <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                        <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
+                                        <select id="hsDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadDriveFolderChain(null, 0)">
+                                            <option value="tai-chinh">💰 Tài Chính (mặc định)</option>
+                                            <option value="hop-dong">📝 Hợp Đồng</option>
+                                            <option value="du-an">📋 Dự Án</option>
+                                            <option value="van-ban">📑 Văn Bản</option>
+                                            <option value="chung">📁 Chung</option>
+                                        </select>
+                                        <div id="hsDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
+                                            <!-- Các subfolder sẽ load động vào đây -->
                                         </div>
-                                        <div style="display:flex; gap:8px; align-items:center;">
-                                            <button type="button" onclick="window.erpApp.openExpenseDrivePickerModal()" style="padding:10px 16px; background:#eff6ff; border:1.5px solid #bfdbfe; color:#2563eb; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
-                                                <span class="material-icons-outlined" style="font-size:16px;">folder_shared</span>Duyệt Drive
-                                            </button>
-                                            <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromModal()" style="padding:10px 16px; background:#f0fdf4; border:1.5px solid #bbf7d0; color:#16a34a; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-                                                <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Tạo Folder
-                                            </button>
-                                        </div>
-                                        <input type="hidden" id="expenseDriveFolderIdInput" name="driveFolderId" value="">
-                                        <input type="hidden" id="expenseDriveFolderPathInput" name="driveFolderPath" value="">
+                                        <button type="button" onclick="window.erpApp.loadDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                            <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
+                                        </button>
+                                        <button type="button" onclick="window.erpApp.createDriveSubfolderFromModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                            <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
+                                        </button>
                                     </div>
 
                                     <!-- Upload Area -->
@@ -858,7 +856,7 @@
                                          onclick="document.getElementById('expenseFileInput').click()">
                                         <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6; margin-bottom:8px; display:block;">cloud_upload</span>
                                         <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                        <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                                        <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                         <input type="file" id="expenseFileInput" multiple onchange="window.erpApp.handleExpenseFileUpload(event)" style="display:none">
                                     </div>
 

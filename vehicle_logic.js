@@ -1722,31 +1722,30 @@
                             <input type="text" name="date" value="${isEdit ? fmtDate(editData.date) : new Date().toLocaleDateString('vi-VN')}" placeholder="DD/MM/YYYY" required style="width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:14px; font-weight:700; color:#ef4444; outline:none; font-size:14px;">
                         </div>
 
-                        <!-- Chứng từ tài liệu đính kèm (Google Drive UI) -->
+                        <!-- Chứng từ tài liệu đính kèm (Google Drive UI - N-level folder chain) -->
                         <div class="form-group" style="border-top: 1px dashed #e2e8f0; padding-top: 20px;">
                             <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:16px;">
                                 <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ chứng từ đính kèm
                             </label>
                             
-                            <!-- Google Drive selectors -->
+                            <!-- Google Drive folder chain selectors -->
                             <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                                <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap; display:flex; align-items:center; gap:4px;">
-                                    <span class="material-icons-outlined" style="font-size:16px; color:#f59e0b;">folder</span> Lưu vào thư mục:
-                                </label>
-                                <select id="expenseDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadExpenseDriveSubfolders()">
+                                <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
+                                <select id="hsDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadDriveFolderChain(null, 0)">
                                     <option value="tai-chinh" selected>💰 Tài Chính (mặc định)</option>
                                     <option value="kho-van">📦 Kho Vận</option>
                                     <option value="hop-dong">📝 Hợp Đồng</option>
+                                    <option value="van-ban">📑 Văn Bản</option>
                                     <option value="chung">📁 Chung</option>
                                 </select>
-                                <select id="expenseDriveSubfolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; display:none; font-weight:600; outline:none;">
-                                    <option value="">— Subfolder (tuỳ chọn) —</option>
-                                </select>
-                                <button type="button" onclick="window.erpApp.loadExpenseDriveSubfolders()" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải subfolder" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                <div id="hsDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
+                                    <!-- Các subfolder sẽ load động vào đây -->
+                                </div>
+                                <button type="button" onclick="window.erpApp.loadDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
                                     <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
                                 </button>
-                                <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromModal()" style="padding:10px 16px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
-                                    <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Tạo Folder
+                                <button type="button" onclick="window.erpApp.createDriveSubfolderFromModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                    <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
                                 </button>
                             </div>
 
@@ -1757,7 +1756,7 @@
                                  onclick="document.getElementById('expenseFileInput').click()">
                                 <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6; margin-bottom:8px; display:block;">cloud_upload</span>
                                 <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                                <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                 <input type="file" id="expenseFileInput" multiple onchange="window.erpApp.handleExpenseFileUpload(event)" style="display:none">
                             </div>
 
@@ -3461,7 +3460,6 @@
         const listEl = document.getElementById('vehicleFileList');
 
         Array.from(files).forEach(async (file) => {
-            if (file.size > 20 * 1024 * 1024) { window.erpApp.showToast(`File "${file.name}" quá lớn (>20MB)`, 'error'); return; }
             const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
             const fType = window.erpApp.getHsFileTypeFromName ? window.erpApp.getHsFileTypeFromName(file.name) : 'pdf';
 
@@ -3472,13 +3470,41 @@
             try {
                 const formData = new FormData();
                 formData.append('files', file);
-                const folderIdInput = document.getElementById('vehicleDriveFolderIdInput');
-                const pathInput = document.getElementById('vehicleDriveFolderPathInput');
 
-                if (folderIdInput && folderIdInput.value) {
-                    formData.append('folderId', folderIdInput.value);
+                let finalFolderId = '';
+                let finalModule = 'kho-van';
+                let pathLabel = '';
+
+                const hsSelect = document.getElementById('hsDriveFolderSelect');
+                if (hsSelect) {
+                    finalModule = hsSelect.value;
+                    pathLabel = hsSelect.options[hsSelect.selectedIndex].text.replace(/^[^\s]+\s/, '');
+                    
+                    const chainContainer = document.getElementById('hsDriveFolderChain');
+                    if (chainContainer) {
+                        const selects = Array.from(chainContainer.querySelectorAll('select'));
+                        for (let i = 0; i < selects.length; i++) {
+                            if (selects[i].value) {
+                                finalFolderId = selects[i].value;
+                                pathLabel += ' ➤ ' + selects[i].options[selects[i].selectedIndex].text;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
                 } else {
-                    formData.append('module', 'kho-van');
+                    const folderIdInput = document.getElementById('vehicleDriveFolderIdInput');
+                    const pathInput = document.getElementById('vehicleDriveFolderPathInput');
+                    if (folderIdInput && folderIdInput.value) {
+                        finalFolderId = folderIdInput.value;
+                    }
+                    pathLabel = (pathInput && pathInput.value) ? pathInput.value : 'Kho Vận';
+                }
+
+                if (finalFolderId) {
+                    formData.append('folderId', finalFolderId);
+                } else {
+                    formData.append('module', finalModule);
                 }
 
                 const res = await fetch((window.API_BASE_URL || '') + '/api/drive/upload', { method: 'POST', body: formData });
@@ -3486,14 +3512,13 @@
 
                 if (data.success && data.uploaded && data.uploaded.length > 0) {
                     const driveFile = data.uploaded[0];
-                    const folderLabel = pathInput && pathInput.value ? pathInput.value : 'Kho Vận';
                     tempVehicleFiles[placeholderIdx] = {
                         name: file.name,
                         size: sizeStr,
                         type: fType,
                         url: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
                         driveFileId: driveFile.id,
-                        drivePath: folderLabel
+                        drivePath: pathLabel
                     };
                     window.erpApp.showToast(`✅ Đã tải "${file.name}" lên Google Drive`, 'success');
                 } else {
@@ -3524,7 +3549,6 @@
         const file = event.target.files[0];
         if (!file) { return; }
 
-        if (file.size > 20 * 1024 * 1024) { window.erpApp.showToast(`File "${file.name}" quá lớn (>20MB)`, 'error'); return; }
         const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
 
         const previewBox = document.getElementById('vehicleImagePreviewBox');
@@ -4125,6 +4149,175 @@
         }
     };
 
+    // ─── Dynamic N-level folder chain for Vehicle/Equipment ─────────────────
+    window.erpApp.getDeepestVehicleDriveFolderId = () => {
+        const chain = document.getElementById('vehicleDriveFolderChain');
+        if (!chain) return null;
+        const selects = chain.querySelectorAll('select[data-chain-level]');
+        let deepest = null;
+        selects.forEach(sel => { if (sel.value) deepest = sel.value; });
+        return deepest;
+    };
+
+    window.erpApp.getVehicleDriveFolderChainPath = () => {
+        const chain = document.getElementById('vehicleDriveFolderChain');
+        if (!chain) return '';
+        const selects = chain.querySelectorAll('select[data-chain-level]');
+        const parts = [];
+        selects.forEach(sel => {
+            if (sel.value) parts.push(sel.options[sel.selectedIndex].text);
+        });
+        return parts.join(' ➔ ');
+    };
+
+    const _trimVehicleFolderChain = (fromLevel) => {
+        const chain = document.getElementById('vehicleDriveFolderChain');
+        if (!chain) return;
+        chain.querySelectorAll(`select[data-chain-level]`).forEach(sel => {
+            if (parseInt(sel.dataset.chainLevel, 10) >= fromLevel) sel.remove();
+        });
+    };
+
+    const _appendVehicleFolderDropdown = (level, folders) => {
+        const chain = document.getElementById('vehicleDriveFolderChain');
+        if (!chain) return;
+        const sel = document.createElement('select');
+        sel.id = `vehicleDriveChainSel_${level}`;
+        sel.dataset.chainLevel = level;
+        sel.style.cssText = 'flex:1;min-width:160px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;background:#fff;cursor:pointer;font-weight:600;outline:none;';
+        sel.innerHTML = `<option value="">— Chọn thư mục —</option>` +
+            folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        sel.addEventListener('change', () => {
+            window.erpApp.loadVehicleDriveFolderChain(sel.value, level + 1);
+            window.erpApp.updateVehicleDriveFolderInputs();
+        });
+        chain.appendChild(sel);
+    };
+
+    window.erpApp.loadVehicleDriveFolderChain = async (parentFolderId, level) => {
+        _trimVehicleFolderChain(level);
+        const folderSelect = document.getElementById('vehicleDriveFolderSelect');
+        const rootFolderId = folderSelect ? folderSelect.value : '';
+        const activeFolderId = parentFolderId || rootFolderId;
+
+        if (!activeFolderId) {
+            window.erpApp.updateVehicleDriveFolderInputs();
+            return;
+        }
+
+        try {
+            const url = (window.API_BASE_URL || '') + `/api/drive/files?folderId=${activeFolderId}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.success) {
+                const folders = (data.files || []).filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+                if (folders.length > 0) {
+                    _appendVehicleFolderDropdown(level, folders);
+                }
+            }
+        } catch (e) { /* silent fail */ }
+
+        window.erpApp.updateVehicleDriveFolderInputs();
+    };
+
+    window.erpApp.createVehicleDriveSubfolderFromChainModal = async () => {
+        const deepestParentId = window.erpApp.getDeepestVehicleDriveFolderId() || document.getElementById('vehicleDriveFolderSelect')?.value || '';
+        if (!deepestParentId) {
+            window.erpApp.showToast('Vui lòng chọn thư mục gốc trước khi tạo thư mục con!', 'error');
+            return;
+        }
+
+        const name = await window.erpApp.vehicleCustomPrompt('Tạo Thư Mục Mới', 'Nhập tên folder mới...');
+        if (!name || !name.trim()) return;
+
+        try {
+            window.erpApp.showToast('⏳ Đang tạo folder...', 'info');
+            const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim(), parentId: deepestParentId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.erpApp.showToast(`✅ Đã tạo folder "${name.trim()}"`, 'success');
+                const chain = document.getElementById('vehicleDriveFolderChain');
+                const selects = chain ? chain.querySelectorAll('select[data-chain-level]') : [];
+                const currentLevel = selects.length;
+                await window.erpApp.loadVehicleDriveFolderChain(deepestParentId, currentLevel);
+                // Auto select
+                if (data.folder && data.folder.id) {
+                    const newSel = document.getElementById(`vehicleDriveChainSel_${currentLevel}`);
+                    if (newSel) {
+                        newSel.value = data.folder.id;
+                        newSel.dispatchEvent(new Event('change'));
+                    }
+                }
+            } else {
+                window.erpApp.showToast(`❌ Lỗi: ${data.error || 'Không tạo được folder'}`, 'error');
+            }
+        } catch (err) {
+            window.erpApp.showToast(`❌ Lỗi kết nối: ${err.message}`, 'error');
+        }
+    };
+
+    window.erpApp.updateVehicleDriveFolderInputs = () => {
+        const idInput = document.getElementById('vehicleDriveFolderIdInput');
+        const pathInput = document.getElementById('vehicleDriveFolderPathInput');
+        if (!idInput || !pathInput) return;
+
+        const deepestId = window.erpApp.getDeepestVehicleDriveFolderId();
+        const folderSelect = document.getElementById('vehicleDriveFolderSelect');
+        if (deepestId) {
+            idInput.value = deepestId;
+            const rootLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : '';
+            const chainPath = window.erpApp.getVehicleDriveFolderChainPath();
+            pathInput.value = rootLabel + (chainPath ? ' ➔ ' + chainPath : '');
+        } else if (folderSelect && folderSelect.value) {
+            idInput.value = folderSelect.value;
+            pathInput.value = folderSelect.options[folderSelect.selectedIndex].text;
+        } else {
+            idInput.value = '';
+            pathInput.value = 'My Drive';
+        }
+    };
+
+    window.erpApp.loadVehicleDriveRootFolders = async (selectedId = null) => {
+        const rootSelect = document.getElementById('vehicleDriveFolderSelect');
+        if (!rootSelect) return;
+        rootSelect.innerHTML = '<option value="">⏳ Đang tải...</option>';
+        try {
+            const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders');
+            const data = await res.json();
+            if (data.success && data.folders) {
+                rootSelect.innerHTML = data.folders.map(f => `<option value="${f.id}" ${selectedId === f.id ? 'selected' : ''}>${f.name}</option>`).join('');
+                
+                if (!selectedId) {
+                    const isEq = currentVmContext === 'equipment';
+                    const searchNames = isEq ? ['Thiết bị cơ giới', 'Thiết bị', 'Cơ giới', 'Kho Vận'] : ['Quản lý xe', 'Kho Vận'];
+                    let targetFolder = null;
+                    for (const name of searchNames) {
+                        targetFolder = data.folders.find(f => f.name.toLowerCase().includes(name.toLowerCase()));
+                        if (targetFolder) break;
+                    }
+                    if (targetFolder) {
+                        rootSelect.value = targetFolder.id;
+                    } else if (data.folders.length > 0) {
+                        rootSelect.value = data.folders[0].id;
+                    }
+                }
+                
+                // Load chain for whatever is currently selected
+                window.erpApp.loadVehicleDriveFolderChain(null, 0);
+            } else {
+                rootSelect.innerHTML = '<option value="">Không tải được</option>';
+                window.erpApp.updateVehicleDriveFolderInputs();
+            }
+        } catch (e) {
+            rootSelect.innerHTML = '<option value="">Lỗi kết nối</option>';
+            window.erpApp.updateVehicleDriveFolderInputs();
+        }
+    };
+
     window.erpApp.removeVehicleFile = (index) => {
         tempVehicleFiles.splice(index, 1);
         const listEl = document.getElementById('vehicleFileList');
@@ -4230,7 +4423,6 @@
         const listEl = document.getElementById('expenseFileList');
 
         Array.from(files).forEach(async (file) => {
-            if (file.size > 20 * 1024 * 1024) { window.erpApp.showToast(`File "${file.name}" quá lớn (>20MB)`, 'error'); return; }
             const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
             const fType = window.erpApp.getHsFileTypeFromName ? window.erpApp.getHsFileTypeFromName(file.name) : 'pdf';
 
@@ -4691,25 +4883,27 @@
                                 <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ tài liệu đính kèm
                             </label>
                             
-                            <!-- Dynamic Google Drive Path Picker -->
-                            <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#f8fafc; border:1.5px solid #e2e8f0; padding:12px 16px; border-radius:16px;">
-                                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
-                                    <span class="material-icons-outlined" style="font-size:20px; color:#f59e0b;">folder</span>
-                                    <div style="display:flex; flex-direction:column; text-align:left;">
-                                        <span style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Thư mục lưu trữ trên Drive</span>
-                                        <div id="vehicleDrivePathBreadcrumb" style="font-size:13px; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
-                                            ⏳ Đang kết nối Google Drive...
-                                        </div>
-                                    </div>
+                            <!-- Google Drive folder chain selectors -->
+                            ${editData && editData.driveFolderPath ? `
+                            <div style="font-size:12px; color:#0d9488; font-weight:700; margin-bottom:10px; text-align:left;">
+                                <span class="material-icons-outlined" style="font-size:14px; vertical-align:middle; margin-right:3px;">folder</span>
+                                Thư mục hiện tại: ${editData.driveFolderPath}
+                            </div>
+                            ` : ''}
+                            <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
+                                <select id="vehicleDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadVehicleDriveFolderChain(null, 0)">
+                                    <option value="">⏳ Đang tải danh sách thư mục...</option>
+                                </select>
+                                <div id="vehicleDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
+                                    <!-- Các subfolder sẽ load động vào đây -->
                                 </div>
-                                <div style="display:flex; gap:8px; align-items:center;">
-                                    <button type="button" onclick="window.erpApp.openVehicleDrivePickerModal()" style="padding:10px 16px; background:#eff6ff; border:1.5px solid #bfdbfe; color:#2563eb; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
-                                        <span class="material-icons-outlined" style="font-size:16px;">folder_shared</span>Duyệt Drive
-                                    </button>
-                                    <button type="button" onclick="window.erpApp.createVehicleDriveSubfolderFromModal()" style="padding:10px 16px; background:#f0fdf4; border:1.5px solid #bbf7d0; color:#16a34a; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-                                        <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Tạo Folder
-                                    </button>
-                                </div>
+                                <button type="button" onclick="window.erpApp.loadVehicleDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                    <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
+                                </button>
+                                <button type="button" onclick="window.erpApp.createVehicleDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color:#16a34a;" title="Tạo folder mới trên Drive">
+                                    <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
+                                </button>
                                 <input type="hidden" id="vehicleDriveFolderIdInput" name="driveFolderId" value="${editData ? (editData.driveFolderId || '') : ''}">
                                 <input type="hidden" id="vehicleDriveFolderPathInput" name="driveFolderPath" value="${editData ? (editData.driveFolderPath || '') : ''}">
                             </div>
@@ -4721,7 +4915,7 @@
                                  onclick="document.getElementById('vehicleFileInput').click()">
                                 <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6; margin-bottom:8px; display:block;">cloud_upload</span>
                                 <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                                <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                 <input type="file" id="vehicleFileInput" multiple onchange="window.erpApp.handleVehicleFileUpload(event)" style="display:none">
                             </div>
 
@@ -4782,7 +4976,7 @@
         }
 
         // Initialize dynamic Google Drive folders
-        window.erpApp.initializeVehicleDriveFolders(isEq ? ['Thiết bị cơ giới', 'Thiết bị', 'Cơ giới', 'Kho Vận'] : ['Quản lý xe', 'Kho Vận']);
+        window.erpApp.loadVehicleDriveRootFolders(editData ? editData.driveFolderId : null);
     };
 
     window.erpApp.saveVehicle = function (e) {

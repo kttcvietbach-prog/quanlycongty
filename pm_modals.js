@@ -5434,7 +5434,6 @@ window.erpApp = window.erpApp || {};
         const listEl = document.getElementById('pmContractFileList');
 
         Array.from(files).forEach(async (file) => {
-            if (file.size > 20 * 1024 * 1024) { window.erpApp.showToast(`File "${file.name}" quá lớn (>20MB)`, 'error'); return; }
             const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
             const fType = window.erpApp.getHsFileTypeFromName ? window.erpApp.getHsFileTypeFromName(file.name) : 'pdf';
 
@@ -5445,13 +5444,46 @@ window.erpApp = window.erpApp || {};
             try {
                 const formData = new FormData();
                 formData.append('files', file);
-                const folderSelect = document.getElementById('pmContractDriveFolderSelect');
-                const subfolderSelect = document.getElementById('pmContractDriveSubfolderSelect');
-                const selectedModule = folderSelect ? folderSelect.value : 'hop-dong';
-                if (subfolderSelect && subfolderSelect.value) {
-                    formData.append('folderId', subfolderSelect.value);
+
+                let finalFolderId = '';
+                let finalModule = 'hop-dong';
+                let pathLabel = '';
+
+                const hsSelect = document.getElementById('hsDriveFolderSelect');
+                if (hsSelect) {
+                    finalModule = hsSelect.value;
+                    pathLabel = hsSelect.options[hsSelect.selectedIndex].text.replace(/^[^\s]+\s/, '');
+                    
+                    const chainContainer = document.getElementById('hsDriveFolderChain');
+                    if (chainContainer) {
+                        const selects = Array.from(chainContainer.querySelectorAll('select'));
+                        for (let i = 0; i < selects.length; i++) {
+                            if (selects[i].value) {
+                                finalFolderId = selects[i].value;
+                                pathLabel += ' ➔ ' + selects[i].options[selects[i].selectedIndex].text;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
                 } else {
-                    formData.append('module', selectedModule);
+                    const folderSelect = document.getElementById('pmContractDriveFolderSelect');
+                    const subfolderSelect = document.getElementById('pmContractDriveSubfolderSelect');
+                    finalModule = folderSelect ? folderSelect.value : 'hop-dong';
+                    if (subfolderSelect && subfolderSelect.value) {
+                        finalFolderId = subfolderSelect.value;
+                        const mainLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : 'Hợp Đồng';
+                        pathLabel = mainLabel.replace(/^[^\s]+\s/, '') + ' / ' + subfolderSelect.options[subfolderSelect.selectedIndex].text;
+                    } else {
+                        const mainLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : 'Hợp Đồng';
+                        pathLabel = mainLabel.replace(/^[^\s]+\s/, '');
+                    }
+                }
+
+                if (finalFolderId) {
+                    formData.append('folderId', finalFolderId);
+                } else {
+                    formData.append('module', finalModule);
                 }
 
                 const res = await fetch((window.API_BASE_URL || '') + '/api/drive/upload', { method: 'POST', body: formData });
@@ -5459,15 +5491,13 @@ window.erpApp = window.erpApp || {};
 
                 if (data.success && data.uploaded && data.uploaded.length > 0) {
                     const driveFile = data.uploaded[0];
-                    const folderLabel = folderSelect ? folderSelect.options[folderSelect.selectedIndex].text : 'Hợp Đồng';
-                    const subLabel = (subfolderSelect && subfolderSelect.value) ? ' / ' + subfolderSelect.options[subfolderSelect.selectedIndex].text : '';
                     tempContractFiles[placeholderIdx] = {
                         name: file.name,
                         size: sizeStr,
                         type: fType,
                         url: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
                         driveFileId: driveFile.id,
-                        drivePath: folderLabel.replace(/^[^\s]+\s/, '') + subLabel
+                        drivePath: pathLabel
                     };
                     window.erpApp.showToast(`✅ Đã tải "${file.name}" lên Google Drive`, 'success');
                 } else {

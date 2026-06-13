@@ -15843,7 +15843,7 @@ window.erpApp = window.erpApp || {};
                                     <label for="pmContractFileInput" class="upload-label" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:24px; border:2px dashed #3b82f6; border-radius:16px; cursor:pointer; background:#f8fafc; transition: 0.2s; min-height:120px;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#f8fafc'">
                                         <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6;">cloud_upload</span>
                                         <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                        <span style="font-size:11px; color:#64748b; font-weight:500;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                                        <span style="font-size:11px; color:#64748b; font-weight:500;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                     </label>
                                     <input type="file" id="pmContractFileInput" multiple onchange="window.erpApp.pmHandleContractFileUpload(event)" style="display:none;">
                                 </div>
@@ -16318,7 +16318,7 @@ window.erpApp = window.erpApp || {};
                                     <label for="pmContractFileInput" class="upload-label" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:24px; border:2px dashed #3b82f6; border-radius:16px; cursor:pointer; background:#f8fafc; transition: 0.2s; min-height:120px;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#f8fafc'">
                                         <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6;">cloud_upload</span>
                                         <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                        <span style="font-size:11px; color:#64748b; font-weight:500;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                                        <span style="font-size:11px; color:#64748b; font-weight:500;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                                     </label>
                                     <input type="file" id="pmContractFileInput" multiple onchange="window.erpApp.pmHandleContractFileUpload(event)" style="display:none;">
                                 </div>
@@ -20368,7 +20368,7 @@ window.erpApp = window.erpApp || {};
                     <label for="hsFileInput" class="upload-label">
                         <span class="material-icons-outlined">cloud_upload</span>
                         <span>Nhấn để chọn file — Upload lên Google Drive</span>
-                        <span style="font-size:11px;color:var(--text-muted);font-weight:400">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Tối đa 20MB/file</span>
+                        <span style="font-size:11px;color:var(--text-muted);font-weight:400">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
                     </label>
                     <input type="file" id="hsFileInput" multiple onchange="window.erpApp.handleHsFileUpload(event)" style="display:none">
                 </div>
@@ -20394,6 +20394,12 @@ window.erpApp = window.erpApp || {};
             </div>
         </div>`;
         document.body.appendChild(modal);
+        // Tự động load subfolders ngay khi mở modal
+        setTimeout(() => {
+            if (window.erpApp && window.erpApp.loadDriveFolderChain) {
+                window.erpApp.loadDriveFolderChain(null, 0);
+            }
+        }, 100);
         window.erpApp.initStorageLocationDropdowns(modal, doc);
         if (typeof flatpickr !== 'undefined') {
             flatpickr(modal.querySelectorAll('.erp-datepicker'), { dateFormat: 'd/m/Y', allowInput: true });
@@ -20939,7 +20945,6 @@ window.erpApp = window.erpApp || {};
         const listEl = document.getElementById('hsFileList');
 
         Array.from(files).forEach(async (file) => {
-            if (file.size > 20 * 1024 * 1024) { showToast(`File "${file.name}" quá lớn (>20MB)`, 'error'); return; }
             const sizeStr = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
             const fType = getHsFileTypeFromName(file.name);
 
