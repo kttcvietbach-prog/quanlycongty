@@ -3237,8 +3237,7 @@
                 {
                     title: 'Quản lý chi phí',
                     modules: [
-                        { icon: 'receipt_long', color: 'red', title: 'Chi phí văn phòng', desc: 'Đề xuất, phê duyệt và hạch toán chi phí hành chính.' },
-                        { icon: 'payments', color: 'slate', title: 'Chi phí khác', desc: 'Đề xuất và theo dõi các loại chi phí phát sinh khác.' }
+                        { icon: 'receipt_long', color: 'red', title: 'Chi phí văn phòng', desc: 'Đề xuất, phê duyệt và hạch toán chi phí hành chính.' }
                     ]
                 },
                 {
@@ -5881,14 +5880,6 @@
                     window.erpApp.renderOfficeExpense();
                 } else {
                     showToast('Module Chi phí văn phòng đang được khởi tạo...', 'warning');
-                }
-                return;
-            }
-            if (title === 'Chi phí khác' || normTitle === 'chi phí khác') {
-                if (window.erpApp.renderOtherExpense) {
-                    window.erpApp.renderOtherExpense();
-                } else {
-                    showToast('Module Chi phí khác đang được khởi tạo...', 'warning');
                 }
                 return;
             }

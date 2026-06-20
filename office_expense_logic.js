@@ -80,6 +80,65 @@
 
         // 1. Tải nhanh từ LocalStorage
         officeExpenses = window.erpApp._getData(COLLECTION_EXPENSES) || [];
+        
+        // --- MIGRATION: Gộp dữ liệu từ Chi phí khác ---
+        let oldOtherExpenses = window.erpApp._getData('other_expenses') || [];
+        if (oldOtherExpenses.length > 0) {
+            let changed = false;
+            for (const oe of oldOtherExpenses) {
+                // Đảm bảo hạng mục hợp lệ trong Office Expense
+                if (!EXPENSE_CATEGORIES[oe.category]) {
+                    oe.category = 'KHAC'; 
+                }
+                if (!officeExpenses.find(e => e.id === oe.id)) {
+                    officeExpenses.push(oe);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                window.erpApp._setData(COLLECTION_EXPENSES, officeExpenses);
+                window.erpApp._setData('other_expenses', []); // Xóa sau khi đã gộp
+                console.log(`📦 [OfficeExpense] Đã gộp ${oldOtherExpenses.length} dữ liệu từ Chi phí khác.`);
+            }
+        }
+
+        // Hạt giống dữ liệu nếu chưa có đề xuất nào
+        if (!officeExpenses || officeExpenses.length === 0) {
+            officeExpenses = [
+                {
+                    id: 'OTH-2026-1001',
+                    requester: 'Nguyễn Quang Quốc',
+                    date: '2026-05-18',
+                    category: 'KHAC',
+                    amount: 15000000,
+                    advance: 3000000,
+                    desc: 'Sửa chữa và nâng cấp hệ thống thoát nước kho bãi trung tâm',
+                    invoiceNo: 'HD-KOB-001',
+                    evidenceUrl: '',
+                    fileData: null,
+                    status: 'approved',
+                    paymentStatus: 'unpaid',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'OTH-2026-1002',
+                    requester: 'Nguyễn Quang Quốc',
+                    date: '2026-05-18',
+                    category: 'KHAC',
+                    amount: 8500000,
+                    advance: 0,
+                    desc: 'Sơn lại văn phòng làm việc và thay thế hệ thống đèn chiếu sáng',
+                    invoiceNo: 'HD-VP-092',
+                    evidenceUrl: '',
+                    fileData: null,
+                    status: 'approved',
+                    paymentStatus: 'paid',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            window.erpApp._setData(COLLECTION_EXPENSES, officeExpenses);
+        }
+
         expenseNorms = window.erpApp._getData(COLLECTION_NORMS) || [];
         const savedCats = window.erpApp._getData(COLLECTION_CATEGORIES);
         if (savedCats) {
@@ -109,6 +168,28 @@
                     EXPENSE_CATEGORIES = cloudCats[0].data;
                 } else if (!Array.isArray(cloudCats) && Object.keys(cloudCats).length > 0) {
                     EXPENSE_CATEGORIES = cloudCats;
+                }
+            }
+
+            // Gộp lại lần nữa từ Cloud nếu Cloud có other_expenses
+            let cloudOtherExpenses = window.erpApp._getData('other_expenses') || [];
+            if (cloudOtherExpenses.length > 0) {
+                let changed = false;
+                for (const oe of cloudOtherExpenses) {
+                    if (!EXPENSE_CATEGORIES[oe.category]) oe.category = 'KHAC';
+                    if (!officeExpenses.find(e => e.id === oe.id)) {
+                        officeExpenses.push(oe);
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    window.erpApp._setData(COLLECTION_EXPENSES, officeExpenses);
+                    window.erpApp._setData('other_expenses', []);
+                    if (window.CrudSync) {
+                        for (const oe of cloudOtherExpenses) {
+                            try { await window.CrudSync.saveItem(COLLECTION_EXPENSES, oe, 'id'); } catch(e){}
+                        }
+                    }
                 }
             }
 
@@ -961,128 +1042,138 @@
     };
 
     window.erpApp.openEditExpenseModal = function (id) {
-        const expense = officeExpenses.find(e => e.id === id);
-        if (!expense) { return; }
+        try {
+            const expense = officeExpenses.find(e => e.id == id);
+            if (!expense) { 
+                alert('Không tìm thấy chi phí với ID: ' + id); 
+                return; 
+            }
 
-        tempExpenseFiles = expense.files || (expense.evidenceUrl ? [{ name: expense.invoiceNo || 'Chứng từ đính kèm', url: expense.evidenceUrl, type: 'pdf', size: '' }] : []);
+            tempExpenseFiles = Array.isArray(expense.files) ? expense.files : (expense.evidenceUrl ? [{ name: expense.invoiceNo || 'Chứng từ đính kèm', url: expense.evidenceUrl, type: 'pdf', size: '' }] : []);
 
-        const modalHtml = `
-            <div class="modal-overlay-pro animated fadeIn" id="editExpenseModal">
-                <div class="modal-content-pro glass-morphism animated zoomIn" style="width: 100%; max-width: 650px;">
-                    <div class="modal-header">
-                        <div class="header-title">
-                            <span class="material-icons-outlined">edit_note</span>
-                            <h2>Chỉnh sửa đề xuất</h2>
+            const modalHtml = `
+                <div class="modal-overlay-pro animated fadeIn" id="editExpenseModal">
+                    <div class="modal-content-pro glass-morphism animated zoomIn" style="width: 100%; max-width: 650px;">
+                        <div class="modal-header">
+                            <div class="header-title">
+                                <span class="material-icons-outlined">edit_note</span>
+                                <h2>Chỉnh sửa đề xuất</h2>
+                            </div>
+                            <button class="close-btn" onclick="window.erpApp.closeEditExpenseModal()"><span class="material-icons-outlined">close</span></button>
                         </div>
-                        <button class="close-btn" onclick="window.erpApp.closeEditExpenseModal()"><span class="material-icons-outlined">close</span></button>
-                    </div>
-                    <form id="editExpenseForm" onsubmit="window.erpApp.submitExpenseEdit(event, '${id}')">
-                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 24px;">
-                            <div class="form-grid">
-                                <div class="form-group full-width">
-                                    <label>Nội dung đề xuất <span class="required">*</span></label>
-                                    <input type="text" name="desc" value="${expense.desc}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Hạng mục <span class="required">*</span></label>
-                                    <select name="category" required>
-                                        ${Object.keys(EXPENSE_CATEGORIES).map(k => `<option value="${k}" ${expense.category === k ? 'selected' : ''}>${EXPENSE_CATEGORIES[k].label}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Số tiền đề xuất <span class="required">*</span></label>
-                                    <input type="text" name="amount" value="${window.erpApp.formatValue(expense.amount)}" required oninput="window.erpApp.formatExpenseAmountInput(this)">
-                                </div>
-                                <div class="form-group">
-                                    <label>Tạm ứng</label>
-                                    <input type="text" name="advance" value="${window.erpApp.formatValue(expense.advance || 0)}" oninput="window.erpApp.formatExpenseAmountInput(this)">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Ngày chi dự kiến</label>
-                                    <input type="text" class="erp-datepicker" name="date" value="${window.erpApp.formatDate(expense.date)}" placeholder="DD/MM/YYYY">
-                                </div>
-                                <div class="form-group full-width">
-                                    <label>Số Hóa đơn / Số chứng từ (nếu có)</label>
-                                    <input type="text" name="invoiceNo" value="${expense.invoiceNo || ''}" placeholder="VD: HD00123...">
-                                </div>
-
-                                <!-- Chứng từ tài liệu đính kèm (Google Drive UI) -->
-                                <div class="form-group full-width" style="border-top: 1px dashed #cbd5e1; padding-top: 20px; margin-top: 10px;">
-                                    <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:16px;">
-                                        <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ chứng từ đính kèm
-                                    </label>
-                                    
-                                    <!-- Google Drive folder chain selectors -->
-                                    <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                                        <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
-                                        <select id="expenseDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadExpenseDriveFolderChain(null, 0)">
-                                            <option value="">⏳ Đang tải danh sách thư mục...</option>
+                        <form id="editExpenseForm" onsubmit="window.erpApp.submitExpenseEdit(event, '${id}')">
+                            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 24px;">
+                                <div class="form-grid">
+                                    <div class="form-group full-width">
+                                        <label>Nội dung đề xuất <span class="required">*</span></label>
+                                        <input type="text" name="desc" value="${expense.desc}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Hạng mục <span class="required">*</span></label>
+                                        <select name="category" required>
+                                            ${Object.keys(EXPENSE_CATEGORIES).map(k => `<option value="${k}" ${expense.category === k ? 'selected' : ''}>${EXPENSE_CATEGORIES[k].label}</option>`).join('')}
                                         </select>
-                                        <div id="expenseDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
-                                            <!-- Các subfolder sẽ load động vào đây -->
-                                        </div>
-                                        <button type="button" onclick="window.erpApp.loadExpenseDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
-                                            <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
-                                        </button>
-                                        <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
-                                            <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
-                                        </button>
-                                        <input type="hidden" id="expenseDriveFolderIdInput" name="driveFolderId" value="${expense.driveFolderId || ''}">
-                                        <input type="hidden" id="expenseDriveFolderPathInput" name="driveFolderPath" value="${expense.driveFolderPath || ''}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Số tiền đề xuất <span class="required">*</span></label>
+                                        <input type="text" name="amount" value="${window.erpApp.formatValue(expense.amount)}" required oninput="window.erpApp.formatExpenseAmountInput(this)">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tạm ứng</label>
+                                        <input type="text" name="advance" value="${window.erpApp.formatValue(expense.advance || 0)}" oninput="window.erpApp.formatExpenseAmountInput(this)">
                                     </div>
 
-                                    <!-- Upload Area -->
-                                    <div style="border: 2px dashed #3b82f644; background: #eff6ff44; border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; transition: 0.2s;" 
-                                         onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff77';" 
-                                         onmouseout="this.style.borderColor='#3b82f644'; this.style.background='#eff6ff44';"
-                                         onclick="document.getElementById('expenseFileInput').click()">
-                                        <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6; margin-bottom:8px; display:block;">cloud_upload</span>
-                                        <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
-                                        <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
-                                        <input type="file" id="expenseFileInput" multiple onchange="window.erpApp.handleExpenseFileUpload(event)" style="display:none">
+                                    <div class="form-group">
+                                        <label>Ngày chi dự kiến</label>
+                                        <input type="text" class="erp-datepicker" name="date" value="${window.erpApp.formatDate(expense.date)}" placeholder="DD/MM/YYYY">
+                                    </div>
+                                    <div class="form-group full-width">
+                                        <label>Số Hóa đơn / Số chứng từ (nếu có)</label>
+                                        <input type="text" name="invoiceNo" value="${expense.invoiceNo || ''}" placeholder="VD: HD00123...">
                                     </div>
 
-                                    <!-- Link area -->
-                                    <div style="margin-top:20px; border-top: 1px dashed #cbd5e1; padding-top: 16px;">
-                                        <label style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:10px;">
-                                            <span class="material-icons-outlined" style="font-size:14px; color:#6366f1;">link</span> Thêm chứng từ bằng đường link
+                                    <!-- Chứng từ tài liệu đính kèm (Google Drive UI) -->
+                                    <div class="form-group full-width" style="border-top: 1px dashed #cbd5e1; padding-top: 20px; margin-top: 10px;">
+                                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:16px;">
+                                            <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ chứng từ đính kèm
                                         </label>
-                                        <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
-                                            <div style="flex:1; min-width:140px;">
-                                                <input type="text" id="expenseLinkName" placeholder="VD: Hóa đơn..." style="padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; width:100%; outline:none; transition:0.2s; font-weight:600;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+                                        
+                                        <!-- Google Drive folder chain selectors -->
+                                        <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                            <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
+                                            <select id="expenseDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadExpenseDriveFolderChain(null, 0)">
+                                                <option value="">⏳ Đang tải danh sách thư mục...</option>
+                                            </select>
+                                            <div id="expenseDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
+                                                <!-- Các subfolder sẽ load động vào đây -->
                                             </div>
-                                            <div style="flex:2; min-width:200px;">
-                                                <input type="url" id="expenseLinkUrl" placeholder="https://drive.google.com/..." style="padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; width:100%; outline:none; transition:0.2s; font-weight:600;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
-                                            </div>
-                                            <button type="button" onclick="window.erpApp.addExpenseFileByLink()" style="padding:10px 18px; background:#2563eb; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; transition:0.2s; height:40px; box-shadow:0 4px 6px -1px rgba(37,99,235,0.2);" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                                                <span class="material-icons-outlined" style="font-size:16px;">add_link</span> Thêm link
+                                            <button type="button" onclick="window.erpApp.loadExpenseDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                                <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
                                             </button>
+                                            <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                                <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
+                                            </button>
+                                            <input type="hidden" id="expenseDriveFolderIdInput" name="driveFolderId" value="${expense.driveFolderId || ''}">
+                                            <input type="hidden" id="expenseDriveFolderPathInput" name="driveFolderPath" value="${expense.driveFolderPath || ''}">
                                         </div>
-                                    </div>
 
-                                    <!-- File list container -->
-                                    <div id="expenseFileList" style="margin-top:16px;">
-                                        ${window.erpApp.renderExpenseFileList ? window.erpApp.renderExpenseFileList(tempExpenseFiles, true) : ''}
+                                        <!-- Upload Area -->
+                                        <div style="border: 2px dashed #3b82f644; background: #eff6ff44; border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; transition: 0.2s;" 
+                                             onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff77';" 
+                                             onmouseout="this.style.borderColor='#3b82f644'; this.style.background='#eff6ff44';"
+                                             onclick="document.getElementById('expenseFileInput').click()">
+                                            <span class="material-icons-outlined" style="font-size:36px; color:#3b82f6; margin-bottom:8px; display:block;">cloud_upload</span>
+                                            <span style="font-weight:700; color:#2563eb; font-size:14px;">Nhấn để chọn file — Upload lên Google Drive</span>
+                                            <span style="font-size:11px; color:#64748b; font-weight:500; display:block; margin-top:4px;">Hỗ trợ: PDF, DOC, XLS, PNG, JPG, ZIP — Không giới hạn dung lượng</span>
+                                            <input type="file" id="expenseFileInput" multiple onchange="window.erpApp.handleExpenseFileUpload(event)" style="display:none">
+                                        </div>
+
+                                        <!-- Link area -->
+                                        <div style="margin-top:20px; border-top: 1px dashed #cbd5e1; padding-top: 16px;">
+                                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:10px;">
+                                                <span class="material-icons-outlined" style="font-size:14px; color:#6366f1;">link</span> Thêm chứng từ bằng đường link
+                                            </label>
+                                            <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                                                <div style="flex:1; min-width:140px;">
+                                                    <input type="text" id="expenseLinkName" placeholder="VD: Hóa đơn..." style="padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; width:100%; outline:none; transition:0.2s; font-weight:600;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+                                                </div>
+                                                <div style="flex:2; min-width:200px;">
+                                                    <input type="url" id="expenseLinkUrl" placeholder="https://drive.google.com/..." style="padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; width:100%; outline:none; transition:0.2s; font-weight:600;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+                                                </div>
+                                                <button type="button" onclick="window.erpApp.addExpenseFileByLink()" style="padding:10px 18px; background:#2563eb; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; transition:0.2s; height:40px; box-shadow:0 4px 6px -1px rgba(37,99,235,0.2);" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                                    <span class="material-icons-outlined" style="font-size:16px;">add_link</span> Thêm link
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- File list container -->
+                                        <div id="expenseFileList" style="margin-top:16px;">
+                                            ${window.erpApp.renderExpenseFileList ? window.erpApp.renderExpenseFileList(tempExpenseFiles, true) : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn-secondary-pro" onclick="window.erpApp.closeEditExpenseModal()">Hủy</button>
-                            <button type="submit" class="btn-primary-pro">Cập nhật</button>
-                        </div>
-                    </form>
+                            <div class="modal-footer">
+                                <button type="button" class="btn-secondary-pro" onclick="window.erpApp.closeEditExpenseModal()">Hủy</button>
+                                <button type="submit" class="btn-primary-pro">Cập nhật</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        if (window.erpApp.initDatePickers) {
-            window.erpApp.initDatePickers(document.getElementById('editExpenseModal'));
-        }
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            if (window.erpApp.initDatePickers) {
+                window.erpApp.initDatePickers(document.getElementById('editExpenseModal'));
+            }
 
-        // Initialize dynamic Google Drive folders
-        window.erpApp.loadExpenseDriveRootFolders(expense.driveFolderId || null);
+            // Initialize dynamic Google Drive folders
+            if (window.erpApp.loadExpenseDriveRootFolders) {
+                window.erpApp.loadExpenseDriveRootFolders(expense.driveFolderId || null);
+            }
+        } catch (err) {
+            alert('Lỗi hệ thống khi mở form sửa: ' + err.message);
+            console.error(err);
+        }
     };
 
     window.erpApp.closeEditExpenseModal = function () {
@@ -1092,7 +1183,7 @@
 
     window.erpApp.submitExpenseEdit = async function (event, id) {
         event.preventDefault();
-        const index = officeExpenses.findIndex(e => e.id === id);
+        const index = officeExpenses.findIndex(e => e.id == id);
         if (index === -1) { return; }
 
         try {
@@ -1203,78 +1294,86 @@
     };
 
     window.erpApp.viewExpenseDetail = function (id) {
-        const expense = officeExpenses.find(e => e.id === id);
-        if (!expense) { return; }
-        const cat = EXPENSE_CATEGORIES[expense.category] || EXPENSE_CATEGORIES['KHAC'];
-
-        const modalHtml = `
-            <div class="modal-overlay-pro animated fadeIn" id="expenseDetailModal">
-                <div class="modal-content-pro glass-morphism animated zoomIn" style="width: 500px;">
-                    <div class="modal-header">
-                        <div class="header-title">
-                            <span class="material-icons-outlined">visibility</span>
-                            <h2>Chi tiết đề xuất</h2>
-                        </div>
-                        <button class="close-btn" onclick="document.getElementById('expenseDetailModal').remove()"><span class="material-icons-outlined">close</span></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="detail-grid">
-                            <div class="detail-item"><label>Mã số</label><div class="val font-bold">${expense.id}</div></div>
-                            <div class="detail-item full-width"><label>Nội dung</label><div class="val">${expense.desc}</div></div>
-                            <div class="detail-item"><label>Hạng mục</label><div class="val">${cat.label}</div></div>
-                            <div class="detail-item"><label>Số tiền đề xuất</label><div class="val font-bold text-primary">${window.erpApp.formatValue(expense.amount)} VNĐ</div></div>
-                            <div class="detail-item"><label>Đã tạm ứng</label><div class="val font-bold" style="color: #e11d48;">- ${window.erpApp.formatValue(expense.advance || 0)} VNĐ</div></div>
-                            <div class="detail-item full-width" style="background: #f0fdf4; padding: 12px 16px; border-radius: 12px; border: 1px solid #bbf7d0; margin-top: 8px;">
-                                <label style="color: #166534; font-weight:800; font-size:12px;">CÒN LẠI CẦN THANH TOÁN</label>
-                                <div class="val font-bold" style="color: #15803d; font-size:20px; margin-top: 4px;">${window.erpApp.formatValue(expense.amount - (expense.advance || 0))} VNĐ</div>
-                            </div>
-                            <div class="detail-item"><label>Người đề xuất</label><div class="val">${expense.requester}</div></div>
-                            <div class="detail-item"><label>Ngày đề xuất</label><div class="val">${formatDate(expense.date)}</div></div>
-
-                            <div class="detail-item full-width" style="border-top:1px dashed #cbd5e1; padding-top: 16px; margin-top: 8px;">
-                                <label style="font-weight: 800; color: #475569;">Hồ sơ chứng từ đính kèm</label>
-                                <div style="margin-top: 8px;">
-                                    ${expense.files && expense.files.length > 0 ?
-                expense.files.map((file, idx) => `
-                                            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:8px;">
-                                                <div style="display:flex; align-items:center; gap:8px;">
-                                                    <span class="material-icons-outlined" style="color:#3b82f6; font-size:20px;">description</span>
-                                                    <span style="font-weight:700; color:#1e293b; font-size:13px; word-break:break-all;">${file.name}</span>
-                                                </div>
-                                                <a href="${file.url || file.dataUrl}" target="_blank" style="padding:4px 12px; border-radius:6px; border:1px solid #3b82f6; background:#eff6ff; color:#2563eb; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap;">Xem tệp</a>
-                                            </div>
-                                        `).join('')
-                : (expense.evidenceUrl ? `
-                                            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
-                                                <div style="display:flex; align-items:center; gap:8px;">
-                                                    <span class="material-icons-outlined" style="color:#3b82f6; font-size:20px;">description</span>
-                                                    <span style="font-weight:700; color:#1e293b; font-size:13px;">Chứng từ (Link)</span>
-                                                </div>
-                                                <a href="${expense.evidenceUrl}" target="_blank" style="padding:4px 12px; border-radius:6px; border:1px solid #3b82f6; background:#eff6ff; color:#2563eb; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap;">Xem tệp</a>
-                                            </div>
-                                        ` : '<span style="color:#94a3b8; font-style:italic; font-size:12px;">Không có chứng từ đính kèm</span>')
+        try {
+            const expense = officeExpenses.find(e => e.id == id);
+            if (!expense) { 
+                alert('Không tìm thấy chi phí với ID: ' + id); 
+                return; 
             }
+            const cat = EXPENSE_CATEGORIES[expense.category] || EXPENSE_CATEGORIES['KHAC'];
+
+            const modalHtml = `
+                <div class="modal-overlay-pro animated fadeIn" id="expenseDetailModal">
+                    <div class="modal-content-pro glass-morphism animated zoomIn" style="width: 500px;">
+                        <div class="modal-header">
+                            <div class="header-title">
+                                <span class="material-icons-outlined">visibility</span>
+                                <h2>Chi tiết đề xuất</h2>
+                            </div>
+                            <button class="close-btn" onclick="document.getElementById('expenseDetailModal').remove()"><span class="material-icons-outlined">close</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="detail-grid">
+                                <div class="detail-item"><label>Mã số</label><div class="val font-bold">${expense.id}</div></div>
+                                <div class="detail-item full-width"><label>Nội dung</label><div class="val">${expense.desc}</div></div>
+                                <div class="detail-item"><label>Hạng mục</label><div class="val">${cat.label}</div></div>
+                                <div class="detail-item"><label>Số tiền đề xuất</label><div class="val font-bold text-primary">${window.erpApp.formatValue(expense.amount)} VNĐ</div></div>
+                                <div class="detail-item"><label>Đã tạm ứng</label><div class="val font-bold" style="color: #e11d48;">- ${window.erpApp.formatValue(expense.advance || 0)} VNĐ</div></div>
+                                <div class="detail-item full-width" style="background: #f0fdf4; padding: 12px 16px; border-radius: 12px; border: 1px solid #bbf7d0; margin-top: 8px;">
+                                    <label style="color: #166534; font-weight:800; font-size:12px;">CÒN LẠI CẦN THANH TOÁN</label>
+                                    <div class="val font-bold" style="color: #15803d; font-size:20px; margin-top: 4px;">${window.erpApp.formatValue(expense.amount - (expense.advance || 0))} VNĐ</div>
+                                </div>
+                                <div class="detail-item"><label>Người đề xuất</label><div class="val">${expense.requester}</div></div>
+                                <div class="detail-item"><label>Ngày đề xuất</label><div class="val">${window.erpApp.formatDate ? window.erpApp.formatDate(expense.date) : expense.date}</div></div>
+
+                                <div class="detail-item full-width" style="border-top:1px dashed #cbd5e1; padding-top: 16px; margin-top: 8px;">
+                                    <label style="font-weight: 800; color: #475569;">Hồ sơ chứng từ đính kèm</label>
+                                    <div style="margin-top: 8px;">
+                                        ${Array.isArray(expense.files) && expense.files.length > 0 ?
+                    expense.files.map((file, idx) => `
+                                                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:8px;">
+                                                    <div style="display:flex; align-items:center; gap:8px;">
+                                                        <span class="material-icons-outlined" style="color:#3b82f6; font-size:20px;">description</span>
+                                                        <span style="font-weight:700; color:#1e293b; font-size:13px; word-break:break-all;">${file.name}</span>
+                                                    </div>
+                                                    <a href="${file.url || file.dataUrl}" target="_blank" style="padding:4px 12px; border-radius:6px; border:1px solid #3b82f6; background:#eff6ff; color:#2563eb; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap;">Xem tệp</a>
+                                                </div>
+                                            `).join('')
+                    : (expense.evidenceUrl ? `
+                                                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+                                                    <div style="display:flex; align-items:center; gap:8px;">
+                                                        <span class="material-icons-outlined" style="color:#3b82f6; font-size:20px;">description</span>
+                                                        <span style="font-weight:700; color:#1e293b; font-size:13px;">Chứng từ (Link)</span>
+                                                    </div>
+                                                    <a href="${expense.evidenceUrl}" target="_blank" style="padding:4px 12px; border-radius:6px; border:1px solid #3b82f6; background:#eff6ff; color:#2563eb; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap;">Xem tệp</a>
+                                                </div>
+                                            ` : '<span style="color:#94a3b8; font-style:italic; font-size:12px;">Không có chứng từ đính kèm</span>')
+                }
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn-primary-pro" onclick="document.getElementById('expenseDetailModal').remove()">Đóng</button>
+                        <div class="modal-footer">
+                            <button class="btn-primary-pro" onclick="document.getElementById('expenseDetailModal').remove()">Đóng</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        } catch (err) {
+            alert('Lỗi hệ thống khi mở Xem chi tiết: ' + err.message);
+            console.error(err);
+        }
     };
 
     window.erpApp.deleteExpense = function (id) {
-        const expense = officeExpenses.find(e => e.id === id);
+        const expense = officeExpenses.find(e => e.id == id);
         if (!expense) return;
 
         window.erpApp.showDeleteConfirmation(
             `Bạn có chắc chắn muốn xóa đề xuất chi phí <strong>${expense.desc}</strong>? Thao tác này không thể hoàn tác.`,
             function () {
-                const index = officeExpenses.findIndex(e => e.id === id);
+                const index = officeExpenses.findIndex(e => e.id == id);
                 if (index === -1) return;
 
                 officeExpenses.splice(index, 1);
@@ -1301,7 +1400,7 @@
     };
 
     window.erpApp.togglePaymentStatus = async function (id, value) {
-        const expense = officeExpenses.find(e => e.id === id);
+        const expense = officeExpenses.find(e => e.id == id);
         if (!expense) return;
         expense.paymentStatus = value;
         window.erpApp._setData(COLLECTION_EXPENSES, officeExpenses);
@@ -1409,7 +1508,7 @@
     };
 
     window.erpApp.printExpense = function (id) {
-        const expense = officeExpenses.find(e => e.id === id);
+        const expense = officeExpenses.find(e => e.id == id);
         if (!expense) return;
 
         const prevSelection = new Set(selectedForPrint);
@@ -1850,9 +1949,12 @@
     // Responsive Styles (Fluid UI)
     // ==========================================
     function injectStyles() {
-        if (document.getElementById('office-expense-styles-v2')) return;
+        if (document.getElementById('office-expense-styles-v3')) return;
+        // Remove old version if present
+        const oldStyle = document.getElementById('office-expense-styles-v2');
+        if (oldStyle) oldStyle.remove();
         const style = document.createElement('style');
-        style.id = 'office-expense-styles-v2';
+        style.id = 'office-expense-styles-v3';
         style.textContent = `
             .office-expense-pro { 
                 padding: clamp(12px, 3vw, 30px); 
@@ -1971,8 +2073,8 @@
             .table-container-pro { overflow: hidden; border-radius: 24px; border: 1px solid #f1f5f9; background: #fff; }
             .table-responsive-pro { width: 100%; overflow-x: auto; cursor: grab; }
             .table-responsive-pro.dragging-active { cursor: grabbing; user-select: none; }
-            .pro-table { width: 100%; border-collapse: collapse; }
-            .pro-table th { padding: 10px 6px; background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
+            .pro-table { width: 100%; min-width: 1100px; border-collapse: collapse; }
+            .pro-table th { padding: 10px 6px; background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
             .pro-table td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; font-size: 12px; color: #334155; }
             
             .text-truncate-v2 {
@@ -2023,6 +2125,21 @@
                 border: 1px solid #cbd5e1;
                 background: #fff;
                 cursor: pointer;
+                color: #475569;
+            }
+            .payment-select.paid {
+                color: #10b981 !important;
+                border-color: #10b981 !important;
+                background-color: #ecfdf5 !important;
+            }
+            .payment-select.unpaid {
+                color: #ef4444 !important;
+                border-color: #ef4444 !important;
+                background-color: #fef2f2 !important;
+            }
+            .debt-badge {
+                color: #ef4444 !important;
+                font-weight: 700;
             }
             
             .action-btn-v2 {
@@ -2092,6 +2209,43 @@
                 box-shadow: 0 10px 30px rgba(0,0,0,0.04); 
             }
             
+            /* Pro Modals */
+            .modal-overlay-pro {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
+                z-index: 9999; display: flex; align-items: center; justify-content: center;
+            }
+            .modal-content-pro {
+                background: #ffffff; border-radius: 24px; padding: 0;
+                box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+                position: relative; display: flex; flex-direction: column; max-height: 90vh;
+                overflow: hidden;
+            }
+            .modal-header {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 20px 24px; border-bottom: 1px solid #f1f5f9;
+            }
+            .header-title { display: flex; align-items: center; gap: 12px; }
+            .header-title span {
+                background: #eff6ff; color: #2563eb; padding: 10px;
+                border-radius: 12px; font-size: 24px;
+            }
+            .header-title h2 { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0; }
+            .close-btn {
+                background: transparent; border: 2px solid #e2e8f0; border-radius: 50%;
+                width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+                cursor: pointer; color: #64748b; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .close-btn:hover {
+                background: #fee2e2; border-color: #fca5a5; color: #ef4444; transform: rotate(90deg);
+            }
+            .close-btn span { font-size: 18px; }
+            .modal-footer {
+                display: flex; justify-content: flex-end; align-items: center; gap: 12px;
+                padding: 20px 24px; border-top: 1px solid #f1f5f9;
+                background: #fafbfc; border-radius: 0 0 24px 24px;
+            }
+
             /* Animations */
             .animated { animation-duration: 0.5s; animation-fill-mode: both; }
             @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
