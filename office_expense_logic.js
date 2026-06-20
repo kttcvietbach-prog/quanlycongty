@@ -1013,7 +1013,21 @@
                                         <span class="material-icons-outlined" style="font-size:18px; color:#3b82f6;">attach_file</span> Hồ sơ chứng từ đính kèm
                                     </label>
                                     
+                                    <!-- Google Drive folder chain selectors -->
+                                    <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                        <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
+                                        <select id="expenseDriveFolderSelect" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; background:#fff; cursor:pointer; font-weight:600; outline:none;" onchange="window.erpApp.loadExpenseDriveFolderChain(null, 0)">
+                                            <option value="">⏳ Đang tải danh sách thư mục...</option>
+                                        </select>
+                                        <div id="expenseDriveFolderChain" style="display:flex; flex-wrap:wrap; gap:10px; flex:2;">
+                                            <!-- Các subfolder sẽ load động vào đây -->
                                         </div>
+                                        <button type="button" onclick="window.erpApp.loadExpenseDriveFolderChain(null, 0)" style="padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; color:#3b82f6; transition:0.2s;" title="Tải lại thư mục" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+                                            <span class="material-icons-outlined" style="font-size:18px;">refresh</span>
+                                        </button>
+                                        <button type="button" onclick="window.erpApp.createExpenseDriveSubfolderFromChainModal()" style="padding:8px 14px; border:1.5px solid #22c55e; border-radius:10px; background:#f0fdf4; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#16a34a; transition:all 0.2s; height:38px;" onmouseover="this.style.background='#22c55e'; this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4'; this.style.color='#16a34a'" title="Tạo folder mới trên Drive">
+                                            <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
+                                        </button>
                                         <input type="hidden" id="expenseDriveFolderIdInput" name="driveFolderId" value="${expense.driveFolderId || ''}">
                                         <input type="hidden" id="expenseDriveFolderPathInput" name="driveFolderPath" value="${expense.driveFolderPath || ''}">
                                     </div>
@@ -1055,8 +1069,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn-secondary-pro" onclick="window.erpApp.closeEditExpenseModal()">Hủy bỏ</button>
-                            <button type="submit" class="btn-primary-pro">Cập nhật đề xuất</button>
+                            <button type="button" class="btn-secondary-pro" onclick="window.erpApp.closeEditExpenseModal()">Hủy</button>
+                            <button type="submit" class="btn-primary-pro">Cập nhật</button>
                         </div>
                     </form>
                 </div>
