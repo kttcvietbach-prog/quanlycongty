@@ -11941,7 +11941,7 @@ window.erpApp = window.erpApp || {};
         const contracts = pmContracts.filter(c => c.projectId === project.id);
         const activeContracts = contracts.filter(c => !c.status || ['dang-thuc-hien', 'dang-hoan-thien', 'moi-ki', 'da-thanh-ly', 'da-quyet-toan', 'dang-thi-cong', 'da-hoan-thien', 'da-nghiem-thu'].includes(c.status));
         const tasks = pmTasks.filter(t => t.projectId === project.id);
-        const materials = pmMaterials.filter(m => m.projectId === project.id);
+        const materials = pmMaterials.filter(m => m.projectId === project.id && (m.status === 'proposed' || ((m.status === 'approved' || !m.status) && (m.legalStatus === 'khong-co-hop-dong' || m.legalStatus === 'co-hop-dong'))));
         const finances = pmFinanceRecords.filter(r => r.projectId === project.id);
 
         const projectAppendices = (typeof hoSoDocuments !== 'undefined' ? hoSoDocuments : []).filter(d => d.category === 'phu-luc');
@@ -12542,18 +12542,30 @@ window.erpApp = window.erpApp || {};
                         </div>
                         <div class="pm-report-card-body">
                             ${materials.length > 0 ? (() => {
-                const topMaterials = materials.slice(0, 6);
+                const aggregatedMap = {};
+                materials.forEach(m => {
+                    const nameKey = (m.name || '').trim().toLowerCase();
+                    if (!nameKey) return;
+                    if (!aggregatedMap[nameKey]) {
+                        aggregatedMap[nameKey] = { name: m.name.trim(), unit: m.unit, norm: 0, actual: 0 };
+                    }
+                    aggregatedMap[nameKey].norm = Math.max(aggregatedMap[nameKey].norm, (Number(m.norm) || 0));
+                    aggregatedMap[nameKey].actual += (Number(m.actual) || 0);
+                });
+                const topMaterials = Object.values(aggregatedMap).sort((a, b) => (b.norm + b.actual) - (a.norm + a.actual)).slice(0, 6);
                 const maxVal = Math.max(...topMaterials.map(m => Math.max(m.norm || 0, m.actual || 0)), 1);
+                
+                const fmt = (v) => Number.isFinite(v) ? Math.round(v * 100) / 100 : v;
                 return `
                                     <div style="display:flex; justify-content:space-around; align-items:flex-end; height:180px; padding:0 10px 40px 10px; margin-top:20px;">
                                         ${topMaterials.map(m => {
                     const normH = (m.norm / maxVal) * 100;
                     const actualH = (m.actual / maxVal) * 100;
                     return `
-                                                <div class="pm-mat-column-container" style="width:80px;" data-label="${m.name}" data-value="Định mức: ${m.norm} / Thực tế: ${m.actual} ${m.unit || ''}">
+                                                <div class="pm-mat-column-container" style="width:80px;" data-label="${m.name}" data-value="Định mức: ${fmt(m.norm)} / Thực tế: ${fmt(m.actual)} ${m.unit || ''}">
                                                     <div class="pm-mat-bars-wrapper">
-                                                        <div class="pm-mat-bar norm" style="height:${Math.max(5, normH)}%;" title="Định mức: ${m.norm}"></div>
-                                                        <div class="pm-mat-bar actual" style="height:${Math.max(5, actualH)}%;" title="Thực tế: ${m.actual}"></div>
+                                                        <div class="pm-mat-bar norm" style="height:${Math.max(5, normH)}%;" title="Định mức: ${fmt(m.norm)}"></div>
+                                                        <div class="pm-mat-bar actual" style="height:${Math.max(5, actualH)}%;" title="Thực tế: ${fmt(m.actual)}"></div>
                                                     </div>
                                                     <div class="pm-mat-column-label" title="${m.name}">${m.name}</div>
                                                 </div>
@@ -14832,6 +14844,7 @@ window.erpApp = window.erpApp || {};
                 
                 const existingMats = pmMaterials.filter(m => 
                     m.projectId === pmActiveProjectId && 
+                    m.status !== 'rejected' &&
                     (m.workItem || '').trim().toLowerCase() === currentWorkItem &&
                     (m.name || '').trim().toLowerCase() === name
                 );
