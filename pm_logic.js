@@ -12543,7 +12543,10 @@ window.erpApp = window.erpApp || {};
                         <div class="pm-report-card-body">
                             ${materials.length > 0 ? (() => {
                 const aggregatedMap = {};
+                const ghostIds = ['MAT-016', 'MAT-017'];
                 materials.forEach(m => {
+                    if (ghostIds.includes(m.id)) return; // Bỏ qua 2 phiếu rác
+                    
                     let nameKey = (m.name || '').trim().toLowerCase();
                     if (!nameKey) return;
                     
