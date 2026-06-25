@@ -706,23 +706,36 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.warn('⚠️ [GoogleDrive] Khởi tạo thất bại:', err.message);
   }
 
-  // Chạy quét thử lần đầu sau khi khởi động 1 phút
-  setTimeout(runAutoBiddingScan, 60000);
-
   // Daily Scheduler
-  let lastRunDate = '';
-  setInterval(() => {
+  let lastMorningScan = '';
+  let lastAfternoonScan = '';
+
+  const checkAndRunSchedule = () => {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    // Lấy ngày local để tránh lệch múi giờ (UTC)
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     const hour = now.getHours();
 
-    // Quét gói thầu mới vào 8h sáng và 2h chiều
-    if ((hour === 8 || hour === 14) && lastRunDate !== today + '_' + hour) {
-      console.log(`🕒 Scheduled Auto Scan: ${hour}:00`);
+    // Quét buổi sáng (từ 8h trở đi, nếu chưa quét trong ngày)
+    if (hour >= 8 && lastMorningScan !== today) {
+      console.log(`🕒 Running Morning Scan (Triggered at ${hour}:${String(now.getMinutes()).padStart(2, '0')})`);
       runAutoBiddingScan();
-      if (hour === 8) runExpirationScan();
-      lastRunDate = today + '_' + hour;
+      runExpirationScan();
+      lastMorningScan = today;
     }
-  }, 1000 * 60 * 30); // Kiểm tra mỗi 30 phút
+
+    // Quét buổi chiều (từ 14h trở đi, nếu chưa quét trong ngày)
+    if (hour >= 14 && lastAfternoonScan !== today) {
+      console.log(`🕒 Running Afternoon Scan (Triggered at ${hour}:${String(now.getMinutes()).padStart(2, '0')})`);
+      runAutoBiddingScan();
+      lastAfternoonScan = today;
+    }
+  };
+
+  // Kiểm tra ngay sau khi khởi động 15 giây
+  setTimeout(checkAndRunSchedule, 15000);
+
+  // Sau đó lặp kiểm tra mỗi 15 phút
+  setInterval(checkAndRunSchedule, 1000 * 60 * 15);
 });
 

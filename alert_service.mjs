@@ -248,7 +248,12 @@ export async function runExpirationScan() {
                             String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + 
                             String(tomorrow.getDate()).padStart(2, '0');
 
-        console.log(`[AlertService] Scanning for expiration date: ${tomorrowStr}`);
+        const todayDate = new Date();
+        const todayStr = todayDate.getFullYear() + '-' + 
+                         String(todayDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(todayDate.getDate()).padStart(2, '0');
+
+        console.log(`[AlertService] Scanning for expiration date: ${tomorrowStr} and overdue <= ${todayStr}`);
 
         const alerts = [];
 
@@ -256,9 +261,18 @@ export async function runExpirationScan() {
         const vehicles = await fetchFirestoreCollection('vmVehicles');
         vehicles.forEach(v => {
             const date = v.inspectionDate || v.nextInspection;
-            if (date === tomorrowStr) {
-                alerts.push(`🚗 [HẾT HẠN KIỂM ĐỊNH]\nXe: ${v.licensePlate || v.name}\nNgày hết hạn: ${date}`);
-                summary.vehicleAlerts++;
+            if (date) {
+                const parts = date.split('-');
+                const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : date;
+                const vehicleName = v.id ? `${v.id} — ${v.name} (${v.licensePlate || 'N/A'})` : (v.licensePlate || v.name);
+
+                if (date === tomorrowStr) {
+                    alerts.push(`🚗 [SẮP HẾT HẠN KIỂM ĐỊNH]\nXe: ${vehicleName}\nNgày hết hạn: ${formattedDate} (Ngày mai)`);
+                    summary.vehicleAlerts++;
+                } else if (date <= todayStr) {
+                    alerts.push(`🚨 [ĐÃ HẾT HẠN KIỂM ĐỊNH]\nXe: ${vehicleName}\nĐã hết hạn từ: ${formattedDate}`);
+                    summary.vehicleAlerts++;
+                }
             }
         });
 
