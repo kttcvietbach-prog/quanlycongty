@@ -14775,7 +14775,7 @@ window.erpApp = window.erpApp || {};
             <!-- Over-limit Warning Alert -->
             <div class="batch-warning-msg" style="display:none; color:#ef4444; font-size:12px; font-weight:700; margin-top:16px; align-items:center; gap:6px; background:#fef2f2; border:1px solid #fee2e2; padding:10px 14px; border-radius:10px;">
                 <span class="material-icons-outlined" style="font-size:18px; color:#ef4444;">warning</span>
-                Chú ý: Bạn đang đề xuất lớn hơn khối lượng trong hợp đồng
+                <span class="warning-text">Chú ý: Bạn đang đề xuất lớn hơn khối lượng trong hợp đồng</span>
             </div>
         `;
 
@@ -14816,16 +14816,60 @@ window.erpApp = window.erpApp || {};
 
         const normInp = card.querySelector('.batch-norm');
         const actualInp = card.querySelector('.batch-actual');
+        const nameInp = card.querySelector('.batch-name');
         if (!normInp || !actualInp) return;
 
         const normVal = window.erpApp.parseVND(normInp.value) || 0;
         const actualVal = window.erpApp.parseVND(actualInp.value) || 0;
 
+        // Tính tổng KL đã đề xuất trước đó
+        let previouslyProposed = 0;
+        if (nameInp) {
+            const name = nameInp.value.trim().toLowerCase();
+            if (name) {
+                const batchWorkItemEl = document.getElementById('batchDefaultWorkItem');
+                const currentWorkItem = batchWorkItemEl ? batchWorkItemEl.value.trim().toLowerCase() : '';
+                
+                const existingMats = pmMaterials.filter(m => 
+                    m.projectId === pmActiveProjectId && 
+                    (m.workItem || '').trim().toLowerCase() === currentWorkItem &&
+                    (m.name || '').trim().toLowerCase() === name
+                );
+                previouslyProposed = existingMats.reduce((sum, m) => sum + (parseFloat(m.actual) || 0), 0);
+            }
+        }
+
+        const totalProposed = previouslyProposed + actualVal;
+
         const warningEl = card.querySelector('.batch-warning-msg');
+        const warningTextEl = warningEl ? warningEl.querySelector('.warning-text') : null;
+
+        // Thêm tag hiển thị SL đã đề xuất
+        let proposedInfoEl = card.querySelector('.proposed-info');
+        if (!proposedInfoEl && nameInp && nameInp.value.trim()) {
+            proposedInfoEl = document.createElement('div');
+            proposedInfoEl.className = 'proposed-info';
+            proposedInfoEl.style.fontSize = '11px';
+            proposedInfoEl.style.marginTop = '4px';
+            proposedInfoEl.style.color = '#64748b';
+            actualInp.parentNode.appendChild(proposedInfoEl);
+        }
+        
+        if (proposedInfoEl) {
+            if (nameInp && nameInp.value.trim()) {
+                proposedInfoEl.innerHTML = `📦 Đã ĐX trước đó: <strong>${window.erpApp.formatValue(previouslyProposed)}</strong>`;
+            } else {
+                proposedInfoEl.innerHTML = '';
+            }
+        }
+
         if (!warningEl) return;
 
-        if (actualVal > normVal) {
+        if (normVal > 0 && totalProposed > normVal) {
             warningEl.style.display = 'flex';
+            if (warningTextEl) {
+                warningTextEl.innerHTML = `VƯỢT ĐỊNH MỨC: Đã ĐX: ${window.erpApp.formatValue(previouslyProposed)}, Lần này: ${window.erpApp.formatValue(actualVal)}. Tổng: ${window.erpApp.formatValue(totalProposed)} > Định mức: ${window.erpApp.formatValue(normVal)}`;
+            }
             actualInp.style.borderColor = '#ef4444';
             actualInp.style.color = '#ef4444';
             actualInp.style.fontWeight = 'bold';
@@ -15174,6 +15218,12 @@ window.erpApp = window.erpApp || {};
                 priceInp.value = window.erpApp.formatValue(found.price);
             }
         }
+        
+        // Trigger limit check update to show previously proposed quantity
+        const actualInp = container.querySelector('.batch-actual');
+        if (actualInp && typeof window.erpApp.pmCheckBatchRowOverLimit === 'function') {
+            window.erpApp.pmCheckBatchRowOverLimit(actualInp);
+        }
     };
 
     window.erpApp.pmTriggerBatchQuotaLookups = function () {
@@ -15351,47 +15401,14 @@ window.erpApp = window.erpApp || {};
         }
 
         mat.status = 'approved';
-        mat.legalStatus = 'co-hop-dong';
-
-        if (!window.pmMaterialContracts) {
-            window.pmMaterialContracts = [];
-        }
-
-        const contractNo = `HĐVT-${mat.id}`;
-        let contract = window.pmMaterialContracts.find(c => c.contractNo === contractNo);
-
-        if (!contract) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const value = (parseFloat(mat.actual) || 0) * (parseFloat(mat.price) || 0);
-
-            contract = {
-                id: `mc-${mat.id}-${Date.now()}`,
-                projectId: pmActiveProjectId,
-                contractNo: contractNo,
-                signDate: todayStr,
-                supplier: mat.supplier || 'Chưa chọn',
-                title: `HĐ mua vật tư: ${mat.name}`,
-                value: value,
-                advanceAmount: parseFloat(mat.advanceAmount) || 0,
-                paidAmount: parseFloat(mat.finalAmount) || 0,
-                status: 'Đang thực hiện',
-                notes: `Tự động tạo từ đề xuất vật tư ${mat.id} được duyệt`
-            };
-            window.pmMaterialContracts.unshift(contract);
-            pmMaterialContracts = window.pmMaterialContracts;
-
-            if (window.CrudSync) {
-                await window.CrudSync.saveItem('pmMaterialContracts', contract, 'id');
-            }
-            localStorage.setItem('erp_pmMaterialContracts', JSON.stringify(window.pmMaterialContracts));
-        }
+        mat.legalStatus = 'khong-co-hop-dong'; // Chuyển qua tab Chi phí thay vì hợp đồng
 
         if (window.CrudSync) {
             await window.CrudSync.saveItem('pmMaterials', mat, 'id');
         }
         localStorage.setItem('erp_pmMaterials', JSON.stringify(pmMaterials));
 
-        showToast(`Đã duyệt đề xuất vật tư "${mat.name}" & tự động tạo HĐ: ${contractNo}`, 'success');
+        showToast(`Đã duyệt đề xuất vật tư "${mat.name}". Vật tư đã được chuyển qua tab Chi phí`, 'success');
 
         window.erpApp.notifyCRUD('Duyệt vật tư', 'update', {
             name: mat.name,
@@ -15403,11 +15420,15 @@ window.erpApp = window.erpApp || {};
 
         const activeProject = pmProjects.find(p => p.id === pmActiveProjectId);
         if (activeProject) {
-            const panel = document.getElementById('pmMaterialsContent');
-            if (panel) {
-                panel.innerHTML = renderPmMaterials(activeProject);
+            if (window.erpApp.pmSetMaterialsSubTab) {
+                window.erpApp.pmSetMaterialsSubTab('chi-phi');
             } else {
-                renderQuanLyDuAn();
+                const panel = document.getElementById('pmMaterialsContent');
+                if (panel) {
+                    panel.innerHTML = renderPmMaterials(activeProject);
+                } else {
+                    renderQuanLyDuAn();
+                }
             }
         }
     };
