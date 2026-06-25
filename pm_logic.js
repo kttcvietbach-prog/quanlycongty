@@ -12544,8 +12544,18 @@ window.erpApp = window.erpApp || {};
                             ${materials.length > 0 ? (() => {
                 const aggregatedMap = {};
                 materials.forEach(m => {
-                    const nameKey = (m.name || '').trim().toLowerCase();
+                    let nameKey = (m.name || '').trim().toLowerCase();
                     if (!nameKey) return;
+                    
+                    // Normalize known variations
+                    if (nameKey.includes('bê tông nhựa') && nameKey.includes('c19')) {
+                        nameKey = 'bê tông nhựa nóng c19';
+                        m.name = 'Bê tông nhựa nóng C19'; // Use canonical name
+                    } else if (nameKey.includes('bt m250') || nameKey.includes('bê tông m250')) {
+                        nameKey = 'bt m250';
+                        m.name = 'BT M250';
+                    }
+
                     if (!aggregatedMap[nameKey]) {
                         aggregatedMap[nameKey] = { name: m.name.trim(), unit: m.unit, norm: 0, actual: 0 };
                     }
