@@ -21395,7 +21395,7 @@ window.erpApp = window.erpApp || {};
         const supplierInfo = allSuppliers.find(s => s.id === firstMat.supplierId || s.name === firstMat.supplier);
 
         const fMoney = (val) => window.erpApp.formatValue(val);
-        const formattedDeliveryDate = materialsToPrint[0] && materialsToPrint[0].deliveryDate ? new Date(materialsToPrint[0].deliveryDate).toLocaleDateString('vi-VN') : '........';
+        const formattedDeliveryDate = materialsToPrint[0] && materialsToPrint[0].deliveryDate ? window.erpApp.formatDate(materialsToPrint[0].deliveryDate) : '........';
 
         const vatRateInput = document.getElementById('pmVatRateSelect');
         const vatRate = vatRateInput ? parseInt(vatRateInput.value) : 10;
