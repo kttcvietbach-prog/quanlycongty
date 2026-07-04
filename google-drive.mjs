@@ -307,26 +307,86 @@ async function createFolder(name, parentId) {
   return res.data;
 }
 
-/**
- * List folders (for folder picker)
- */
 async function listFolders(parentId) {
   const drive = await initDriveClient();
   if (!drive) throw new Error('Google Drive chưa được cấu hình.');
 
-  const targetParent = parentId || rootFolderId;
-  const query = targetParent
-    ? `'${targetParent}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
-    : `mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const targetRoot = parentId || rootFolderId;
+  if (!targetRoot) return [];
 
-  const res = await drive.files.list({
-    q: query,
-    fields: 'files(id, name, createdTime)',
-    orderBy: 'name',
-    pageSize: 100
-  });
+  try {
+    // 1. Tải tất cả các folder trên Drive (chưa trashed) để dựng tree
+    const res = await drive.files.list({
+      q: `mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      fields: 'files(id, name, parents, createdTime)',
+      pageSize: 1000
+    });
 
-  return res.data.files || [];
+    const allFolders = res.data.files || [];
+    const folderMap = new Map();
+    for (const f of allFolders) {
+      folderMap.set(f.id, f);
+    }
+
+    // Hàm đệ quy xây dựng đường dẫn đầy đủ từ một folder lên đến targetRoot
+    const getFullPath = (folderId, visited = new Set()) => {
+      if (folderId === targetRoot) {
+        return ''; // Đã chạm tới root, trả về rỗng để bắt đầu nối đường dẫn
+      }
+      if (visited.has(folderId)) {
+        return null; // Tránh loop vô tận
+      }
+      visited.add(folderId);
+
+      const folder = folderMap.get(folderId);
+      if (!folder || !folder.parents || folder.parents.length === 0) {
+        return null; // Không tìm thấy cha hoặc cha không thuộc nhánh root
+      }
+
+      const parentId = folder.parents[0];
+      const parentPath = getFullPath(parentId, visited);
+      if (parentPath === null) {
+        return null; // Nhánh cha này không dẫn tới root
+      }
+
+      return parentPath ? `${parentPath} / ${folder.name}` : folder.name;
+    };
+
+    // Lọc và dựng đường dẫn đầy đủ
+    const result = [];
+    for (const f of allFolders) {
+      if (f.id === targetRoot) continue; // Không cho chọn chính thư mục gốc
+
+      const fullPath = getFullPath(f.id);
+      if (fullPath !== null) {
+        result.push({
+          id: f.id,
+          name: fullPath,
+          createdTime: f.createdTime
+        });
+      }
+    }
+
+    // Sắp xếp theo tên đường dẫn từ A-Z
+    result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  } catch (err) {
+    console.error('❌ [GoogleDrive] listFolders error:', err.message);
+    // Fallback về cách lấy trực tiếp nếu có lỗi xảy ra
+    const query = targetRoot
+      ? `'${targetRoot}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
+      : `mimeType='application/vnd.google-apps.folder' and trashed=false`;
+
+    const res = await drive.files.list({
+      q: query,
+      fields: 'files(id, name, createdTime)',
+      orderBy: 'name',
+      pageSize: 100
+    });
+
+    return res.data.files || [];
+  }
 }
 
 /**
