@@ -13652,14 +13652,81 @@ window.erpApp = window.erpApp || {};
     // EXPOSE DATA SOURCE FOR REPORTING & SYNC
     // ==========================================
     window.erpApp.pmOpenViewModal = (id) => {
+        const pmContracts = window.pmContracts || [];
+        const contract = pmContracts.find(c => c.id === id);
+        
+        // 1. Nếu là Hợp đồng, mở modal xem hợp đồng chi tiết (đầy đủ thông tin, file đính kèm)
+        if (contract || id.startsWith('HĐ-')) {
+            if (window.erpApp.pmOpenEditContractModal) {
+                window.erpApp.pmOpenEditContractModal(id, true);
+                return;
+            }
+        }
+
         let title = `Chi tiết chứng từ: ${id}`;
         let icon = 'description';
         let iconColor = '#3b82f6';
         let bodyContent = '';
         const fMoney = (val) => window.erpApp.formatValue(val) + ' đ';
 
-        // Check if it's a Contract or Finance Record
-        if (id.startsWith('HĐ-')) {
+        // 2. Kiểm tra nếu là Hồ sơ pháp lý (mã HS-)
+        const pmLegalDocs = window.pmLegalDocs || [];
+        const legalDoc = pmLegalDocs.find(d => d.id === id);
+        if (legalDoc) {
+            title = `Chi tiết Hồ sơ pháp lý: ${id}`;
+            icon = 'policy';
+            iconColor = '#6366f1';
+            
+            let vouchersHtml = '';
+            if (legalDoc.vouchers && legalDoc.vouchers.length > 0) {
+                vouchersHtml = `
+                    <div style="margin-top:20px; border-top:1px dashed #e2e8f0; padding-top:16px;">
+                        <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:12px;">Tài liệu đính kèm (${legalDoc.vouchers.length})</div>
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            ${legalDoc.vouchers.map(v => {
+                                const isLink = v.url && (v.url.startsWith('http') || v.url.includes('drive.google.com'));
+                                return `
+                                    <div style="display:flex; align-items:center; justify-content:space-between; background:#f8fafc; padding:10px 16px; border-radius:10px; border:1px solid #e2e8f0;">
+                                        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+                                            <span class="material-icons-outlined" style="color:#64748b; font-size:20px;">
+                                                ${v.type === 'pdf' ? 'picture_as_pdf' : (['png', 'jpg', 'jpeg'].includes(v.type) ? 'image' : 'insert_drive_file')}
+                                            </span>
+                                            <span style="font-size:13px; font-weight:700; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${v.name}">${v.name}</span>
+                                        </div>
+                                        <a href="${v.url}" target="_blank" style="font-size:12px; font-weight:700; color:#2563eb; display:flex; align-items:center; gap:4px; text-decoration:none; margin-left:12px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                            <span class="material-icons-outlined" style="font-size:14px;">open_in_new</span> ${isLink ? 'Mở link' : 'Tải xuống'}
+                                        </a>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            bodyContent = `
+                <div style="font-weight:800; color:#1e293b; font-size:16px; margin-bottom:20px; border-left:4px solid #6366f1; padding-left:12px;">${legalDoc.title}</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:12px;">
+                    <div>
+                        <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:4px;">Số hiệu</div>
+                        <div style="font-weight:700; color:#1e293b;">${legalDoc.symbol || '—'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:4px;">Ngày ban hành</div>
+                        <div style="font-weight:700; color:#1e293b;">${legalDoc.date ? window.erpApp.formatDate(legalDoc.date) : '—'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:4px;">Nơi nhận</div>
+                        <div style="font-weight:700; color:#1e293b;">${legalDoc.recipient || '—'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:4px;">Nơi ban hành</div>
+                        <div style="font-weight:700; color:#1e293b;">${legalDoc.issuer || '—'}</div>
+                    </div>
+                </div>
+                ${vouchersHtml}
+            `;
+        } else if (id.startsWith('HĐ-')) {
             const contract = pmContracts.find(c => c.id === id);
             if (contract) {
                 title = `Chi tiết Hợp đồng: ${id}`;
