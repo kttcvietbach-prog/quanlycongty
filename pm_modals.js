@@ -3464,6 +3464,12 @@ window.erpApp = window.erpApp || {};
                             </div>                            <div class="form-group" style="margin-bottom:20px;">
                                 <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Chứng từ hợp đồng (Scan, Ảnh / Link tài liệu)</label>
                                 
+                                ${existingDrivePath ? `
+                                <div style="font-size:12px; color:#0d9488; font-weight:700; margin-top:4px; margin-bottom:12px; display:block;">
+                                    Thư mục hiện tại: <a href="https://drive.google.com/drive/folders/${contract.driveFolderId || ''}" target="_blank" style="color:#0d9488; text-decoration:underline;">${existingDrivePath}</a>
+                                </div>
+                                ` : (isView ? '<div style="font-size:12px; color:#64748b; font-style:italic; margin-bottom:12px;">Chưa liên kết thư mục Drive</div>' : '')}
+                                
                                 ${isView ? '' : `
                                 <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                     <label style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;"><span class="material-icons-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">folder</span>Lưu vào thư mục:</label>
@@ -3478,8 +3484,7 @@ window.erpApp = window.erpApp || {};
                                         <span class="material-icons-outlined" style="font-size:16px;">create_new_folder</span>Thêm Thư Mục
                                     </button>
                                 </div>
-                                <div id="pmContractDriveFolderPathText" style="font-size:12px; color:#0d9488; font-weight:700; margin-top:4px; margin-bottom:8px; display:${existingDrivePath ? 'block' : 'none'};" data-initial-path="${existingDrivePath}">
-                                    ${existingDrivePath ? `Thư mục hiện tại: ${existingDrivePath}` : ''}
+                                <div id="pmContractDriveFolderPathText" style="font-size:12px; color:#0d9488; font-weight:700; margin-top:4px; margin-bottom:8px; display:none;" data-initial-path="${existingDrivePath}">
                                 </div>
 
                                 <div class="contract-upload-area" style="margin-bottom: 16px;">

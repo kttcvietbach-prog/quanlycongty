@@ -20462,19 +20462,16 @@ window.erpApp = window.erpApp || {};
                 <div class="form-section-title"><span class="material-icons-outlined" style="font-size:14px">attach_file</span> File đính kèm</div>
                 <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                     <label style="font-size:13px;font-weight:600;color:var(--text-secondary);white-space:nowrap"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">folder</span>Lưu vào thư mục:</label>
-                    <select id="hsDriveFolderSelect" style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer" onchange="window.erpApp.loadDriveFolderChain(null, 0)">
-                        <option value="hop-dong">📝 Hợp Đồng (mặc định)</option>
-                        <option value="du-an">📋 Dự Án</option>
-                        <option value="tai-chinh">💰 Tài Chính</option>
-                        <option value="nhan-su">👥 Nhân Sự</option>
-                        <option value="kho-van">📦 Kho Vận</option>
-                        <option value="dau-thau">🏗️ Đấu Thầu</option>
-                        <option value="san-xuat">🏭 Sản Xuất</option>
-                        <option value="chung">📁 Chung</option>
-                    </select>
-                    <div id="hsDriveFolderChain" style="display:contents"></div>
-                    <button type="button" onclick="window.erpApp.loadDriveFolderChain(null, 0)" style="padding:8px;border:1.5px solid var(--border-color);border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center" title="Tải thư mục"><span class="material-icons-outlined" style="font-size:18px;color:var(--primary)">refresh</span></button>
-                    <button type="button" onclick="window.erpApp.createDriveSubfolderFromModal()" style="padding:6px 12px;border:1.5px solid #22c55e;border-radius:8px;background:#f0fdf4;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#16a34a;transition:all .15s" onmouseover="this.style.background='#22c55e';this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4';this.style.color='#16a34a'" title="Tạo folder mới trên Drive"><span class="material-icons-outlined" style="font-size:16px">create_new_folder</span>Tạo Folder</button>
+                    <div style="display:flex; flex-direction:column; gap:8px; flex:1; min-width:160px;">
+                        <select id="hsArchiveDriveFolderSelect" style="flex:1;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer" onchange="window.erpApp.loadHsArchiveDriveFolderChain(null, 0)">
+                            <option value="">⏳ Đang tải thư mục...</option>
+                        </select>
+                        <div id="hsArchiveDriveFolderChain" style="display:contents"></div>
+                        <div style="display:flex; gap:8px; margin-top:4px;">
+                            <button type="button" onclick="window.erpApp.loadHsArchiveDriveRootFolders()" style="padding:8px;border:1.5px solid var(--border-color);border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center" title="Tải thư mục"><span class="material-icons-outlined" style="font-size:18px;color:var(--primary)">refresh</span></button>
+                            <button type="button" onclick="window.erpApp.createHsArchiveDriveSubfolder()" style="padding:6px 12px;border:1.5px solid #22c55e;border-radius:8px;background:#f0fdf4;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#16a34a;transition:all .15s" onmouseover="this.style.background='#22c55e';this.style.color='#fff'" onmouseout="this.style.background='#f0fdf4';this.style.color='#16a34a'" title="Tạo folder mới trên Drive"><span class="material-icons-outlined" style="font-size:16px">create_new_folder</span>Tạo Folder</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="contract-upload-area">
                     <label for="hsFileInput" class="upload-label">
@@ -20508,7 +20505,9 @@ window.erpApp = window.erpApp || {};
         document.body.appendChild(modal);
         // Tự động load subfolders ngay khi mở modal
         setTimeout(() => {
-            if (window.erpApp && window.erpApp.loadDriveFolderChain) {
+            if (window.erpApp && window.erpApp.loadHsArchiveDriveRootFolders) {
+                window.erpApp.loadHsArchiveDriveRootFolders();
+            } else if (window.erpApp && window.erpApp.loadDriveFolderChain) {
                 window.erpApp.loadDriveFolderChain(null, 0);
             }
         }, 100);
@@ -21071,9 +21070,8 @@ window.erpApp = window.erpApp || {};
                 formData.append('files', file);
                 // Use selected folder from dropdown
                 const folderSelect = document.getElementById('hsDriveFolderSelect');
-                const subfolderSelect = document.getElementById('hsDriveSubfolderSelect');
                 const selectedModule = folderSelect ? folderSelect.value : 'hop-dong';
-                const effectiveFolderId = window.erpApp.getDeepestDriveFolderId();
+                const effectiveFolderId = window.erpApp.getDeepestHsArchiveDriveFolderId ? window.erpApp.getDeepestHsArchiveDriveFolderId() : (window.erpApp.getDeepestDriveFolderId ? window.erpApp.getDeepestDriveFolderId() : null);
                 if (effectiveFolderId) {
                     formData.append('folderId', effectiveFolderId);
                 } else {
@@ -21150,6 +21148,115 @@ window.erpApp = window.erpApp || {};
         chain.querySelectorAll(`select[data-chain-level]`).forEach(sel => {
             if (parseInt(sel.dataset.chainLevel, 10) >= fromLevel) sel.remove();
         });
+    };
+
+    window.erpApp.getDeepestHsArchiveDriveFolderId = () => {
+        const chain = document.getElementById('hsArchiveDriveFolderChain');
+        if (chain) {
+            const selects = Array.from(chain.querySelectorAll('select[data-chain-level]'));
+            for (let i = selects.length - 1; i >= 0; i--) {
+                if (selects[i].value) return selects[i].value;
+            }
+        }
+        const rootSelect = document.getElementById('hsArchiveDriveFolderSelect');
+        return rootSelect ? rootSelect.value : '';
+    };
+
+    const _trimHsArchiveFolderChain = (level) => {
+        const chain = document.getElementById('hsArchiveDriveFolderChain');
+        if (!chain) return;
+        chain.querySelectorAll(`select[data-chain-level]`).forEach(sel => {
+            if (parseInt(sel.dataset.chainLevel, 10) >= level) sel.remove();
+        });
+    };
+
+    const _appendHsArchiveFolderDropdown = (level, folders) => {
+        const chain = document.getElementById('hsArchiveDriveFolderChain');
+        if (!chain) return;
+        const sel = document.createElement('select');
+        sel.id = `hsArchiveDriveChainSel_${level}`;
+        sel.dataset.chainLevel = level;
+        sel.style.cssText = 'flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;cursor:pointer;margin-top:8px;';
+        sel.innerHTML = `<option value="">— Chọn thư mục —</option>` +
+            folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        sel.addEventListener('change', () => window.erpApp.loadHsArchiveDriveFolderChain(sel.value, level + 1));
+        chain.appendChild(sel);
+    };
+
+    window.erpApp.loadHsArchiveDriveFolderChain = async (parentFolderId, level) => {
+        _trimHsArchiveFolderChain(level);
+        const folderSelect = document.getElementById('hsArchiveDriveFolderSelect');
+        const rootFolderId = folderSelect ? folderSelect.value : '';
+        const activeFolderId = parentFolderId || rootFolderId;
+        if (!activeFolderId) return;
+        try {
+            const url = (window.API_BASE_URL || '') + `/api/drive/files?folderId=${activeFolderId}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.success) {
+                const folders = (data.files || []).filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+                if (folders.length > 0) _appendHsArchiveFolderDropdown(level, folders);
+            }
+        } catch (e) {}
+    };
+
+    window.erpApp.loadHsArchiveDriveRootFolders = async (selectedId = null) => {
+        const rootSelect = document.getElementById('hsArchiveDriveFolderSelect');
+        if (!rootSelect) return;
+        rootSelect.innerHTML = '<option value="">⏳ Đang tải...</option>';
+        try {
+            const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders');
+            const data = await res.json();
+            if (data.success && data.files) {
+                rootSelect.innerHTML = '<option value="">— Chọn thư mục gốc —</option>';
+                data.files.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.textContent = '📁 ' + f.name;
+                    rootSelect.appendChild(opt);
+                });
+                if (selectedId) rootSelect.value = selectedId;
+                window.erpApp.loadHsArchiveDriveFolderChain(null, 0);
+            } else {
+                rootSelect.innerHTML = '<option value="">❌ Không tải được</option>';
+            }
+        } catch (e) {
+            rootSelect.innerHTML = '<option value="">❌ Lỗi mạng</option>';
+        }
+    };
+
+    window.erpApp.createHsArchiveDriveSubfolder = async () => {
+        const parentId = window.erpApp.getDeepestHsArchiveDriveFolderId();
+        if (!parentId) {
+            window.erpApp.showToast('Vui lòng chọn thư mục gốc trước!', 'error');
+            return;
+        }
+        const name = prompt('Nhập tên folder mới trên Google Drive:');
+        if (!name || !name.trim()) return;
+        try {
+            window.erpApp.showToast('⏳ Đang tạo folder...', 'info');
+            const res = await fetch((window.API_BASE_URL || '') + '/api/drive/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim(), parentId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.erpApp.showToast(`✅ Đã tạo folder "${name.trim()}"`, 'success');
+                const chain = document.getElementById('hsArchiveDriveFolderChain');
+                const selects = chain ? chain.querySelectorAll('select[data-chain-level]') : [];
+                const currentLevel = selects.length;
+                await window.erpApp.loadHsArchiveDriveFolderChain(parentId, currentLevel);
+                if (data.folder && data.folder.id) {
+                    const newSel = document.getElementById(`hsArchiveDriveChainSel_${currentLevel}`);
+                    if (newSel) { newSel.value = data.folder.id; newSel.dispatchEvent(new Event('change')); }
+                }
+            } else {
+                window.erpApp.showToast(`❌ Lỗi: ${data.error || 'Không tạo được folder'}`, 'error');
+            }
+        } catch (err) {
+            window.erpApp.showToast(`❌ Lỗi kết nối: ${err.message}`, 'error');
+        }
     };
     // Append a new dropdown at `level` populated with `folders`
     const _appendFolderDropdown = (level, folders) => {
