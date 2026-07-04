@@ -129,15 +129,15 @@ window.erpApp = window.erpApp || {};
         overlay.className = 'modal-overlay';
         overlay.style = 'background:rgba(15,23,42,0.6); backdrop-filter:blur(5px); position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; display:flex; align-items:center; justify-content:center;';
         overlay.innerHTML = `
-            <div class="modal-content" style="width:650px; background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPop 0.3s ease-out;">
+            <div class="modal-content" style="width:650px; background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPop 0.3s ease-out; display:flex; flex-direction:column; max-height:90vh;">
                 <div style="padding:24px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0; font-size:18px; font-weight:900; color:#1e293b; display:flex; align-items:center; gap:10px;">
                         <span class="material-icons-outlined" style="color:#6366f1;">policy</span> ${id ? 'Sửa hồ sơ pháp lý' : 'Thêm hồ sơ pháp lý mới'}
                     </h2>
                     <button onclick="this.closest('.modal-overlay').remove()" style="background:none; border:none; color:#94a3b8; cursor:pointer;"><span class="material-icons-outlined">close</span></button>
                 </div>
-                <form onsubmit="window.erpApp.pmSaveLegalDoc(event, ${id ? `'${id}'` : 'null'})">
-                    <div style="padding:24px; display:grid; grid-template-columns:1fr 1fr; gap:20px; max-height:calc(100vh - 180px); overflow-y:auto;">
+                <form onsubmit="window.erpApp.pmSaveLegalDoc(event, ${id ? `'${id}'` : 'null'})" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                    <div style="padding:24px; display:grid; grid-template-columns:1fr 1fr; gap:20px; flex:1; overflow-y:auto;">
                         <div class="form-group" style="grid-column: span 2;">
                             <label style="display:block; font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:8px;">Tên hồ sơ / Tài liệu <span style="color:red">*</span></label>
                             <input type="text" name="title" required value="${doc ? doc.title : ''}" placeholder="Ví dụ: Giấy phép xây dựng, Biên bản bàn giao..." style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; font-weight:700;">
@@ -3343,7 +3343,7 @@ window.erpApp = window.erpApp || {};
 
         const modalHtml = `
             <div class="modal-overlay" id="pmContractModal" style="background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; display:flex; align-items:center; justify-content:center;">
-                <div class="modal-content" style="width:680px; max-width:95%; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPop 0.3s ease-out;">
+                <div class="modal-content" style="width:680px; max-width:95%; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPop 0.3s ease-out; display:flex; flex-direction:column; max-height:90vh;">
                     <style>
                         @keyframes modalPop { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
                     </style>
@@ -3358,8 +3358,8 @@ window.erpApp = window.erpApp || {};
                             <span class="material-icons-outlined" style="font-size:18px;">close</span>
                         </button>
                     </div>
-                    <form id="pmContractForm" onsubmit="${isView ? 'event.preventDefault(); window.erpApp.pmCloseAddContractModal();' : `window.erpApp.pmSaveNewContract(event, ${isEdit ? `'${id}'` : 'null'})`}">
-                        <div class="modal-body" style="padding:24px; max-height:75vh; overflow-y:auto;">
+                    <form id="pmContractForm" onsubmit="${isView ? 'event.preventDefault(); window.erpApp.pmCloseAddContractModal();' : `window.erpApp.pmSaveNewContract(event, ${isEdit ? `'${id}'` : 'null'})`}" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                        <div class="modal-body" style="padding:24px; flex:1; overflow-y:auto;">
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
                                 <div class="form-group">
                                     <label style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Mã nội bộ (ID)</label>
@@ -3843,7 +3843,7 @@ window.erpApp = window.erpApp || {};
         overlay.style = 'background:rgba(15,23,42,0.6); backdrop-filter:blur(5px); position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; display:flex; align-items:center; justify-content:center;';
 
         overlay.innerHTML = `
-            <div class="modal-content" style="width:600px; background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPop 0.3s ease-out;">
+            <div class="modal-content" style="width:600px; background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPop 0.3s ease-out; display:flex; flex-direction:column; max-height:90vh;">
                 <div style="padding:20px 24px; border-bottom:1px solid #f1f5f9; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <h2 style="margin:0; font-size:16px; font-weight:900; color:#1e293b;">${isView ? 'Xem Phụ lục' : (isEdit ? 'Chỉnh sửa Phụ lục' : 'Thêm Phụ lục Hợp đồng')}</h2>
@@ -3851,8 +3851,8 @@ window.erpApp = window.erpApp || {};
                     </div>
                     <button onclick="this.closest('.modal-overlay').remove()" style="border:none; background:none; cursor:pointer; color:#94a3b8;"><span class="material-icons-outlined">close</span></button>
                 </div>
-                <form onsubmit="${isView ? "event.preventDefault(); this.closest('.modal-overlay').remove();" : `window.erpApp.pmSaveAppendix(event${id ? `, '${id}'` : ''})`}">
-                    <div style="padding:24px; max-height:calc(100vh - 180px); overflow-y:auto;">
+                <form onsubmit="${isView ? "event.preventDefault(); this.closest('.modal-overlay').remove();" : `window.erpApp.pmSaveAppendix(event${id ? `, '${id}'` : ''})`}" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                    <div style="padding:24px; max-height:none; flex:1; overflow-y:auto;">
                         <div style="margin-bottom:16px;">
                             <label style="display:block; font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:8px;">Hợp đồng gốc</label>
                             <select name="contractId" ${isView ? 'disabled' : ''} style="width:100%; padding:12px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; outline:none; color:#1e293b; background:${isView ? '#f1f5f9' : '#fff'}; font-weight:600;">
