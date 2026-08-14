@@ -1,21 +1,30 @@
 @echo off
-echo ===================================================
-echo   DANG DON DEP CAC FILE RAC / DEBUG TAM THOI
-echo ===================================================
+chcp 65001 > nul
+echo.
+echo ========================================
+echo   DỌN DẸP FILE RÁC - VIETBACH V5.29
+echo ========================================
 echo.
 
-del /F /Q debug_braces.js 2>nul
-del /F /Q find_funcs.js 2>nul
-del /F /Q nuclear_reset.js 2>nul
-del /F /Q read_lines.js 2>nul
-del /F /Q test_pmSaveMaterial.js 2>nul
-rmdir /S /Q scratch 2>nul
+cd /d "%~dp0"
+
+set FILES=bisect_js_parse.py count_js_delimiters.py count_js_delimiters2.py find_js_mismatch.py scratch_find_contract.py scratch_sync_temp_files.py inspect_vehicles.mjs "New Text Document.txt" pm_modals_prefix.js
+
+echo [*] Đang xóa các file debug/scratch/rác...
+echo.
+
+for %%F in (%FILES%) do (
+    if exist %%F (
+        del /f /q %%F
+        echo [OK] Da xoa: %%F
+    ) else (
+        echo [--] Khong ton tai: %%F
+    )
+)
 
 echo.
-echo ===================================================
-echo   DON DEP HOAN TAT!
-echo   Luu y: Cac file nay rat nho (chi khoang 10KB).
-echo   De giam dung luong that su, ban can xoa thu muc 
-echo   'node_modules' hoac nen hinh anh.
-echo ===================================================
+echo ========================================
+echo   HOAN THANH! He thong da duoc don dep.
+echo ========================================
+echo.
 pause
