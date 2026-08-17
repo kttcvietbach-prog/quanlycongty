@@ -481,8 +481,7 @@
     contracts = window.contracts = loadLocal('contracts', contracts);
     hoSoDocuments = window.hoSoDocuments = loadLocal('hoSoDocuments', hoSoDocuments);
     congVanList = window.congVanList = loadLocal('congVanList', congVanList);
-    hoSoRecordList = window.hoSoRecordList = loadLocal('hoSoRecordList', hoSoRecordList);
-    if (!hoSoRecordList || hoSoRecordList.length === 0) {
+    if (localStorage.getItem('erp_hoSoRecordList') === null) {
         hoSoRecordList = window.hoSoRecordList = [
             {
                 id: 'HS-2026/001',
@@ -537,6 +536,8 @@
             }
         ];
         localStorage.setItem('erp_hoSoRecordList', JSON.stringify(hoSoRecordList));
+    } else {
+        hoSoRecordList = window.hoSoRecordList = loadLocal('hoSoRecordList', []);
     }
     pheDuyetList = window.pheDuyetList = loadLocal('pheDuyetList', pheDuyetList);
     cvProjects = window.cvProjects = loadLocal('cvProjects', ['Tổng công ty', 'Sản xuất', 'Văn phòng HQ', 'Kho Bình Dương']);
@@ -18674,6 +18675,10 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
         }
 
         localStorage.setItem('erp_hoSoRecordList', JSON.stringify(hoSoRecordList));
+        window.hoSoRecordList = hoSoRecordList;
+        if (window.erpApp && window.erpApp._setData) {
+            window.erpApp._setData('hoSoRecordList', hoSoRecordList);
+        }
         const modal = document.getElementById('hsModal');
         if (modal) modal.remove();
         tempHsFiles = [];
@@ -18758,9 +18763,12 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
     function deleteHoSoRecord(id) {
         if (!isAdmin()) { showToast('Bạn không có quyền thực hiện chức năng này!', 'error'); return; }
         const hs = hoSoRecordList.find(h => h.id === id);
-        hoSoRecordList = hoSoRecordList.filter(h => h.id !== id);
+        hoSoRecordList = window.hoSoRecordList = hoSoRecordList.filter(h => h.id !== id);
         if (window.CrudSync) { window.CrudSync.deleteItem('hoSoRecordList', id); }
         localStorage.setItem('erp_hoSoRecordList', JSON.stringify(hoSoRecordList));
+        if (window.erpApp && window.erpApp._setData) {
+            window.erpApp._setData('hoSoRecordList', hoSoRecordList);
+        }
         const m = document.getElementById('hsDeleteModal');
         if (m) m.remove();
         showToast('Đã xóa thành công hồ sơ ' + id);
