@@ -329,6 +329,7 @@
     var contracts = window.contracts = window.contracts || [];
     var hoSoDocuments = window.hoSoDocuments = window.hoSoDocuments || [];
     var congVanList = window.congVanList = window.congVanList || [];
+    var hoSoRecordList = window.hoSoRecordList = window.hoSoRecordList || [];
     var pheDuyetList = window.pheDuyetList = window.pheDuyetList || [];
     var erpOffices = window.erpOffices = window.erpOffices || [];
     var pmProjects = window.pmProjects = window.pmProjects || [];
@@ -480,6 +481,63 @@
     contracts = window.contracts = loadLocal('contracts', contracts);
     hoSoDocuments = window.hoSoDocuments = loadLocal('hoSoDocuments', hoSoDocuments);
     congVanList = window.congVanList = loadLocal('congVanList', congVanList);
+    hoSoRecordList = window.hoSoRecordList = loadLocal('hoSoRecordList', hoSoRecordList);
+    if (!hoSoRecordList || hoSoRecordList.length === 0) {
+        hoSoRecordList = window.hoSoRecordList = [
+            {
+                id: 'HS-2026/001',
+                type: 'den',
+                title: 'Hồ sơ Nghiệm thu Hạng mục Móng Tòa nhà A',
+                sender: 'Công ty TNHH Tư vấn Giám sát Đô Thị',
+                receiver: 'Ban Quản lý Dự án VietBach',
+                project: 'Sunrise Tower',
+                department: 'Phòng Kỹ thuật',
+                handler: 'Nguyễn Văn A',
+                issueDate: '10/08/2026',
+                originalCount: 2,
+                copyCount: 3,
+                priority: 'cao',
+                status: 'da-tiep-nhan',
+                note: 'Đã lưu kho tài liệu phòng Hành chính',
+                files: []
+            },
+            {
+                id: 'HS-2026/002',
+                type: 'di',
+                title: 'Bộ Hồ sơ Dự thầu Gói thầu Thi công Kết cấu Xây dựng',
+                sender: 'Phòng Kinh doanh VietBach',
+                receiver: 'Chủ đầu tư Tập đoàn Vingroup',
+                project: 'Green Valley',
+                department: 'Phòng Kinh doanh',
+                handler: 'Trần Thị B',
+                issueDate: '12/08/2026',
+                originalCount: 1,
+                copyCount: 5,
+                priority: 'trung-binh',
+                status: 'da-gui',
+                note: 'Gửi chuyển phát nhanh qua bưu điện EMS',
+                files: []
+            },
+            {
+                id: 'HS-2026/003',
+                type: 'noi-bo',
+                title: 'Hồ sơ Tờ trình Phê duyệt Dự toán Vật tư Quý III/2026',
+                sender: 'Phòng Vật tư Kho vận',
+                receiver: 'Ban Giám đốc',
+                project: 'Tổng công ty',
+                department: 'Phòng Hành chính',
+                handler: 'Lê Văn C',
+                issueDate: '15/08/2026',
+                originalCount: 1,
+                copyCount: 1,
+                priority: 'thap',
+                status: 'da-duyet',
+                note: 'BGĐ đã ký duyệt nguyên tắc',
+                files: []
+            }
+        ];
+        localStorage.setItem('erp_hoSoRecordList', JSON.stringify(hoSoRecordList));
+    }
     pheDuyetList = window.pheDuyetList = loadLocal('pheDuyetList', pheDuyetList);
     cvProjects = window.cvProjects = loadLocal('cvProjects', ['Tổng công ty', 'Sản xuất', 'Văn phòng HQ', 'Kho Bình Dương']);
     erpOffices = window.erpOffices = loadLocal('erpOffices', erpOffices);
@@ -1118,6 +1176,7 @@
         if (key === 'contracts') { return contracts; }
         if (key === 'hoSoDocuments') { return hoSoDocuments; }
         if (key === 'congVanList') { return congVanList; }
+        if (key === 'hoSoRecordList') { return hoSoRecordList; }
         if (key === 'pheDuyetList') { return pheDuyetList; }
         if (key === 'erpOffices') { return erpOffices; }
         if (key === 'pmProjects') { return pmProjects; }
@@ -1258,6 +1317,7 @@
             else if (dataKey === 'contracts') { window.contracts = contracts = data; localStorage.setItem('erp_contracts', JSON.stringify(data)); }
             else if (dataKey === 'hosodocuments') { window.hoSoDocuments = hoSoDocuments = data; localStorage.setItem('erp_hoSoDocuments', JSON.stringify(data)); }
             else if (dataKey === 'congvanlist') { window.congVanList = congVanList = data; localStorage.setItem('erp_congVanList', JSON.stringify(data)); }
+            else if (dataKey === 'hosorecordlist') { window.hoSoRecordList = hoSoRecordList = data; localStorage.setItem('erp_hoSoRecordList', JSON.stringify(data)); }
             else if (dataKey === 'pheduyetlist') { window.pheDuyetList = pheDuyetList = data; localStorage.setItem('erp_pheDuyetList', JSON.stringify(data)); }
             else if (dataKey === 'erpoffices') { window.erpOffices = erpOffices = data; localStorage.setItem('erp_erpOffices', JSON.stringify(data)); }
             else if (dataKey === 'pmprojects' || dataKey === 'pm_projects') { window.pmProjects = pmProjects = data; localStorage.setItem('erp_pmProjects', JSON.stringify(data)); }
@@ -3207,6 +3267,7 @@
                     title: 'Quản lý văn bản',
                     modules: [
                         { icon: 'description', color: 'blue', title: 'Quản lý công văn', desc: 'Theo dõi công văn đến, đi, nội bộ và phân phối xử lý.' },
+                        { icon: 'mark_as_unread', color: 'teal', title: 'Quản lý hồ sơ gởi/nhận', desc: 'Theo dõi chi tiết hồ sơ đến, hồ sơ gửi đi, bàn giao và lưu trữ.' },
                         { icon: 'folder_shared', color: 'purple', title: 'Lưu trữ hồ sơ', desc: 'Quản lý kho lưu trữ hồ sơ, tài liệu theo danh mục.' },
                         { icon: 'approval', color: 'orange', title: 'Phê duyệt văn bản', desc: 'Quy trình phê duyệt văn bản, đề xuất trực tuyến.' }
                     ]
@@ -5799,6 +5860,7 @@
 
             if (title === 'Lưu trữ hồ sơ') { window.erpApp.renderLuuTruHoSo(); return; }
             if (title === 'Quản lý công văn') { renderQuanLyCongVan(); return; }
+            if (title === 'Quản lý hồ sơ gởi/nhận' || title === 'Quản lý hồ sơ' || title === 'Hồ sơ gởi/nhận') { renderQuanLyHoSo(); return; }
             if (title === 'Quản lý văn phòng') { window.erpApp.renderOfficeManagement(); return; }
             if (title === 'Phê duyệt văn bản') { renderPheDuyetVanBan(); return; }
             if (title === 'Phiếu kho') { renderPhieuKho(); return; }
@@ -18163,6 +18225,556 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
     function closeCvDeleteModal() { const m = document.getElementById('cvDeleteModal'); if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); } }
 
     // ==========================================
+    // MODULE: Quản lý hồ sơ gởi đi & nhận (CRUD đầy đủ)
+    // ==========================================
+
+    let hsCategories = [
+        { id: 'den', label: 'Hồ sơ nhận (đến)', icon: 'inbox', color: '#2563EB', bg: '#EFF6FF' },
+        { id: 'di', label: 'Hồ sơ gửi đi', icon: 'send', color: '#16A34A', bg: '#F0FDF4' },
+        { id: 'noi-bo', label: 'Nội bộ', icon: 'swap_horiz', color: '#7C3AED', bg: '#F5F3FF' },
+        { id: 'phap-ly', label: 'Pháp lý / Dự án', icon: 'gavel', color: '#EA580C', bg: '#FFF7ED' }
+    ];
+
+    let hsSearchQuery = '';
+    let hsCurrentPage = 1;
+    let hsActiveTab = 'all';
+    let hsFilterProject = '';
+    let hsFilterDept = '';
+    let hsSortOrder = 'desc';
+    const hsPageSize = 10;
+    let tempHsFiles = [];
+
+    function getHsCatById(id) {
+        return hsCategories.find(c => c.id === id) || { label: id, icon: 'folder', color: '#64748B', bg: '#F1F5F9' };
+    }
+
+    function getHsTypeLabel(t) { return { 'den': 'Hồ sơ đến', 'di': 'Hồ sơ gửi đi', 'noi-bo': 'Nội bộ', 'phap-ly': 'Pháp lý / Dự án' }[t] || t; }
+    function getHsTypeColor(t) { return { 'den': 'blue', 'di': 'green', 'noi-bo': 'purple', 'phap-ly': 'orange' }[t] || 'gray'; }
+    function getHsTypeIcon(t) { return { 'den': 'inbox', 'di': 'send', 'noi-bo': 'swap_horiz', 'phap-ly': 'gavel' }[t] || 'description'; }
+    function getHsStatusLabel(s) { return { 'da-tiep-nhan': 'Đã tiếp nhận', 'dang-xu-ly': 'Đang xử lý', 'da-gui': 'Đã gửi', 'da-duyet': 'Đã duyệt', 'luu-kho': 'Đã lưu kho' }[s] || s; }
+    function getHsStatusColor(s) { return { 'da-tiep-nhan': 'blue', 'dang-xu-ly': 'orange', 'da-gui': 'teal', 'da-duyet': 'green', 'luu-kho': 'purple' }[s] || 'gray'; }
+    function getHsPriorityLabel(p) { return { 'cao': 'Cao', 'trung-binh': 'Trung bình', 'thap': 'Thấp' }[p] || p; }
+    function getHsPriorityColor(p) { return { 'cao': 'red', 'trung-binh': 'orange', 'thap': 'blue' }[p] || 'gray'; }
+
+    function nextHsId() {
+        const nums = hoSoRecordList.map(h => {
+            const parts = (h.id || '').split('/');
+            if (parts.length < 2) return 0;
+            const n = parseInt(parts[parts.length - 1], 10);
+            return isNaN(n) ? 0 : n;
+        });
+        return 'HS-2026/' + String(Math.max(...nums, 0) + 1).padStart(3, '0');
+    }
+
+    function getFilteredHoSo() {
+        let data = [...hoSoRecordList];
+        if (hsActiveTab !== 'all') { data = data.filter(h => h.type === hsActiveTab); }
+        if (hsFilterProject) { data = data.filter(h => h.project === hsFilterProject); }
+        if (hsFilterDept) { data = data.filter(h => (h.department || '').toLowerCase().includes(hsFilterDept.toLowerCase())); }
+
+        const q = hsSearchQuery.toLowerCase().trim();
+        if (q) {
+            data = data.filter(h =>
+                (h.id || '').toLowerCase().includes(q) ||
+                (h.title || '').toLowerCase().includes(q) ||
+                (h.sender || '').toLowerCase().includes(q) ||
+                (h.receiver || '').toLowerCase().includes(q) ||
+                (h.handler || '').toLowerCase().includes(q) ||
+                (h.project || '').toLowerCase().includes(q) ||
+                (h.department || '').toLowerCase().includes(q) ||
+                getHsCatById(h.type).label.toLowerCase().includes(q)
+            );
+        }
+
+        data.sort((a, b) => {
+            const dateA = new Date(a.issueDate || '1970-01-01');
+            const dateB = new Date(b.issueDate || '1970-01-01');
+            return hsSortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        });
+        return data;
+    }
+
+    function renderQuanLyHoSo() {
+        breadcrumbCurrent.textContent = 'Quản lý hồ sơ gởi/nhận';
+        pageBadge.textContent = 'Hành chính';
+
+        const filtered = getFilteredHoSo();
+        const totalPages = Math.max(1, Math.ceil(filtered.length / hsPageSize));
+        if (hsCurrentPage > totalPages) { hsCurrentPage = totalPages; }
+        const pageData = filtered.slice((hsCurrentPage - 1) * hsPageSize, hsCurrentPage * hsPageSize);
+
+        const statsHtml = hsCategories.map(cat => {
+            const cnt = hoSoRecordList.filter(c => c.type === cat.id).length;
+            const isAct = hsActiveTab === cat.id;
+            return `<div class="cv2-stat-card${isAct ? ' cv2-stat-active' : ''}" onclick="window.erpApp.hsSetTab('${cat.id}')" style="border-left:3px solid ${cat.color};background:${isAct ? cat.color + '14' : '#fff'}">
+                <span class="material-icons-outlined" style="color:${cat.color};font-size:22px">${cat.icon}</span>
+                <div><div class="cv2-stat-num" style="color:${cat.color}">${cnt}</div><div class="cv2-stat-lbl">${cat.label}</div></div>
+            </div>`;
+        }).join('');
+
+        const projects = [...new Set([
+            ...(typeof cvProjects !== 'undefined' ? cvProjects : []),
+            ...(window.pmProjects || []).map(p => p.name),
+            ...hoSoRecordList.map(c => c.project)
+        ].filter(Boolean))];
+        const depts = departments.filter(d => d.status === 'active').map(d => d.name);
+        const projOpts = projects.map(p => `<option value="${p}" ${hsFilterProject === p ? 'selected' : ''}>${p}</option>`).join('');
+        const deptOpts = depts.map(d => `<option value="${d}" ${hsFilterDept === d ? 'selected' : ''}>${d}</option>`).join('');
+
+        const tableBody = pageData.length === 0
+            ? `<tr><td colspan="10" style="text-align:center;padding:48px;color:var(--text-muted)">
+                <span class="material-icons-outlined" style="font-size:48px;opacity:.3;display:block;margin-bottom:12px">folder_off</span>
+                Không tìm thấy hồ sơ nào</td></tr>`
+            : pageData.map((hs, idx) => {
+                const cat = getHsCatById(hs.type);
+                const fc = (hs.files || []).length;
+                const senderReceiver = hs.type === 'den' ? hs.sender : hs.receiver;
+                const srLabel = hs.type === 'den' ? 'Nơi gửi' : 'Nơi nhận';
+
+                return `<tr class="cv2-row">
+                    <td style="text-align:center;color:var(--text-secondary);font-size:12px">${(hsCurrentPage - 1) * hsPageSize + idx + 1}</td>
+                    <td><span class="cv2-id-badge" style="background:#EEF2FF;color:#4F46E5">${hs.id}</span></td>
+                    <td><div class="cv2-title-cell">
+                        <span class="cv2-cat-chip" style="background:${cat.bg};color:${cat.color}">
+                            <span class="material-icons-outlined" style="font-size:12px">${cat.icon}</span>${cat.label}
+                        </span>
+                        <span class="cv2-title-text" title="${hs.title}">${hs.title}</span>
+                    </div></td>
+                    <td><div style="display:flex;flex-direction:column;gap:2px">
+                        <span style="font-size:10px;color:var(--text-muted);text-transform:uppercase">${srLabel}</span>
+                        <span style="font-size:13px;color:var(--text-main);font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${senderReceiver || ''}">${senderReceiver || '—'}</span>
+                    </div></td>
+                    <td><span class="cv2-project-tag" title="${hs.project || ''}"><span class="material-icons-outlined" style="font-size:13px">work_outline</span>${hs.project || '—'}</span></td>
+                    <td style="color:var(--text-secondary);font-size:13px">${window.erpApp.formatDate(hs.issueDate)}</td>
+                    <td style="color:var(--text-secondary);font-size:12px"><strong>${hs.originalCount || 1}</strong> gốc / <strong>${hs.copyCount || 0}</strong> sao</td>
+                    <td><span class="gm-badge ${getHsPriorityColor(hs.priority)}">${getHsPriorityLabel(hs.priority)}</span></td>
+                    <td><span class="gm-badge ${getHsStatusColor(hs.status)}">${getHsStatusLabel(hs.status)}</span></td>
+                    <td><div class="cv2-actions">
+                        <button class="cv2-btn cv2-btn-view" title="Xem chi tiết" onclick="window.erpApp.viewHoSoRecord('${hs.id}')"><span class="material-icons-outlined">visibility</span></button>
+                        ${fc > 0 ? `<button class="cv2-btn cv2-btn-preview" title="Xem tài liệu (${fc} file)" onclick="window.erpApp.openHsPreview('${hs.id}')"><span class="material-icons-outlined">preview</span></button>` : ''}
+                        ${isAdmin() ? `
+                            <button class="cv2-btn cv2-btn-edit" title="Chỉnh sửa" onclick="window.erpApp.openHsModal('${hs.id}')"><span class="material-icons-outlined">edit</span></button>
+                            <button class="cv2-btn cv2-btn-del" title="Xóa" onclick="window.erpApp.confirmDeleteHs('${hs.id}')"><span class="material-icons-outlined">delete</span></button>
+                        ` : ''}
+                    </div></td>
+                </tr>`;
+            }).join('');
+
+        let pagHtml = '';
+        if (totalPages > 1) {
+            pagHtml = `<div class="pagination" style="padding:16px 20px">
+                <button class="page-btn" ${hsCurrentPage <= 1 ? 'disabled' : ''} onclick="window.erpApp.hsGoPage(${hsCurrentPage - 1})"><span class="material-icons-outlined">chevron_left</span></button>`;
+            for (let i = 1; i <= totalPages; i++) { pagHtml += `<button class="page-btn ${i === hsCurrentPage ? 'active' : ''}" onclick="window.erpApp.hsGoPage(${i})">${i}</button>`; }
+            pagHtml += `<button class="page-btn" ${hsCurrentPage >= totalPages ? 'disabled' : ''} onclick="window.erpApp.hsGoPage(${hsCurrentPage + 1})"><span class="material-icons-outlined">chevron_right</span></button>
+                <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Hiển thị ${(hsCurrentPage - 1) * hsPageSize + 1}–${Math.min(hsCurrentPage * hsPageSize, filtered.length)} / ${filtered.length}</span>
+            </div>`;
+        }
+
+        const hasFilter = hsFilterProject || hsFilterDept || hsSearchQuery || hsActiveTab !== 'all';
+
+        pageContent.innerHTML = `
+        <style>
+        .cv2-stats-row{display:flex;gap:10px;padding:0 20px 16px;overflow-x:auto;flex-wrap:wrap}
+        .cv2-stat-card{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;border:1px solid var(--border-color);cursor:pointer;transition:all .18s;min-width:140px;flex:1;background:#fff}
+        .cv2-stat-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+        .cv2-stat-active{box-shadow:0 2px 8px rgba(0,0,0,.12)!important}
+        .cv2-stat-num{font-size:22px;font-weight:700;line-height:1}
+        .cv2-stat-lbl{font-size:11px;color:var(--text-secondary);margin-top:2px}
+        .cv2-filter-select{padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-size:13px;background:#fff;color:var(--text-main);cursor:pointer;outline:none;transition:border .15s}
+        .cv2-filter-select:focus{border-color:var(--primary)}
+        .cv2-clear-btn{padding:8px;border:1.5px solid #FCA5A5;border-radius:8px;background:#FEF2F2;color:#DC2626;cursor:pointer;display:flex;align-items:center}
+        .cv2-table{min-width:1250px !important; width: 100%; border-collapse: collapse; table-layout: auto;}
+        .cv2-table th, .cv2-table td { white-space: nowrap; }
+        .cv2-row{transition:background .15s}
+        .cv2-row:hover{background:#F8FAFF}
+        .table-scroll { display: block; overflow-x: auto !important; width: 100%; -webkit-overflow-scrolling: touch; padding-bottom: 15px; }
+        .table-scroll::-webkit-scrollbar { height: 10px; }
+        .table-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; border: 2px solid #f1f1f1; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .cv2-id-badge{font-size:11px;font-weight:700;color:var(--primary);background:#EFF6FF;padding:3px 8px;border-radius:5px;white-space:nowrap}
+        .cv2-title-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
+        .cv2-cat-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;width:fit-content;text-transform:uppercase}
+        .cv2-title-text{font-size:13px;font-weight:500;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}
+        .cv2-project-tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#7C3AED;background:#F5F3FF;padding:3px 8px;border-radius:5px;font-weight:500;white-space:nowrap}
+        .cv2-actions{display:flex;gap:4px;align-items:center;justify-content:center}
+        .cv2-btn{width:28px;height:28px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+        .cv2-btn span{font-size:16px}
+        .cv2-btn-view{background:#EFF6FF;color:#2563EB}.cv2-btn-view:hover{background:#2563EB;color:#fff}
+        .cv2-btn-preview{background:#F0FDFA;color:#0D9488}.cv2-btn-preview:hover{background:#0D9488;color:#fff}
+        .cv2-btn-edit{background:#FFF7ED;color:#EA580C}.cv2-btn-edit:hover{background:#EA580C;color:#fff}
+        .cv2-btn-del{background:#FEF2F2;color:#DC2626}.cv2-btn-del:hover{background:#DC2626;color:#fff}
+        </style>
+        <div class="employee-module" style="background:var(--bg-body)">
+            <div class="employee-toolbar" style="flex-wrap:wrap;gap:10px">
+                <button class="back-btn" onclick="window.erpApp.navigateTo('hanh-chinh')"><span class="material-icons-outlined">arrow_back</span>Quay lại</button>
+                <div class="search-box" style="flex:1;min-width:250px">
+                    <span class="material-icons-outlined">search</span>
+                    <input type="text" placeholder="Tìm kiếm theo mã, tiêu đề, nơi gửi/nhận, dự án..." value="${hsSearchQuery}" oninput="window.erpApp.hsSearch(this.value)">
+                </div>
+                <select class="cv2-filter-select" onchange="window.erpApp.hsFilterBy('project',this.value)">
+                    <option value="">📁 Tất cả dự án</option>${projOpts}
+                </select>
+                <select class="cv2-filter-select" onchange="window.erpApp.hsFilterBy('dept',this.value)">
+                    <option value="">🏢 Tất cả phòng ban</option>${deptOpts}
+                </select>
+                ${hasFilter ? '<button class="cv2-clear-btn" onclick="window.erpApp.hsClearFilters()" title="Xóa bộ lọc"><span class="material-icons-outlined">filter_alt_off</span></button>' : ''}
+                ${isAdmin() ? '<button class="btn-add-employee" onclick="window.erpApp.openHsModal()"><span class="material-icons-outlined">note_add</span>Thêm hồ sơ mới</button>' : ''}
+            </div>
+
+            <div class="cv2-stats-row">
+                <div class="cv2-stat-card${hsActiveTab === 'all' ? ' cv2-stat-active' : ''}" onclick="window.erpApp.hsSetTab('all')" style="border-left:3px solid #64748B">
+                    <span class="material-icons-outlined" style="color:#64748B;font-size:22px">folder_copy</span>
+                    <div><div class="cv2-stat-num" style="color:#64748B">${hoSoRecordList.length}</div><div class="cv2-stat-lbl">Tất cả hồ sơ</div></div>
+                </div>
+                ${statsHtml}
+            </div>
+
+            <div class="table-container" style="margin:0 20px 16px">
+                <div class="table-header-bar">
+                    <div class="table-title"><span class="material-icons-outlined">mark_as_unread</span>Danh sách hồ sơ gởi đi & nhận</div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div class="table-count">${filtered.length} kết quả${hsActiveTab !== 'all' ? ' — ' + getHsCatById(hsActiveTab).label : ''}</div>
+                        <button class="cv2-btn cv2-btn-view" title="Đổi thứ tự ngày" onclick="window.erpApp.hsToggleSort()"><span class="material-icons-outlined">swap_vert</span></button>
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table cv2-table">
+                        <thead><tr>
+                            <th style="width:50px">STT</th>
+                            <th style="width:110px">Mã hồ sơ</th>
+                            <th>Tiêu đề bộ hồ sơ / Phân loại</th>
+                            <th style="width:180px">Nơi gửi / Nhận</th>
+                            <th style="width:150px">Dự án</th>
+                            <th style="width:110px">Ngày lập</th>
+                            <th style="width:110px">Số bản</th>
+                            <th style="width:100px">Độ ưu tiên</th>
+                            <th style="width:120px">Trạng thái</th>
+                            <th style="width:130px;text-align:center">Tác vụ</th>
+                        </tr></thead>
+                        <tbody>${tableBody}</tbody>
+                    </table>
+                </div>
+                ${pagHtml}
+            </div>
+        </div>`;
+    }
+
+    function openHsModal(id = null) {
+        if (!isAdmin()) { showToast('Bạn không có quyền thực hiện chức năng này!', 'error'); return; }
+        const hs = id ? hoSoRecordList.find(h => h.id === id) : null;
+        const isEdit = !!hs;
+        const formId = hs ? hs.id : nextHsId();
+        tempHsFiles = hs && hs.files ? [...hs.files] : [];
+
+        const projects = [...new Set([
+            ...(typeof cvProjects !== 'undefined' ? cvProjects : []),
+            ...(window.pmProjects || []).map(p => p.name)
+        ].filter(Boolean))];
+        const depts = departments.filter(d => d.status === 'active').map(d => d.name);
+
+        const projOpts = projects.map(p => `<option value="${p}" ${hs && hs.project === p ? 'selected' : ''}>${p}</option>`).join('');
+        const deptOpts = depts.map(d => `<option value="${d}" ${hs && hs.department === d ? 'selected' : ''}>${d}</option>`).join('');
+
+        const fileItemsHtml = tempHsFiles.map((f, i) => `
+            <div class="cv2-file-chip" style="display:inline-flex;align-items:center;gap:6px;background:#F1F5F9;padding:4px 10px;border-radius:6px;font-size:12px">
+                <span class="material-icons-outlined" style="font-size:14px;color:#4F46E5">attach_file</span>
+                <span>${f.name}</span>
+                <span class="material-icons-outlined" style="font-size:14px;color:#EF4444;cursor:pointer" onclick="window.erpApp.removeHsFile(${i})">close</span>
+            </div>
+        `).join('');
+
+        const modalHtml = `
+        <div class="modal-overlay" id="hsModal" style="background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center">
+            <div class="modal-content" style="width:720px;max-width:95%;max-height:90vh;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);display:flex;flex-direction:column">
+                <div class="modal-header" style="background:#F8FAFC;border-bottom:1px solid #E2E8F0;padding:18px 24px;display:flex;justify-content:space-between;align-items:center">
+                    <h3 style="margin:0;font-size:18px;font-weight:800;color:#1E293B;display:flex;align-items:center;gap:8px">
+                        <span class="material-icons-outlined" style="color:#4F46E5">${isEdit ? 'edit_note' : 'post_add'}</span>
+                        ${isEdit ? 'Chỉnh sửa hồ sơ: ' + hs.id : 'Thêm hồ sơ mới: ' + formId}
+                    </h3>
+                    <button onclick="window.erpApp.closeHsEditModal()" style="border:none;background:none;cursor:pointer;color:#94A3B8"><span class="material-icons-outlined">close</span></button>
+                </div>
+                <div class="modal-body" style="padding:24px;overflow-y:auto;flex:1">
+                    <form id="hsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <input type="hidden" id="hsFormId" value="${formId}">
+                        <input type="hidden" id="hsIsEdit" value="${isEdit ? 'true' : 'false'}">
+                        
+                        <div style="grid-column:span 2">
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Phân loại hồ sơ <span style="color:#EF4444">*</span></label>
+                            <select id="hsType" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                                <option value="den" ${hs && hs.type === 'den' ? 'selected' : ''}>Hồ sơ nhận (Đến)</option>
+                                <option value="di" ${hs && hs.type === 'di' ? 'selected' : ''}>Hồ sơ gửi đi</option>
+                                <option value="noi-bo" ${hs && hs.type === 'noi-bo' ? 'selected' : ''}>Hồ sơ Nội bộ</option>
+                                <option value="phap-ly" ${hs && hs.type === 'phap-ly' ? 'selected' : ''}>Hồ sơ Pháp lý / Dự án</option>
+                            </select>
+                        </div>
+
+                        <div style="grid-column:span 2">
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Tên bộ hồ sơ / Tiêu đề <span style="color:#EF4444">*</span></label>
+                            <input type="text" id="hsTitle" value="${hs ? hs.title : ''}" placeholder="Nhập tên bộ hồ sơ..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Nơi gửi (Đơn vị / Ban phòng) <span style="color:#EF4444">*</span></label>
+                            <input type="text" id="hsSender" value="${hs ? hs.sender : ''}" placeholder="Tên nơi gửi..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Nơi nhận / Đơn vị tiếp nhận <span style="color:#EF4444">*</span></label>
+                            <input type="text" id="hsReceiver" value="${hs ? hs.receiver : ''}" placeholder="Tên nơi nhận..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Dự án liên quan</label>
+                            <select id="hsProject" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                                <option value="">-- Không thuộc dự án --</option>
+                                ${projOpts}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Phòng ban phụ trách</label>
+                            <select id="hsDepartment" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                                <option value="">-- Chọn phòng ban --</option>
+                                ${deptOpts}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Người thực hiện / Bàn giao</label>
+                            <input type="text" id="hsHandler" value="${hs ? (hs.handler || '') : (currentUser ? currentUser.fullName : '')}" placeholder="Họ tên người phụ trách..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Ngày gửi/nhận <span style="color:#EF4444">*</span></label>
+                            <input type="text" id="hsIssueDate" value="${hs ? hs.issueDate : window.erpApp.formatDate(new Date().toISOString())}" placeholder="DD/MM/YYYY" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Số bản gốc</label>
+                            <input type="number" id="hsOriginalCount" min="0" value="${hs ? (hs.originalCount || 1) : 1}" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Số bản sao / photocopy</label>
+                            <input type="number" id="hsCopyCount" min="0" value="${hs ? (hs.copyCount || 0) : 0}" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Độ ưu tiên / Mức độ</label>
+                            <select id="hsPriority" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                                <option value="trung-binh" ${hs && hs.priority === 'trung-binh' ? 'selected' : ''}>Trung bình</option>
+                                <option value="cao" ${hs && hs.priority === 'cao' ? 'selected' : ''}>Cao / Khẩn</option>
+                                <option value="thap" ${hs && hs.priority === 'thap' ? 'selected' : ''}>Thấp</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Trạng thái hồ sơ</label>
+                            <select id="hsStatus" style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">
+                                <option value="da-tiep-nhan" ${hs && hs.status === 'da-tiep-nhan' ? 'selected' : ''}>Đã tiếp nhận</option>
+                                <option value="dang-xu-ly" ${hs && hs.status === 'dang-xu-ly' ? 'selected' : ''}>Đang xử lý</option>
+                                <option value="da-gui" ${hs && hs.status === 'da-gui' ? 'selected' : ''}>Đã gửi</option>
+                                <option value="da-duyet" ${hs && hs.status === 'da-duyet' ? 'selected' : ''}>Đã duyệt</option>
+                                <option value="luu-kho" ${hs && hs.status === 'luu-kho' ? 'selected' : ''}>Đã lưu kho</option>
+                            </select>
+                        </div>
+
+                        <div style="grid-column:span 2">
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Ghi chú / Nơi lưu trữ thực tế</label>
+                            <textarea id="hsNote" rows="2" placeholder="Thông tin chi tiết về vị trí tủ, kệ hoặc nội dung bàn giao..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #CBD5E1;font-size:13px;outline:none">${hs ? (hs.note || '') : ''}</textarea>
+                        </div>
+
+                        <div style="grid-column:span 2">
+                            <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Tài liệu đính kèm (File Scan/PDF/Docs)</label>
+                            <input type="file" multiple id="hsFileInput" onchange="window.erpApp.handleHsFileUpload(event)" style="display:none">
+                            <button type="button" onclick="document.getElementById('hsFileInput').click()" style="padding:8px 16px;border-radius:8px;border:1px dashed #4F46E5;background:#EEF2FF;color:#4F46E5;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">
+                                <span class="material-icons-outlined">upload_file</span> Chọn file đính kèm
+                            </button>
+                            <div id="hsFileList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                                ${fileItemsHtml}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px 24px;display:flex;justify-content:flex-end;gap:12px">
+                    <button class="btn-cancel" onclick="window.erpApp.closeHsEditModal()" style="padding:10px 20px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#64748B;font-weight:700;cursor:pointer">Hủy</button>
+                    <button class="btn-save" onclick="window.erpApp.saveHoSoRecord()" style="padding:10px 24px;border-radius:8px;border:none;background:#4F46E5;color:#fff;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+                        <span class="material-icons-outlined">save</span> Lưu hồ sơ
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    async function saveHoSoRecord() {
+        const formId = document.getElementById('hsFormId').value;
+        const isEdit = document.getElementById('hsIsEdit').value === 'true';
+
+        const type = document.getElementById('hsType').value;
+        const title = document.getElementById('hsTitle').value.trim();
+        const sender = document.getElementById('hsSender').value.trim();
+        const receiver = document.getElementById('hsReceiver').value.trim();
+        const project = document.getElementById('hsProject').value;
+        const department = document.getElementById('hsDepartment').value;
+        const handler = document.getElementById('hsHandler').value.trim();
+        const issueDate = document.getElementById('hsIssueDate').value.trim();
+        const originalCount = parseInt(document.getElementById('hsOriginalCount').value, 10) || 1;
+        const copyCount = parseInt(document.getElementById('hsCopyCount').value, 10) || 0;
+        const priority = document.getElementById('hsPriority').value;
+        const status = document.getElementById('hsStatus').value;
+        const note = document.getElementById('hsNote').value.trim();
+
+        if (!title || !sender || !receiver || !issueDate) {
+            showToast('Vui lòng điền đầy đủ các thông tin bắt buộc!', 'warning');
+            return;
+        }
+
+        const formattedIssueDate = window.erpApp.parseInputDate(issueDate);
+        if (!window.erpApp.isValidDateString(formattedIssueDate)) {
+            showToast('Ngày gửi/nhận không hợp lệ! Định dạng yêu cầu: DD/MM/YYYY (ví dụ: 17/08/2026)', 'error');
+            return;
+        }
+
+        const payload = {
+            type, title, sender, receiver, project, department, handler,
+            issueDate: formattedIssueDate, originalCount, copyCount, priority, status, note,
+            files: [...tempHsFiles]
+        };
+
+        if (isEdit) {
+            const hs = hoSoRecordList.find(h => h.id === formId);
+            if (hs) {
+                Object.assign(hs, payload);
+                if (window.FileStore) { await window.FileStore.saveAllFiles('hoSoRecordList', formId, hs.files); }
+                if (window.CrudSync) { await window.CrudSync.saveItem('hoSoRecordList', hs, 'id'); }
+                showToast('Đã cập nhật bộ hồ sơ thành công!');
+
+                window.erpApp.notifyCRUD('Hồ sơ', 'update', {
+                    name: title,
+                    page: 'hanh-chinh',
+                    module: 'Quản lý hồ sơ gởi/nhận'
+                });
+            }
+        } else {
+            const newHs = { id: formId, ...payload };
+            hoSoRecordList.unshift(newHs);
+            if (window.FileStore) { await window.FileStore.saveAllFiles('hoSoRecordList', formId, newHs.files); }
+            if (window.CrudSync) { await window.CrudSync.saveItem('hoSoRecordList', newHs, 'id'); }
+            showToast('Đã thêm hồ sơ mới thành công!');
+
+            window.erpApp.notifyCRUD('Hồ sơ', 'add', {
+                name: title,
+                page: 'hanh-chinh',
+                module: 'Quản lý hồ sơ gởi/nhận'
+            });
+        }
+
+        localStorage.setItem('erp_hoSoRecordList', JSON.stringify(hoSoRecordList));
+        const modal = document.getElementById('hsModal');
+        if (modal) modal.remove();
+        tempHsFiles = [];
+        renderQuanLyHoSo();
+    }
+
+    function viewHoSoRecord(id) {
+        const hs = hoSoRecordList.find(h => h.id === id);
+        if (!hs) return;
+
+        const cat = getHsCatById(hs.type);
+        const fc = (hs.files || []).length;
+
+        const fileItems = (hs.files || []).map((f, i) => `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span class="material-icons-outlined" style="color:#4F46E5;font-size:18px">description</span>
+                    <span style="font-size:13px;font-weight:600;color:#334155">${f.name}</span>
+                </div>
+                <button onclick="window.erpApp.downloadHsFile('${hs.id}', ${i})" style="border:none;background:#EEF2FF;color:#4F46E5;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">
+                    <span class="material-icons-outlined" style="font-size:14px">download</span> Tải file
+                </button>
+            </div>
+        `).join('');
+
+        const modalHtml = `
+        <div class="modal-overlay" id="hsViewModal" style="background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center">
+            <div class="modal-content" style="width:640px;max-width:95%;max-height:90vh;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);display:flex;flex-direction:column">
+                <div class="modal-header" style="background:#F8FAFC;border-bottom:1px solid #E2E8F0;padding:18px 24px;display:flex;justify-content:space-between;align-items:center">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span class="cv2-cat-chip" style="background:${cat.bg};color:${cat.color}">
+                            <span class="material-icons-outlined" style="font-size:14px">${cat.icon}</span>${cat.label}
+                        </span>
+                        <h3 style="margin:0;font-size:17px;font-weight:800;color:#1E293B">${hs.id}</h3>
+                    </div>
+                    <button onclick="document.getElementById('hsViewModal').remove()" style="border:none;background:none;cursor:pointer;color:#94A3B8"><span class="material-icons-outlined">close</span></button>
+                </div>
+                <div class="modal-body" style="padding:24px;overflow-y:auto;flex:1">
+                    <h4 style="margin:0 0 16px 0;font-size:18px;font-weight:700;color:#0F172A;line-height:1.4">${hs.title}</h4>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#F8FAFC;padding:16px;border-radius:12px;border:1px solid #E2E8F0;margin-bottom:20px">
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Nơi gửi</span><div style="font-size:14px;font-weight:600;color:#1E293B">${hs.sender || '—'}</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Nơi nhận</span><div style="font-size:14px;font-weight:600;color:#1E293B">${hs.receiver || '—'}</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Dự án</span><div style="font-size:13px;font-weight:600;color:#2563EB">${hs.project || '—'}</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Phòng ban</span><div style="font-size:13px;font-weight:600;color:#7C3AED">${hs.department || '—'}</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Ngày gửi/nhận</span><div style="font-size:13px;font-weight:600;color:#334155">${window.erpApp.formatDate(hs.issueDate)}</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Người phụ trách</span><div style="font-size:13px;font-weight:600;color:#334155">${hs.handler || '—'}</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Số lượng bản</span><div style="font-size:13px;font-weight:600;color:#334155">${hs.originalCount || 1} bản gốc / ${hs.copyCount || 0} bản sao</div></div>
+                        <div><span style="font-size:11px;color:#64748B;text-transform:uppercase">Trạng thái</span><div><span class="gm-badge ${getHsStatusColor(hs.status)}">${getHsStatusLabel(hs.status)}</span></div></div>
+                    </div>
+
+                    ${hs.note ? `<div style="margin-bottom:20px"><span style="font-size:12px;font-weight:700;color:#475569">Ghi chú / Nơi lưu trữ:</span><p style="margin:4px 0 0 0;font-size:13px;color:#334155;background:#FFFBEB;padding:10px;border-radius:8px;border:1px solid #FDE68A">${hs.note}</p></div>` : ''}
+
+                    <div>
+                        <span style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:8px">Danh sách tài liệu đính kèm (${fc} file):</span>
+                        <div style="display:flex;flex-direction:column;gap:8px">
+                            ${fc > 0 ? fileItems : '<div style="font-size:13px;color:#94A3B8;font-style:italic">Không có file đính kèm</div>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px 24px;display:flex;justify-content:flex-end">
+                    <button class="btn-cancel" onclick="document.getElementById('hsViewModal').remove()" style="padding:9px 20px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#64748B;font-weight:700;cursor:pointer">Đóng</button>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    function confirmDeleteHs(id) {
+        if (!isAdmin()) { showToast('Bạn không có quyền thực hiện chức năng này!', 'error'); return; }
+        const hs = hoSoRecordList.find(h => h.id === id); if (!hs) return;
+        const modal = document.createElement('div'); modal.className = 'modal-overlay'; modal.id = 'hsDeleteModal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:420px"><div class="modal-header"><h3><span class="material-icons-outlined" style="color:#DC2626">warning</span> Xác nhận xóa</h3><button class="modal-close" onclick="document.getElementById('hsDeleteModal').remove()"><span class="material-icons-outlined">close</span></button></div>
+            <div class="modal-body" style="text-align:center;padding:24px"><p style="font-size:15px">Xóa bộ hồ sơ <strong>${hs.id}</strong>?</p><p style="color:var(--text-secondary);margin-top:8px;font-size:13px">${hs.title}</p></div>
+            <div class="modal-footer"><button class="btn-cancel" onclick="document.getElementById('hsDeleteModal').remove()">Hủy</button><button class="btn-save" style="background:#DC2626" onclick="window.erpApp.deleteHoSoRecord('${hs.id}')"><span class="material-icons-outlined">delete</span> Xóa</button></div></div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function deleteHoSoRecord(id) {
+        if (!isAdmin()) { showToast('Bạn không có quyền thực hiện chức năng này!', 'error'); return; }
+        const hs = hoSoRecordList.find(h => h.id === id);
+        hoSoRecordList = hoSoRecordList.filter(h => h.id !== id);
+        if (window.CrudSync) { window.CrudSync.deleteItem('hoSoRecordList', id); }
+        localStorage.setItem('erp_hoSoRecordList', JSON.stringify(hoSoRecordList));
+        const m = document.getElementById('hsDeleteModal');
+        if (m) m.remove();
+        showToast('Đã xóa thành công hồ sơ ' + id);
+
+        window.erpApp.notifyCRUD('Hồ sơ', 'delete', {
+            name: hs ? hs.title : id,
+            page: 'hanh-chinh',
+            module: 'Quản lý hồ sơ gởi/nhận'
+        });
+
+        renderQuanLyHoSo();
+    }
+
+    // ==========================================
     // MODULE: Phê duyệt văn bản (CRUD đầy đủ)
     // ==========================================
 
@@ -21156,6 +21768,33 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
         closeCvViewModal: closeCvViewModal,
         openCvPreview,
         confirmDeleteCv: confirmDeleteCv,
+
+        // === Quản lý hồ sơ gởi/nhận module handlers ===
+        renderQuanLyHoSo: () => renderQuanLyHoSo(),
+        hsSearch: (q) => { hsSearchQuery = q; hsCurrentPage = 1; renderQuanLyHoSo(); },
+        hsSetTab: (tab) => { hsActiveTab = tab; hsCurrentPage = 1; renderQuanLyHoSo(); },
+        hsToggleSort: () => { hsSortOrder = hsSortOrder === 'desc' ? 'asc' : 'desc'; hsCurrentPage = 1; renderQuanLyHoSo(); },
+        hsGoPage: (page) => {
+            const filtered = getFilteredHoSo();
+            const totalPages = Math.ceil(filtered.length / hsPageSize);
+            if (page < 1 || page > totalPages) { return; }
+            hsCurrentPage = page; renderQuanLyHoSo();
+        },
+        hsFilterBy: (type, val) => {
+            if (type === 'project') { hsFilterProject = val; }
+            if (type === 'dept') { hsFilterDept = val; }
+            hsCurrentPage = 1; renderQuanLyHoSo();
+        },
+        hsClearFilters: () => {
+            hsFilterProject = ''; hsFilterDept = ''; hsSearchQuery = ''; hsActiveTab = 'all';
+            hsCurrentPage = 1; renderQuanLyHoSo();
+        },
+        openHsModal: (id) => openHsModal(id),
+        closeHsEditModal: () => { const m = document.getElementById('hsModal'); if (m) { m.remove(); } tempHsFiles = []; },
+        saveHoSoRecord: () => saveHoSoRecord(),
+        viewHoSoRecord: (id) => viewHoSoRecord(id),
+        confirmDeleteHs: (id) => confirmDeleteHs(id),
+        deleteHoSoRecord: (id) => deleteHoSoRecord(id),
         deleteCongVan: deleteCongVan,
         closeCvDeleteModal: () => { const m = document.getElementById('cvDeleteModal'); if (m) { m.classList.add('closing'); setTimeout(() => m.remove(), 200); } },
 
