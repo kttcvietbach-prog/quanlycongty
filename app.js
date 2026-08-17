@@ -18307,7 +18307,7 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
         const statsHtml = hsCategories.map(cat => {
             const cnt = hoSoRecordList.filter(c => c.type === cat.id).length;
             const isAct = hsActiveTab === cat.id;
-            return `<div class="cv2-stat-card${isAct ? ' cv2-stat-active' : ''}" onclick="window.erpApp.hsSetTab('${cat.id}')" style="border-left:3px solid ${cat.color};background:${isAct ? cat.color + '14' : '#fff'}">
+            return `<div class="cv2-stat-card${isAct ? ' cv2-stat-active' : ''}" onclick="window.erpApp.hsRecordSetTab('${cat.id}')" style="border-left:3px solid ${cat.color};background:${isAct ? cat.color + '14' : '#fff'}">
                 <span class="material-icons-outlined" style="color:${cat.color};font-size:22px">${cat.icon}</span>
                 <div><div class="cv2-stat-num" style="color:${cat.color}">${cnt}</div><div class="cv2-stat-lbl">${cat.label}</div></div>
             </div>`;
@@ -18354,7 +18354,7 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
                         <button class="cv2-btn cv2-btn-view" title="Xem chi tiết" onclick="window.erpApp.viewHoSoRecord('${hs.id}')"><span class="material-icons-outlined">visibility</span></button>
                         ${fc > 0 ? `<button class="cv2-btn cv2-btn-preview" title="Xem tài liệu (${fc} file)" onclick="window.erpApp.openHsPreview('${hs.id}')"><span class="material-icons-outlined">preview</span></button>` : ''}
                         ${isAdmin() ? `
-                            <button class="cv2-btn cv2-btn-edit" title="Chỉnh sửa" onclick="window.erpApp.openHsModal('${hs.id}')"><span class="material-icons-outlined">edit</span></button>
+                            <button class="cv2-btn cv2-btn-edit" title="Chỉnh sửa" onclick="window.erpApp.openHoSoRecordModal('${hs.id}')"><span class="material-icons-outlined">edit</span></button>
                             <button class="cv2-btn cv2-btn-del" title="Xóa" onclick="window.erpApp.confirmDeleteHs('${hs.id}')"><span class="material-icons-outlined">delete</span></button>
                         ` : ''}
                     </div></td>
@@ -18364,9 +18364,9 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
         let pagHtml = '';
         if (totalPages > 1) {
             pagHtml = `<div class="pagination" style="padding:16px 20px">
-                <button class="page-btn" ${hsCurrentPage <= 1 ? 'disabled' : ''} onclick="window.erpApp.hsGoPage(${hsCurrentPage - 1})"><span class="material-icons-outlined">chevron_left</span></button>`;
-            for (let i = 1; i <= totalPages; i++) { pagHtml += `<button class="page-btn ${i === hsCurrentPage ? 'active' : ''}" onclick="window.erpApp.hsGoPage(${i})">${i}</button>`; }
-            pagHtml += `<button class="page-btn" ${hsCurrentPage >= totalPages ? 'disabled' : ''} onclick="window.erpApp.hsGoPage(${hsCurrentPage + 1})"><span class="material-icons-outlined">chevron_right</span></button>
+                <button class="page-btn" ${hsCurrentPage <= 1 ? 'disabled' : ''} onclick="window.erpApp.hsRecordGoPage(${hsCurrentPage - 1})"><span class="material-icons-outlined">chevron_left</span></button>`;
+            for (let i = 1; i <= totalPages; i++) { pagHtml += `<button class="page-btn ${i === hsCurrentPage ? 'active' : ''}" onclick="window.erpApp.hsRecordGoPage(${i})">${i}</button>`; }
+            pagHtml += `<button class="page-btn" ${hsCurrentPage >= totalPages ? 'disabled' : ''} onclick="window.erpApp.hsRecordGoPage(${hsCurrentPage + 1})"><span class="material-icons-outlined">chevron_right</span></button>
                 <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Hiển thị ${(hsCurrentPage - 1) * hsPageSize + 1}–${Math.min(hsCurrentPage * hsPageSize, filtered.length)} / ${filtered.length}</span>
             </div>`;
         }
@@ -18411,20 +18411,20 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
                 <button class="back-btn" onclick="window.erpApp.navigateTo('hanh-chinh')"><span class="material-icons-outlined">arrow_back</span>Quay lại</button>
                 <div class="search-box" style="flex:1;min-width:250px">
                     <span class="material-icons-outlined">search</span>
-                    <input type="text" placeholder="Tìm kiếm theo mã, tiêu đề, nơi gửi/nhận, dự án..." value="${hsSearchQuery}" oninput="window.erpApp.hsSearch(this.value)">
+                    <input type="text" placeholder="Tìm kiếm theo mã, tiêu đề, nơi gửi/nhận, dự án..." value="${hsSearchQuery}" oninput="window.erpApp.hsRecordSearch(this.value)">
                 </div>
-                <select class="cv2-filter-select" onchange="window.erpApp.hsFilterBy('project',this.value)">
+                <select class="cv2-filter-select" onchange="window.erpApp.hsRecordFilterBy('project',this.value)">
                     <option value="">📁 Tất cả dự án</option>${projOpts}
                 </select>
-                <select class="cv2-filter-select" onchange="window.erpApp.hsFilterBy('dept',this.value)">
+                <select class="cv2-filter-select" onchange="window.erpApp.hsRecordFilterBy('dept',this.value)">
                     <option value="">🏢 Tất cả phòng ban</option>${deptOpts}
                 </select>
-                ${hasFilter ? '<button class="cv2-clear-btn" onclick="window.erpApp.hsClearFilters()" title="Xóa bộ lọc"><span class="material-icons-outlined">filter_alt_off</span></button>' : ''}
-                ${isAdmin() ? '<button class="btn-add-employee" onclick="window.erpApp.openHsModal()"><span class="material-icons-outlined">note_add</span>Thêm hồ sơ mới</button>' : ''}
+                ${hasFilter ? '<button class="cv2-clear-btn" onclick="window.erpApp.hsRecordClearFilters()" title="Xóa bộ lọc"><span class="material-icons-outlined">filter_alt_off</span></button>' : ''}
+                ${isAdmin() ? '<button class="btn-add-employee" onclick="window.erpApp.openHoSoRecordModal()"><span class="material-icons-outlined">note_add</span>Thêm hồ sơ mới</button>' : ''}
             </div>
 
             <div class="cv2-stats-row">
-                <div class="cv2-stat-card${hsActiveTab === 'all' ? ' cv2-stat-active' : ''}" onclick="window.erpApp.hsSetTab('all')" style="border-left:3px solid #64748B">
+                <div class="cv2-stat-card${hsActiveTab === 'all' ? ' cv2-stat-active' : ''}" onclick="window.erpApp.hsRecordSetTab('all')" style="border-left:3px solid #64748B">
                     <span class="material-icons-outlined" style="color:#64748B;font-size:22px">folder_copy</span>
                     <div><div class="cv2-stat-num" style="color:#64748B">${hoSoRecordList.length}</div><div class="cv2-stat-lbl">Tất cả hồ sơ</div></div>
                 </div>
@@ -18436,7 +18436,7 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
                     <div class="table-title"><span class="material-icons-outlined">mark_as_unread</span>Danh sách hồ sơ gởi đi & nhận</div>
                     <div style="display:flex;align-items:center;gap:10px">
                         <div class="table-count">${filtered.length} kết quả${hsActiveTab !== 'all' ? ' — ' + getHsCatById(hsActiveTab).label : ''}</div>
-                        <button class="cv2-btn cv2-btn-view" title="Đổi thứ tự ngày" onclick="window.erpApp.hsToggleSort()"><span class="material-icons-outlined">swap_vert</span></button>
+                        <button class="cv2-btn cv2-btn-view" title="Đổi thứ tự ngày" onclick="window.erpApp.hsRecordToggleSort()"><span class="material-icons-outlined">swap_vert</span></button>
                     </div>
                 </div>
                 <div class="table-scroll">
@@ -18461,7 +18461,7 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
         </div>`;
     }
 
-    function openHsModal(id = null) {
+    function openHoSoRecordModal(id = null) {
         if (!isAdmin()) { showToast('Bạn không có quyền thực hiện chức năng này!', 'error'); return; }
         const hs = id ? hoSoRecordList.find(h => h.id === id) : null;
         const isEdit = !!hs;
@@ -21779,25 +21779,26 @@ ${detailedProjects || 'Không có dữ liệu chi tiết'}
 
         // === Quản lý hồ sơ gởi/nhận module handlers ===
         renderQuanLyHoSo: () => renderQuanLyHoSo(),
-        hsSearch: (q) => { hsSearchQuery = q; hsCurrentPage = 1; renderQuanLyHoSo(); },
-        hsSetTab: (tab) => { hsActiveTab = tab; hsCurrentPage = 1; renderQuanLyHoSo(); },
-        hsToggleSort: () => { hsSortOrder = hsSortOrder === 'desc' ? 'asc' : 'desc'; hsCurrentPage = 1; renderQuanLyHoSo(); },
-        hsGoPage: (page) => {
+        hsRecordSearch: (q) => { hsSearchQuery = q; hsCurrentPage = 1; renderQuanLyHoSo(); },
+        hsRecordSetTab: (tab) => { hsActiveTab = tab; hsCurrentPage = 1; renderQuanLyHoSo(); },
+        hsRecordToggleSort: () => { hsSortOrder = hsSortOrder === 'desc' ? 'asc' : 'desc'; hsCurrentPage = 1; renderQuanLyHoSo(); },
+        hsRecordGoPage: (page) => {
             const filtered = getFilteredHoSo();
-            const totalPages = Math.ceil(filtered.length / hsPageSize);
+            const totalPages = Math.max(1, Math.ceil(filtered.length / hsPageSize));
             if (page < 1 || page > totalPages) { return; }
             hsCurrentPage = page; renderQuanLyHoSo();
         },
-        hsFilterBy: (type, val) => {
+        hsRecordFilterBy: (type, val) => {
             if (type === 'project') { hsFilterProject = val; }
             if (type === 'dept') { hsFilterDept = val; }
             hsCurrentPage = 1; renderQuanLyHoSo();
         },
-        hsClearFilters: () => {
+        hsRecordClearFilters: () => {
             hsFilterProject = ''; hsFilterDept = ''; hsSearchQuery = ''; hsActiveTab = 'all';
             hsCurrentPage = 1; renderQuanLyHoSo();
         },
-        openHsModal: (id) => openHsModal(id),
+        openHoSoRecordModal: (id) => openHoSoRecordModal(id),
+        openHsRecordModal: (id) => openHoSoRecordModal(id),
         closeHsEditModal: () => { const m = document.getElementById('hsModal'); if (m) { m.remove(); } tempHsFiles = []; },
         saveHoSoRecord: () => saveHoSoRecord(),
         viewHoSoRecord: (id) => viewHoSoRecord(id),
